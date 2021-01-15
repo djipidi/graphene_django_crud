@@ -262,14 +262,14 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         
         if root:
             try:
-                queryset = root.__getattr__(info.field_name)
+                queryset =  cls.get_queryset(root, info) & root.__getattr__(info.field_name).all()
             except:
-                queryset = root.__getattribute__(info.field_name)
+                queryset =  cls.get_queryset(root, info) & root.__getattribute__(info.field_name).all()
         else:
             queryset = cls.get_queryset(root, info)
-        queryset = queryset \
-            .filter(apply_where(kwargs.get("where", {}))) \
-            .order_by(*kwargs.get("orderBy", []))
+        queryset = queryset.filter(apply_where(kwargs.get("where", {})))
+        if "orderBy" in kwargs.keys():
+            queryset = queryset.order_by(*kwargs.get("orderBy", []))
         return {
             'count' : queryset.count(),
             'data' : queryset \
