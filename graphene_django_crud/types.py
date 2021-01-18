@@ -223,7 +223,10 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
 
         arguments = OrderedDict()
         arguments.update({
-            "where": graphene.Argument(convert_model_to_input_type(cls._meta.model, input_flag="where_unique", registry=cls._meta.registry)),
+            "where": graphene.Argument(
+                convert_model_to_input_type(cls._meta.model, input_flag="where_unique", registry=cls._meta.registry),
+                required=True
+            ),
         })
         return graphene.Field(
             cls,
@@ -373,7 +376,9 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         arguments = OrderedDict()
         arguments.update({
             "input": graphene.Argument(convert_model_to_input_type(cls._meta.model, input_flag="update", registry=cls._meta.registry), required=True),
-            "where": graphene.Argument(convert_model_to_input_type(cls._meta.model, input_flag="where_unique", registry=cls._meta.registry), required=True),
+            "where": graphene.Argument(
+                convert_model_to_input_type(cls._meta.model, input_flag="where_unique", registry=cls._meta.registry),
+                required=True),
         })
 
         return graphene.Field(
@@ -417,7 +422,10 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
     def DeleteField(cls, *args, **kwargs):
         arguments = OrderedDict()
         arguments.update({
-            "where": graphene.Argument(convert_model_to_input_type(cls._meta.model, input_flag="where_unique", registry=cls._meta.registry), required=True),
+            "where": graphene.Argument(
+                convert_model_to_input_type(cls._meta.model, input_flag="where_unique", registry=cls._meta.registry),
+                required=True
+            ),
         })
 
         return graphene.Field(
