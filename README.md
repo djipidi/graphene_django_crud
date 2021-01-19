@@ -376,7 +376,7 @@ Query field that can return a node composed of a list items in "data" field and 
 Show doc in graphiql for more information
 
 <details>
-  <summary>show query exemple</summary>
+  <summary>show query example</summary>
 
 
 ```
@@ -449,10 +449,11 @@ Show doc in graphiql for more information
 ## Meta parameters 
 
 ### model (required parameter)
-the model used for the definition type
+The model used for the definition type
 
 ### only_fields / exclude_fields
-tuple of model fields to include/exclude in graphql type. only one of the two parameters can be declared.
+Tuple of model fields to include/exclude in graphql type.  
+Only one of the two parameters can be declared.
 
 ### input_only_fields / input_exclude_fields
 tuple of model fields to include/exclude in graphql inputs type. Only one of the two parameters can be declared.
@@ -465,7 +466,7 @@ tuple of model fields to include/exclude in graphql inputs type. Only one of the
 def get_queryset(cls, root, info, **kwargs):
     return queryset_class
 ```
-Default it return "model.objects.all()", the overload is useful for applying filtering based on user. The method is also called in the nested query.
+Default it returns "model.objects.all()", the overload is useful for applying filtering based on user. The method is more than a resolver, it is also called in nested request, fetch instances for mutations and subscription verification.
 
 
 ### Midleware methode before_XXX(cls, root, info, instance, data) / after_XXX(cls, root, info, instance, data)
@@ -502,4 +503,5 @@ def after_update(cls, root, info, instance, data):
 def after_delete(cls, root, info, instance, data):
     pass
 ```
-Methods called before or after a mutation. The "instance" argument is the instance of the model that goes or has been modified retrieved from the "where" argument of the mutation or created by the model constructor. The "data" argument is a dict of the "input" argument of the mutation. The method is also called in nested mutation.
+Methods called before or after a mutation. The "instance" argument is the instance of the model that goes or has been modified retrieved from the "where" argument of the mutation, or it's been created by the model constructor. The "data" argument is a dict of the "input" argument of the mutation.  
+The method is also called in nested mutation.
