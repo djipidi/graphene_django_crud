@@ -469,7 +469,7 @@ def get_queryset(cls, root, info, **kwargs):
 Default it returns "model.objects.all()", the overload is useful for applying filtering based on user. The method is more than a resolver, it is also called in nested request, fetch instances for mutations and subscription verification.
 
 
-### Midleware methode before_XXX(cls, root, info, instance, data) / after_XXX(cls, root, info, instance, data)
+### Middleware methode before_XXX(cls, root, info, instance, data) / after_XXX(cls, root, info, instance, data)
 ```python
 @classmethod
 def before_mutate(cls, root, info, instance, data):
