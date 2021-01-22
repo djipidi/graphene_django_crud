@@ -380,38 +380,9 @@ def convert_onetoone_field_to_djangomodel(
     return Dynamic(dynamic_type)
 
 
-@convert_django_field.register(models.ManyToManyField)
-def convert_field_to_list_or_connection(
-    field, registry=None, input_flag=None
-):
-    model = get_related_model(field)
-
-    def dynamic_type():
-        _type = registry.get_type_for_model(model)
-        if not _type:
-            return
-
-
-        if input_flag:
-            if input_flag == "where":
-                return graphene.Field(convert_model_to_input_type(model, input_flag="where", registry=registry))
-            elif input_flag == "create" :
-                return graphene.Field(convert_model_to_input_type(model, input_flag="create_nested_many", registry=registry))
-            elif input_flag == "update" :
-                return graphene.Field(convert_model_to_input_type(model, input_flag="update_nested_many", registry=registry))
-        else:
-            return DjangoListField(
-                _type,
-                required=is_required(field) and input_flag == "create",
-                description=field.help_text or field.verbose_name,
-            )
-
-    return Dynamic(dynamic_type)
-
-
-@convert_django_field.register(GenericRel)
 @convert_django_field.register(models.ManyToManyRel)
 @convert_django_field.register(models.ManyToOneRel)
+@convert_django_field.register(models.ManyToManyField)
 def convert_many_rel_to_djangomodel(
     field, registry=None, input_flag=None
 ):

@@ -1,10 +1,16 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [Unreleased]
+
+### Fixed
+
+- FIX error mutation with related foreign key
+- FIX manytomanyfield dont have BatchReadField args
 
 ## [1.0.2] - 2020-01-20
 
-## Fixed
+### Fixed
 
 - FIX do not apply the default ordering in batchread query
 - FIX do not apply the filter of the get_queryset method in the nested batchread query

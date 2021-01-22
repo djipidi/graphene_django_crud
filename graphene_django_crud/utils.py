@@ -15,6 +15,10 @@ from django.db.models import (
     Model,
     ManyToOneRel,
     ManyToManyRel,
+    OneToOneRel,
+    ForeignKey,
+    ManyToManyField,
+    OneToOneField
 )
 from django.db.models.base import ModelBase
 from graphene.utils.str_converters import to_snake_case
@@ -68,7 +72,7 @@ def get_related_model(field):
     return field.remote_field.model
 
 
-def get_model_fields(model, only_fields="__all__", exclude_fields=()):
+def get_model_fields(model, only_fields="__all__", exclude_fields=(), to_dict=False):
     # Backward compatibility patch for Django versions lower than 1.11.x
     if DJANGO_VERSION >= (1, 11):
         private_fields = model._meta.private_fields
@@ -95,8 +99,10 @@ def get_model_fields(model, only_fields="__all__", exclude_fields=()):
 
     if settings.DEBUG:
             all_fields = sorted(all_fields, key=lambda f: f[0])
-
-    fields = []
+    if to_dict:
+        fields = {}
+    else:
+        fields = []
 
     for name, field in all_fields:
         is_include = False
@@ -109,7 +115,10 @@ def get_model_fields(model, only_fields="__all__", exclude_fields=()):
             is_include = True
 
         if is_include:
-            fields.append((name, field))
+            if to_dict:
+                fields[name] = field
+            else:
+                fields.append((name, field))
     return fields
 
 def is_required(field):
@@ -132,3 +141,15 @@ def is_required(field):
         return False
 
     return not blank and default == NOT_PROVIDED
+
+
+MANY_NESTED_FIELD = (ManyToManyField, ManyToOneRel)
+ONE_NESTED_FIELD = (OneToOneRel, OneToOneField, ForeignKey)
+def field_to_relation_type(model, field_name):
+    field = get_model_fields(model, to_dict=True)[field_name]
+    if isinstance(field, MANY_NESTED_FIELD):
+        return "MANY"
+    elif isinstance(field, ONE_NESTED_FIELD):
+        return "ONE"
+    else:
+        return "ATTRIBUTE"

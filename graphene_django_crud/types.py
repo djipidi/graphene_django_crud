@@ -5,7 +5,7 @@ import graphene
 from graphene.types.base import BaseOptions
 from graphene_django.types import ErrorType
 
-from .utils import get_related_model
+from .utils import get_related_model, field_to_relation_type
 from .base_types import mutation_factory_type, node_factory_type
 
 from graphene_django.compat import ArrayField, HStoreField, RangeField, JSONField
@@ -31,10 +31,6 @@ from django.contrib.contenttypes.fields import (
 from django.dispatch import receiver
 from django.db.models.signals import post_save, post_delete, pre_delete 
 from graphene_subscriptions.signals import post_save_subscription, post_delete_subscription
-
-
-MANY_NESTED_FIELD = (models.ManyToManyField, GenericForeignKey, GenericRelation, GenericRel) 
-NESTED_FIELD = (models.OneToOneRel, models.OneToOneField, models.ForeignKey)
 
 def get_paths(d):
     q = [(d, [])]
@@ -282,16 +278,15 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
     @classmethod
     def mutateItem(cls, root, info, instance, data):
         for key, value in data.items():
-            if isinstance(getattr(cls._meta.model, key).field, MANY_NESTED_FIELD):
+            if field_to_relation_type(cls._meta.model, key) == "MANY":
                 pass
-            elif isinstance(getattr(cls._meta.model, key).field, NESTED_FIELD):
+            elif field_to_relation_type(cls._meta.model, key) == "ONE":
                 pass
             else:
                 instance.__setattr__(key, value)
         instance.save()
         for key, value in data.items():
-
-            if isinstance(getattr(cls._meta.model, key).field, MANY_NESTED_FIELD):
+            if field_to_relation_type(cls._meta.model, key) == "MANY":
                 relatedModel = get_global_registry().get_type_for_model(
                     get_related_model(getattr(cls._meta.model, key).field)
                 )
@@ -299,31 +294,27 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 addItems = []
                 disconnectItems = []
                 for create_input in value.get("create", []):
-                    addItems.append( relatedModel.create(create_input) )
+                    addItems.append( relatedModel.create(root, info, create_input) )
                 for connect_input in value.get("connect", []):
                     addItems.append(q.get(apply_where(connect_input)))
                 for disconnect_input in value.get("disconnect", []):
                     disconnectItems.append(q.get(apply_where(disconnect_input)))
-                for remove_input in value.get("remove", []):
-                    relatedModel.delete(remove_input)
+                for remove_where_input in value.get("remove", []):
+                    relatedModel.delete(root, info, remove_where_input)
 
                 getattr(instance, key).add(*addItems)
                 getattr(instance, key).remove(*disconnectItems)
 
-            elif isinstance(getattr(cls._meta.model, key).field, NESTED_FIELD):
+            elif field_to_relation_type(cls._meta.model, key) == "ONE":
                 relatedModel = get_global_registry().get_type_for_model(
                     get_related_model(getattr(cls._meta.model, key).field)
                 )
                 q = relatedModel.get_queryset(root, info)
                 if value.get("create", None):
-                    instance.__setattr__(key, relatedModel.create(value["create"]) )
+                    instance.__setattr__(key, relatedModel.create(root, info, value["create"]) )
                 if value.get("connect", None):
                     instance.__setattr__(key, q.get(apply_where(value["connect"])) )
         return instance
-
-
-
-
 
     @classmethod
     def CreateField(cls, *args, **kwargs):
