@@ -94,9 +94,7 @@ def get_model_fields(model, only_fields="__all__", exclude_fields=(), to_dict=Fa
     local_fields = []
     for field in all_fields_list: 
         if field not in invalid_fields:
-            if isinstance(field, (ManyToManyRel, OneToOneRel)):
-                local_fields.append((field.related_name, field))
-            elif isinstance(field, (ManyToOneRel)):
+            if isinstance(field, (ManyToManyRel, OneToOneRel, ManyToOneRel)):
                 if field.related_name == None:
                     local_fields.append((field.name + '_set', field))
                 else:
