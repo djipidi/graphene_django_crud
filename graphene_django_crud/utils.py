@@ -91,9 +91,19 @@ def get_model_fields(model, only_fields="__all__", exclude_fields=(), to_dict=Fa
     reverse_fields = list(get_reverse_fields(model))
     invalid_fields = [field[1] for field in reverse_fields]
 
-    local_fields = [
-        (field.name, field) for field in all_fields_list if field not in invalid_fields
-    ]
+    local_fields = []
+    for field in all_fields_list: 
+        if field not in invalid_fields:
+            if isinstance(field, (ManyToManyRel, OneToOneRel)):
+                local_fields.append((field.related_name, field))
+            elif isinstance(field, (ManyToOneRel)):
+                if field.related_name == None:
+                    local_fields.append((field.name + '_set', field))
+                else:
+                    local_fields.append((field.related_name, field))
+            else:
+                local_fields.append((field.name, field))
+
 
     all_fields = local_fields + reverse_fields
 

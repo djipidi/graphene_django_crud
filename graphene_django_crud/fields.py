@@ -9,6 +9,8 @@ from graphene.types import Field, List
 
 from .base_types import node_factory_type
 
+def related_batchread(django_type, related_field, root, info, **Kwargs):
+    return django_type.batchread(root, info, related_field=related_field, **Kwargs)
 
 class DjangoListField(Field):
     def __init__(self, _type, *args, **kwargs):
@@ -34,4 +36,4 @@ class DjangoListField(Field):
 
     def get_resolver(self, parent_resolver):
 
-        return self.django_type.batchread
+        return partial(related_batchread, self.django_type, parent_resolver.args[0])

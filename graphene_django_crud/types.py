@@ -257,13 +257,13 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         )
 
     @classmethod
-    def batchread(cls, root, info, **kwargs):
+    def batchread(cls, root, info, related_field=None, **kwargs):
         
-        if root:
+        if related_field is not None:
             try:
-                queryset =  cls.get_queryset(root, info) & root.__getattr__(info.field_name).all()
+                queryset =  cls.get_queryset(root, info) & root.__getattr__(related_field).all()
             except:
-                queryset =  cls.get_queryset(root, info) & root.__getattribute__(info.field_name).all()
+                queryset =  cls.get_queryset(root, info) & root.__getattribute__(related_field).all()
         else:
             queryset = cls.get_queryset(root, info)
         queryset = queryset.filter(apply_where(kwargs.get("where", {})))
