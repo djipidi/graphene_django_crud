@@ -70,8 +70,6 @@ def pytest_configure(config):
         ),
     )
 
-
-
     django.setup()
     management.call_command("migrate", verbosity=0, interactive=False)
     if config.getoption("--staticfiles"):
