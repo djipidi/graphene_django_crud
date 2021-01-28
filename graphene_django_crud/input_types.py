@@ -9,6 +9,7 @@ def gen_inputType_filter(name, field, with_number_filter=False, with_text_filter
 
     items["equals"] = graphene.Field(field)
     items["in"] = graphene.List(field)
+    items["isnull"] = graphene.Boolean()
 
     if with_number_filter:
         items["gt"] = graphene.Field(field)

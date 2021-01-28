@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
+### Added
+
+- Add "isnull" arg in "InputTypeFilter"
+
 ### Fixed
 
 - FIX error mutation with related foreign key
