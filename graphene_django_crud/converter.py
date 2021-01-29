@@ -90,23 +90,23 @@ def convert_model_to_input_type(model, input_flag="create", registry=None):
 
     if input_flag == "create_nested_many":
         items["create"] = graphene.List(convert_model_to_input_type(model, input_flag="create", registry=registry))
-        items["connect"] = graphene.List(convert_model_to_input_type(model, input_flag="where_unique", registry=registry))
+        items["connect"] = graphene.List(convert_model_to_input_type(model, input_flag="where", registry=registry))
     
     elif input_flag == "update_nested_many":
         items["create"] = graphene.List(convert_model_to_input_type(model, input_flag="create", registry=registry))
-        items["remove"] = graphene.List(convert_model_to_input_type(model, input_flag="where_unique", registry=registry))
-        items["connect"] = graphene.List(convert_model_to_input_type(model, input_flag="where_unique", registry=registry))
-        items["disconnect"] = graphene.List(convert_model_to_input_type(model, input_flag="where_unique", registry=registry))
+        items["remove"] = graphene.List(convert_model_to_input_type(model, input_flag="where", registry=registry))
+        items["connect"] = graphene.List(convert_model_to_input_type(model, input_flag="where", registry=registry))
+        items["disconnect"] = graphene.List(convert_model_to_input_type(model, input_flag="where", registry=registry))
 
     elif input_flag == "create_nested":
         items["create"] = graphene.Field(convert_model_to_input_type(model, input_flag="create", registry=registry))
-        items["connect"] = graphene.Field(convert_model_to_input_type(model, input_flag="where_unique", registry=registry))
+        items["connect"] = graphene.Field(convert_model_to_input_type(model, input_flag="where", registry=registry))
 
     elif input_flag == "update_nested":
         items["create"] = graphene.Field(convert_model_to_input_type(model, input_flag="create", registry=registry))
-        # items["remove"] = graphene.Field(convert_model_to_input_type(model, input_flag="where_unique", registry=registry))
-        items["connect"] = graphene.Field(convert_model_to_input_type(model, input_flag="where_unique", registry=registry))
-        # items["disconnect"] = graphene.Field(convert_model_to_input_type(model, input_flag="where_unique", registry=registry))
+        # items["remove"] = graphene.Field(convert_model_to_input_type(model, input_flag="where", registry=registry))
+        items["connect"] = graphene.Field(convert_model_to_input_type(model, input_flag="where", registry=registry))
+        # items["disconnect"] = graphene.Field(convert_model_to_input_type(model, input_flag="where", registry=registry))
  
     else:
         for name, field in model_fields:

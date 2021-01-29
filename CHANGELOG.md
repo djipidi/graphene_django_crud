@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
+### Changed
+
+- Replace all "WhereUniqueInput" to "WhereInput"
+
 ### Added
 
 - Add "isnull" arg in "InputTypeFilter"
