@@ -281,7 +281,14 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
             if field_to_relation_type(cls._meta.model, key) == "MANY":
                 pass
             elif field_to_relation_type(cls._meta.model, key) == "ONE":
-                pass
+                relatedModel = get_global_registry().get_type_for_model(
+                    get_related_model(getattr(cls._meta.model, key).field)
+                )
+                q = relatedModel.get_queryset(root, info)
+                if value.get("create", None):
+                    instance.__setattr__(key, relatedModel.create(root, info, value["create"]) )
+                if value.get("connect", None):
+                    instance.__setattr__(key, q.get(apply_where(value["connect"])) )
             else:
                 instance.__setattr__(key, value)
         instance.save()
@@ -304,16 +311,6 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
 
                 getattr(instance, key).add(*addItems)
                 getattr(instance, key).remove(*disconnectItems)
-
-            elif field_to_relation_type(cls._meta.model, key) == "ONE":
-                relatedModel = get_global_registry().get_type_for_model(
-                    get_related_model(getattr(cls._meta.model, key).field)
-                )
-                q = relatedModel.get_queryset(root, info)
-                if value.get("create", None):
-                    instance.__setattr__(key, relatedModel.create(root, info, value["create"]) )
-                if value.get("connect", None):
-                    instance.__setattr__(key, q.get(apply_where(value["connect"])) )
         return instance
 
     @classmethod
