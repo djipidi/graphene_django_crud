@@ -321,6 +321,8 @@ def convert_binary_to_string(field, registry=None, input_flag=None):
 @convert_django_field.register(models.FloatField)
 @convert_django_field.register(models.DurationField)
 def convert_field_to_float(field, registry=None, input_flag=None):
+    if input_flag == "where":
+        return FloatFilter()
     return Float(
         description=field.help_text or field.verbose_name,
         required=is_required(field) and input_flag == "create",
@@ -329,6 +331,8 @@ def convert_field_to_float(field, registry=None, input_flag=None):
 
 @convert_django_field.register(models.DateField)
 def convert_date_to_string(field, registry=None, input_flag=None):
+    if input_flag == "where":
+        return DateFilter()
     return Date(
         description=field.help_text or field.verbose_name,
         required=is_required(field) and input_flag == "create",
@@ -349,6 +353,8 @@ def convert_datetime_to_string(
 
 @convert_django_field.register(models.TimeField)
 def convert_time_to_string(field, registry=None, input_flag=None):
+    if input_flag == "where":
+        return TimeFilter()
     return Time(
         description=field.help_text or field.verbose_name,
         required=is_required(field) and input_flag == "create",

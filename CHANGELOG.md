@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - FIX manytomanyfield dont have BatchReadField args
 - FIX bad attribute for the related field whose related_name is not specified
 - FIX error in mutation resolver with foreignKeyField not null
+- FIX "InputTypeFilter" of FloatField, Datefield and TimeField is not generated
 
 ## [1.0.2] - 2020-01-20
 
