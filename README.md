@@ -10,7 +10,7 @@ For installing graphene-django-crud, just run this command in your shell:
 pip install graphene-django-crud
 ```
 
-## Basic example
+## Usage
 
 
 

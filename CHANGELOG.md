@@ -1,7 +1,7 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
-## [Unreleased]
+## [1.0.3] - 2021-02-04
 
 ### Changed
 
@@ -19,7 +19,7 @@ All notable changes to this project will be documented in this file.
 - FIX error in mutation resolver with foreignKeyField not null
 - FIX "InputTypeFilter" of FloatField, Datefield and TimeField is not generated
 
-## [1.0.2] - 2020-01-20
+## [1.0.2] - 2021-01-20
 
 ### Fixed
 
