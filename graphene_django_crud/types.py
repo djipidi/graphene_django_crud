@@ -220,7 +220,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         arguments = OrderedDict()
         arguments.update({
             "where": graphene.Argument(
-                convert_model_to_input_type(cls._meta.model, input_flag="where", registry=cls._meta.registry),
+                convert_model_to_input_type(cls._meta.model, input_flag="where_with_operator", registry=cls._meta.registry),
                 required=True
             ),
         })
@@ -234,7 +234,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
 
     @classmethod
     def read(cls, root, info, **kwargs):
-        return cls.get_queryset(root, info).filter(**kwargs.get("where", {})).get()
+        return cls.get_queryset(root, info).filter(apply_where(kwargs.get("where", {}))).get()
 
 
 
