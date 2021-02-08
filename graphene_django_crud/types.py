@@ -220,7 +220,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         arguments = OrderedDict()
         arguments.update({
             "where": graphene.Argument(
-                convert_model_to_input_type(cls._meta.model, input_flag="where_with_operator", registry=cls._meta.registry),
+                convert_model_to_input_type(cls._meta.model, input_flag="where", registry=cls._meta.registry),
                 required=True
             ),
         })
@@ -243,7 +243,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
 
         arguments = OrderedDict()
         arguments.update({
-            "where": graphene.Argument(convert_model_to_input_type(cls._meta.model, input_flag="where_with_operator", registry=cls._meta.registry)),
+            "where": graphene.Argument(convert_model_to_input_type(cls._meta.model, input_flag="where", registry=cls._meta.registry)),
             "limit": graphene.Int(),
             "offset" : graphene.Int(),
             "orderBy" : graphene.List(graphene.String)

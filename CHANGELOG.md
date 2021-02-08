@@ -1,6 +1,12 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [Unreleased]
+
+### Changed
+
+- "WhereWithOperatorsInput" merge to "WhereInput" and keep operators
+
 ## [1.0.3] - 2021-02-04
 
 ### Changed
