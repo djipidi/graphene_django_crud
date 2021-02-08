@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.contrib.auth.models import User, Group
-from graphene_django_crud.types import DjangoGrapheneCRUD
+from graphene_django_crud import DjangoGrapheneCRUD, where_input_to_queryset_filter_args
 import graphene
 from .models import ModelTestGenerateSchemaA, ModelTestGenerateSchemaB, Person
 
@@ -19,6 +19,23 @@ class ModelTestGenerateSchemaAType(DjangoGrapheneCRUD):
 class ModelTestGenerateSchemaBType(DjangoGrapheneCRUD):
     class Meta:
         model = ModelTestGenerateSchemaB
+
+class ModelTestGenerateSchemaBCustomMutation(graphene.Mutation):
+    class Arguments:
+        where = graphene.Argument(ModelTestGenerateSchemaBType.WhereInputType())
+        create = graphene.Argument(ModelTestGenerateSchemaBType.CreateInputType())
+        update = graphene.Argument(ModelTestGenerateSchemaBType.UpdateInputType())
+
+    ok = graphene.Boolean()
+    result = graphene.Field(ModelTestGenerateSchemaBType)
+
+    def mutate(root, info, where, create, update):
+        where_input_to_queryset_filter_args(where)
+        return {
+            "ok" : True,
+            "result" : None
+        }
+
 
 class PersonType(DjangoGrapheneCRUD):
     class Meta:
@@ -57,6 +74,7 @@ class Mutation(graphene.ObjectType):
     test_generate_schema_b_create = ModelTestGenerateSchemaBType.CreateField()
     test_generate_schema_b_update = ModelTestGenerateSchemaBType.UpdateField()
     test_generate_schema_b_delete = ModelTestGenerateSchemaBType.DeleteField()
+    test_generate_schema_b_custom = ModelTestGenerateSchemaBCustomMutation.Field()
 
     person_create = PersonType.CreateField()
     person_update = PersonType.UpdateField()

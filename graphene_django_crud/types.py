@@ -213,6 +213,17 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
     def Type(cls):
         return cls
 
+    @classmethod
+    def WhereInputType(cls, *args, **kwargs):
+        return convert_model_to_input_type(cls._meta.model, input_flag="where", registry=cls._meta.registry)
+
+    @classmethod
+    def CreateInputType(cls, *args, **kwargs):
+        return convert_model_to_input_type(cls._meta.model, input_flag="create", registry=cls._meta.registry)
+
+    @classmethod
+    def UpdateInputType(cls, *args, **kwargs):
+        return convert_model_to_input_type(cls._meta.model, input_flag="update", registry=cls._meta.registry)
 
     @classmethod
     def ReadField(cls, *args, **kwargs):
