@@ -1,6 +1,7 @@
 # Graphene-Django-Crud
 
-Inspired by prisma-nexus and graphene-django-extras, This package turns the django orm into a graphql API.
+Inspired by prisma-nexus and graphene-django-extras, This package
+turns the django orm into a graphql API.
 
 ## Installation
 
@@ -11,8 +12,6 @@ pip install graphene-django-crud
 ```
 
 ## Usage
-
-
 
 ```python
 # schema.py
@@ -330,8 +329,9 @@ input UserWhereWithOperatorInput {
 ## Fields
 
 ### ReadField
-Query field with a required argument "where" that can return only an instance of the defined type. 
-the "where" argument is composed of only unique fields of the model.
+Query field with a required argument "where" that can return only an instance of
+the defined type. Like the get method of the queryset. If multiple values ​​are
+returned, the response will be an error.
 
 Show doc in graphiql for more information
 
@@ -341,7 +341,8 @@ Show doc in graphiql for more information
 
 ```
 query{
-    <read_field_name>(where:{id:1}){
+    <read_field_name>(where:{id:{equals:1}}){
+        id
         attribute1
         attribute2
     }
@@ -350,7 +351,7 @@ query{
 # or
 
 query{
-    <read_field_name>(where:{<unique_field>:value}){
+    <read_field_name>(where:{<field>:{equals:1}}){
         attribute1
         attribute2
     }
@@ -361,7 +362,7 @@ query{
 {
     "data": {
         <read_field_name>: {
-            "id": id_value,
+            "id": 1,
             "attribute1": attribute1_value,
             "attribute2": attribute1_value
         }
@@ -399,12 +400,12 @@ query{
             "count" : n
             "data": [
                 {
-                    "id": id_value,
+                    "id": 1,
                     "attribute1": attribute1_value,
                     "attribute2": attribute1_value,
                 },
                 {
-                    "id": id_value,
+                    "id": 2,
                     "attribute1": attribute1_value,
                     "attribute2": attribute1_value,
                 },
@@ -456,7 +457,8 @@ Tuple of model fields to include/exclude in graphql type.
 Only one of the two parameters can be declared.
 
 ### input_only_fields / input_exclude_fields
-tuple of model fields to include/exclude in graphql inputs type. Only one of the two parameters can be declared.
+tuple of model fields to include/exclude in graphql inputs type.
+Only one of the two parameters can be declared.
 
 ## overload methods
 
@@ -466,7 +468,8 @@ tuple of model fields to include/exclude in graphql inputs type. Only one of the
 def get_queryset(cls, root, info, **kwargs):
     return queryset_class
 ```
-Default it returns "model.objects.all()", the overload is useful for applying filtering based on user. The method is more than a resolver, it is also called in nested request, fetch instances for mutations and subscription verification.
+Default it returns "model.objects.all()", the overload is useful for applying filtering based on user.
+The method is more than a resolver, it is also called in nested request, fetch instances for mutations and subscription verification.
 
 
 ### Middleware methode before_XXX(cls, root, info, instance, data) / after_XXX(cls, root, info, instance, data)
