@@ -1,6 +1,16 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [Unreleased]
+
+### Changed
+
+- "WhereWithOperatorsInput" merge to "WhereInput" and keep operators
+
+### Added
+
+- Add getters 'WhereInputType', 'CreateInputType', UpdateInputType from 'GrapheneDjangoCrud' object
+
 ## [1.0.3] - 2021-02-04
 
 ### Changed

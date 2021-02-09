@@ -96,7 +96,7 @@ GroupType.generate_signals()
 <details>
   <summary>show the generated graphql schema</summary>
 
-```
+```gql
 schema {
   query: Query
   mutation: Mutation
@@ -339,7 +339,7 @@ Show doc in graphiql for more information
   <summary>show query exemple</summary>
 
 
-```
+```gql
 query{
     <read_field_name>(where:{id:{equals:1}}){
         id
@@ -380,7 +380,7 @@ Show doc in graphiql for more information
   <summary>show query example</summary>
 
 
-```
+```gql
 query{
     <batch_read_field_name>(where:{id:{in:[1,2,3,4]}}){
         count
@@ -508,3 +508,91 @@ def after_delete(cls, root, info, instance, data):
 ```
 Methods called before or after a mutation. The "instance" argument is the instance of the model that goes or has been modified retrieved from the "where" argument of the mutation, or it's been created by the model constructor. The "data" argument is a dict of the "input" argument of the mutation.  
 The method is also called in nested mutation.
+
+
+
+## Input Types
+
+### WhereInputType()
+
+Input type composed of the scalar filter of each readable fields of the model. The logical operators "or", "and", "no" are also included.
+
+### CreateInputType()
+
+Input type composed of model fields without the id. If the field is not nullable, the graphene field is required.
+
+### UpdateInputType()
+
+Input type composed of each fields of the model. No fields are required.
+
+## Scalar Filter
+
+```gql
+input StringFilter {
+  equals: String
+  in: [String]
+  isnull: Boolean
+  contains: String
+  startswith: String
+  endswith: String
+  regex: String
+}
+
+input IntFilter {
+  equals: Int
+  in: [Int]
+  isnull: Boolean
+  gt: Int
+  gte: Int
+  lt: Int
+  lte: Int
+  contains: Int
+  startswith: Int
+  endswith: Int
+  regex: String
+}
+
+input FloatFilter {
+  equals: Float
+  in: [Float]
+  isnull: Boolean
+  gt: Float
+  gte: Float
+  lt: Float
+  lte: Float
+  contains: Float
+  startswith: Float
+  endswith: Float
+  regex: String
+}
+
+input timeFilter {
+  equals: Time
+  in: [Time]
+  isnull: Boolean
+  gt: Time
+  gte: Time
+  lt: Time
+  lte: Time
+}
+
+input DateFilter {
+  equals: Date
+  in: [Date]
+  isnull: Boolean
+  gt: Date
+  gte: Date
+  lt: Date
+  lte: Date
+}
+
+input DatetimeFilter {
+  equals: DateTime
+  in: [DateTime]
+  isnull: Boolean
+  gt: DateTime
+  gte: DateTime
+  lt: DateTime
+  lte: DateTime
+}
+```

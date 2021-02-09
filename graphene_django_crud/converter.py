@@ -59,17 +59,11 @@ def convert_model_to_input_type(model, input_flag="create", registry=None):
     if input_type:
         return input_type
 
-    where_with_operator = False
-    if input_flag == "where_with_operator":
-        where_with_operator = True
-        input_flag = "where"
-
-
     def embeded_list_fields():
-        return graphene.List(convert_model_to_input_type(model, input_flag="where_with_operator", registry=registry))
+        return graphene.List(convert_model_to_input_type(model, input_flag="where", registry=registry))
     
     def embeded_field():
-        return graphene.Field(convert_model_to_input_type(model, input_flag="where_with_operator", registry=registry))
+        return graphene.Field(convert_model_to_input_type(model, input_flag="where", registry=registry))
     
     djangoType = registry.get_type_for_model(model)
     if "create" in input_flag or "update" in input_flag:
@@ -112,16 +106,10 @@ def convert_model_to_input_type(model, input_flag="create", registry=None):
         for name, field in model_fields:
             if name == "id" and ("create" in input_flag or "update" in input_flag):
                 continue
-            if input_flag == "where_unique":
-                try :
-                    if not field.unique:
-                        continue
-                except AttributeError:#for manytomany relation
-                    continue
 
             converted = convert_django_field_with_choices(field, input_flag=input_flag, registry=registry)
             items[name] = converted
-        if where_with_operator:
+        if input_flag == "where":
             items["OR"] = graphene.Dynamic(embeded_list_fields)
             items["AND"] = graphene.Dynamic(embeded_list_fields)
             items["NOT"] = graphene.Dynamic(embeded_field)
