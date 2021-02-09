@@ -516,6 +516,7 @@ The method is also called in nested mutation.
 ### WhereInputType()
 
 Input type composed of the scalar filter of each readable fields of the model. The logical operators "or", "and", "no" are also included.
+the returned arg can be used in queryset with function "where_input_to_queryset_filter_args(where)"
 
 ### CreateInputType()
 
@@ -595,4 +596,16 @@ input DatetimeFilter {
   lt: DateTime
   lte: DateTime
 }
+```
+
+## Utils
+
+### where_input_to_queryset_filter_args(where_input: dict) -> dict
+
+Function that returns the dict of the where argument to a dict for the queryset args.
+
+example :
+
+```python
+<model>.objects.get(where_input_to_queryset_filter_args(where))
 ```
