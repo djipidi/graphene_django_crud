@@ -13,6 +13,13 @@ pip install graphene-django-crud
 
 ## Usage
 
+The GrapheneDjangoCrud class transforms a django model into a graphene type.
+The type also has fields corresponding to the crud operation.
+
+### Example
+
+You will be able to project the auth django models on your GraphQL API and expose the CRUD operations.
+
 ```python
 # schema.py
 import graphene
@@ -93,8 +100,11 @@ from .schema import UserType, GroupType
 UserType.generate_signals()
 GroupType.generate_signals()
 ```
+
+And get the resulting GraphQL API:
+
 <details>
-  <summary>show the generated graphql schema</summary>
+  <summary>toggle me</summary>
 
 ```gql
 schema {
@@ -325,6 +335,25 @@ input UserWhereWithOperatorInput {
 }
 ```
 </details>
+
+## Filtering by user
+
+To respond to a business logic it is necessary to filtering by user.
+the graphene module gives access to the user from the context object in info arg.
+The "get_queryset" method which returns by default <model>.objects.all(), but it can be overloaded.
+
+```python
+class UserType(DjangoGrapheneCRUD):
+    class Meta:
+        model = User
+
+    @classmethod
+    def get_queryset(cls, root, info, **kwargs):
+        if info.context.user.is_staff:
+            return User.objects.all()
+        else:
+            return User.objects.exclude(is_superuser=True)
+```
 
 ## Fields
 
