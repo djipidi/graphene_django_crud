@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.contrib.auth.models import User, Group
-from graphene_django_crud import DjangoGrapheneCRUD, where_input_to_queryset_filter_args
+from graphene_django_crud import DjangoGrapheneCRUD, where_input_to_Q
 import graphene
 from .models import ModelTestGenerateSchemaA, ModelTestGenerateSchemaB, Person
 
@@ -33,7 +33,7 @@ class ModelTestGenerateSchemaBCustomMutation(graphene.Mutation):
     result = graphene.Field(ModelTestGenerateSchemaBType)
 
     def mutate(root, info, where, create, update):
-        where_input_to_queryset_filter_args(where)
+        where_input_to_Q(where)
         return {
             "ok" : True,
             "result" : None

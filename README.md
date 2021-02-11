@@ -649,12 +649,12 @@ input DatetimeFilter {
 
 ## Utils
 
-### where_input_to_queryset_filter_args(where_input: dict) -> dict
+### where_input_to_Q(where_input: dict) -> Q
 
-Function that returns the dict of the where argument to a dict for the queryset args.
+Function that returns the dict of the where argument to a object Q to be used in queryset.
 
 example :
 
 ```python
-<model>.objects.get(where_input_to_queryset_filter_args(where))
+<model>.objects.filter(where_input_to_Q(where))
 ```
