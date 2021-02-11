@@ -19,6 +19,9 @@ class ModelTestGenerateSchemaAType(DjangoGrapheneCRUD):
 class ModelTestGenerateSchemaBType(DjangoGrapheneCRUD):
     class Meta:
         model = ModelTestGenerateSchemaB
+        input_extend_fields = (
+            ("extend", graphene.Int()),
+        )
 
 class ModelTestGenerateSchemaBCustomMutation(graphene.Mutation):
     class Arguments:

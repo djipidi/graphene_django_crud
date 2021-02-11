@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Add getters 'WhereInputType', 'CreateInputType', UpdateInputType from 'GrapheneDjangoCrud' object
+- Add possibility to extend the create and update input fields
 
 ## [1.0.3] - 2021-02-04
 

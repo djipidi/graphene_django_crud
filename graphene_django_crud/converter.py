@@ -101,7 +101,7 @@ def convert_model_to_input_type(model, input_flag="create", registry=None):
         # items["remove"] = graphene.Field(convert_model_to_input_type(model, input_flag="where", registry=registry))
         items["connect"] = graphene.Field(convert_model_to_input_type(model, input_flag="where", registry=registry))
         # items["disconnect"] = graphene.Field(convert_model_to_input_type(model, input_flag="where", registry=registry))
- 
+
     else:
         for name, field in model_fields:
             if name == "id" and ("create" in input_flag or "update" in input_flag):
@@ -109,6 +109,9 @@ def convert_model_to_input_type(model, input_flag="create", registry=None):
 
             converted = convert_django_field_with_choices(field, input_flag=input_flag, registry=registry)
             items[name] = converted
+        if ("create" in input_flag or "update" in input_flag):
+            for name, field in djangoType._meta.input_extend_fields:
+                items[name] = field
         if input_flag == "where":
             items["OR"] = graphene.Dynamic(embeded_list_fields)
             items["AND"] = graphene.Dynamic(embeded_list_fields)

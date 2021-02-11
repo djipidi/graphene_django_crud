@@ -94,6 +94,7 @@ class DjangoGrapheneCRUDOptions(BaseOptions):
 
     input_only_fields = "__all__"
     input_exclude_fields = ()
+    input_extend_fields = ()
 
     interfaces = ()
 
@@ -116,6 +117,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         exclude_fields=(),
         input_only_fields = "__all__",
         input_exclude_fields = (),
+        input_extend_fields = (),
         description="",
         registry=None,
         skip_registry=False,
@@ -156,6 +158,8 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
 
         _meta.input_only_fields = input_only_fields
         _meta.input_exclude_fields = input_exclude_fields
+
+        _meta.input_extend_fields = input_extend_fields
 
         _meta.registry = registry
 
