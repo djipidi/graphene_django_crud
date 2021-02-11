@@ -365,7 +365,7 @@ returned, the response will be an error.
 Show doc in graphiql for more information
 
 <details>
-  <summary>show query exemple</summary>
+  <summary>show query example</summary>
 
 
 ```gql
@@ -486,8 +486,28 @@ Tuple of model fields to include/exclude in graphql type.
 Only one of the two parameters can be declared.
 
 ### input_only_fields / input_exclude_fields
-tuple of model fields to include/exclude in graphql inputs type.
+Tuple of model fields to include/exclude in graphql inputs type.
 Only one of the two parameters can be declared.
+
+### input_extend_fields
+Field list to exted the create and update input. value must be a list of tuple (name: string, type: graphene.ObjectType)
+the value of the field must be used and removed from dict data with the methods before_create (), before_update (), before_mutate () otherwise an TypeError exception will be raised.
+
+example:
+```python
+class UserType(DjangoGrapheneCRUD):
+    class Meta:
+        model = User
+        input_extend_fields = (
+            ("fullName": graphene.String()),
+        )
+
+    @classmethod
+    def before_mutate(cls, root, info, instance, data):
+        if "fullName" in data.keys():
+            fullName = data.pop("fullName")#remove the field to avoid having an error
+        ...
+```
 
 ## overload methods
 
