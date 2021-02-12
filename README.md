@@ -491,7 +491,7 @@ Only one of the two parameters can be declared.
 
 ### input_extend_fields
 Field list to exted the create and update input. value must be a list of tuple (name: string, type: graphene.ObjectType)
-the value of the field must be used and removed from dict data with the methods before_create (), before_update (), before_mutate () otherwise an TypeError exception will be raised.
+The parameter can be processed in the middleware functions (before_XXX / after_XXX).
 
 example:
 ```python
@@ -505,7 +505,8 @@ class UserType(DjangoGrapheneCRUD):
     @classmethod
     def before_mutate(cls, root, info, instance, data):
         if "fullName" in data.keys():
-            fullName = data.pop("fullName")#remove the field to avoid having an error
+            instance.first_name = data["fullName"].split(" ")[0]
+            instance.last_name = data["fullName"].split(" ")[1]
         ...
 ```
 
