@@ -481,6 +481,11 @@ Show doc in graphiql for more information
 ### model (required parameter)
 The model used for the definition type
 
+### max_limit
+default : None  
+To avoid too large transfers, the max_limit parameter imposes a maximum number of return items for batchreadField and nodeField.
+it imposes to use pagination. If the value is None there is no limit.
+
 ### only_fields / exclude_fields
 Tuple of model fields to include/exclude in graphql type.  
 Only one of the two parameters can be declared.

@@ -58,10 +58,6 @@ def get_args(where):
     return args
 
 
-DEFAULT_OFFSET = 0
-DEFAULT_LIMIT =  100
-
-
 def apply_where(where):
 
     AND = Q()
@@ -89,6 +85,8 @@ class ClassProperty(property):
 class DjangoGrapheneCRUDOptions(BaseOptions):
     model = None
 
+    max_limt = None
+
     only_fields = "__all__"
     exclude_fields = ()
 
@@ -113,6 +111,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
     def __init_subclass_with_meta__(
         cls,
         model = None,
+        max_limit = None,
         only_fields="__all__",
         exclude_fields=(),
         input_only_fields = "__all__",
@@ -152,6 +151,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
 
         _meta = DjangoGrapheneCRUDOptions(cls)
         _meta.model = model
+        _meta.max_limit = max_limit
         _meta.fields = fields
         _meta.only_fields = only_fields
         _meta.exclude_fields = exclude_fields
@@ -284,10 +284,19 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         queryset = queryset.filter(apply_where(kwargs.get("where", {})))
         if "orderBy" in kwargs.keys():
             queryset = queryset.order_by(*kwargs.get("orderBy", []))
+
+        start = kwargs.get("offset", 0)
+        limit = kwargs.get("limit", cls._meta.max_limit)
+        if limit is not  None and cls._meta.max_limit is not None:
+            if limit > cls._meta.max_limit:
+                limit = cls._meta.max_limit
+        if limit is not None:
+            end = start + limit
+        else:
+            end = None
         return {
             'count' : queryset.count(),
-            'data' : queryset \
-                [kwargs.get("offset", DEFAULT_OFFSET) : kwargs.get("limit", DEFAULT_LIMIT) + kwargs.get("offset", DEFAULT_OFFSET)]
+            'data' : queryset[start:end]
         }
 
     @classmethod

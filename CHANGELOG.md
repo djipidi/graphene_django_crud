@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 
 - Add getters 'WhereInputType', 'CreateInputType', UpdateInputType from 'GrapheneDjangoCrud' object
 - Add possibility to extend the create and update input fields
+- Add max limit for batchread request
 
 ## [1.0.3] - 2021-02-04
 
