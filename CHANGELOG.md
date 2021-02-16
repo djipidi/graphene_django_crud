@@ -13,6 +13,10 @@ All notable changes to this project will be documented in this file.
 - Add possibility to extend the create and update input fields
 - Add max limit for batchread request
 
+### Fixed
+
+- Improve the stability of the relationship fields
+
 ## [1.0.3] - 2021-02-04
 
 ### Changed

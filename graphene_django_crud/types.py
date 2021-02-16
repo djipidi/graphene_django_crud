@@ -5,11 +5,8 @@ import graphene
 from graphene.types.base import BaseOptions
 from graphene_django.types import ErrorType
 
-from .utils import get_related_model, field_to_relation_type
+from .utils import get_related_model, get_model_fields
 from .base_types import mutation_factory_type, node_factory_type
-
-from graphene_django.compat import ArrayField, HStoreField, RangeField, JSONField
-from graphene_django.utils import import_single_dispatch
 
 from django.db import models, transaction
 
@@ -22,15 +19,17 @@ from graphene_subscriptions.events import CREATED, UPDATED, DELETED
 
 from graphene.types.utils import yank_fields_from_attrs
 
-
-from django.contrib.contenttypes.fields import (
-    GenericForeignKey,
-    GenericRelation,
-    GenericRel,
-)
-from django.dispatch import receiver
 from django.db.models.signals import post_save, post_delete, pre_delete 
 from graphene_subscriptions.signals import post_save_subscription, post_delete_subscription
+
+from django.db.models import (
+    ManyToOneRel,
+    ManyToManyRel,
+    OneToOneRel,
+    ForeignKey,
+    ManyToManyField,
+    OneToOneField
+)
 
 def get_paths(d):
     q = [(d, [])]
@@ -302,36 +301,54 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
     @classmethod
     def mutateItem(cls, root, info, instance, data):
         for key, value in data.items():
-            if field_to_relation_type(cls._meta.model, key) == "MANY":
+            model_field = get_model_fields(cls._meta.model, to_dict=True)[key]
+            if isinstance(model_field, (OneToOneRel ,ManyToOneRel, ManyToManyField, ManyToManyRel)):
                 pass
-            elif field_to_relation_type(cls._meta.model, key) == "ONE":
-                relatedModel = get_global_registry().get_type_for_model(
-                    get_related_model(getattr(cls._meta.model, key).field)
+            elif isinstance(model_field, (ForeignKey, OneToOneField)):
+                related_type = get_global_registry().get_type_for_model(
+                    model_field.remote_field.model
                 )
-                q = relatedModel.get_queryset(root, info)
-                if value.get("create", None):
-                    instance.__setattr__(key, relatedModel.create(root, info, value["create"]) )
-                if value.get("connect", None):
-                    instance.__setattr__(key, q.get(apply_where(value["connect"])) )
+                if "create" in value.keys():
+                    instance.__setattr__(key, related_type.create(root, info, value["create"]) )
+                elif "connect" in value.keys():
+                    instance.__setattr__(key, related_type.get_queryset(root, info).get(apply_where(value["connect"])) )
             else:
                 instance.__setattr__(key, value)
         instance.save()
         for key, value in data.items():
-            if field_to_relation_type(cls._meta.model, key) == "MANY":
-                relatedModel = get_global_registry().get_type_for_model(
-                    get_related_model(getattr(cls._meta.model, key).field)
+            model_field = get_model_fields(cls._meta.model, to_dict=True)[key]
+            if isinstance(model_field, OneToOneRel):
+                related_type = get_global_registry().get_type_for_model(
+                    model_field.remote_field.model
                 )
-                q = relatedModel.get_queryset(root, info)
+                if "create" in value.keys():
+                    related_type.create(root, info, value["create"], field=model_field.remote_field, parent_instance=instance)
+                elif "connect" in value.keys():
+                    related_type.update(root, info, value["connect"], {}, field=model_field.remote_field, parent_instance=instance)
+            elif isinstance(model_field, ManyToOneRel):
+                related_type = get_global_registry().get_type_for_model(
+                    model_field.remote_field.model
+                )
+                for create_input in value.get("create", []):
+                    related_type.create(root, info, create_input, field=model_field.remote_field, parent_instance=instance)
+                for connect_input in value.get("connect", []):
+                    related_type.update(root, info, connect_input, {}, field=model_field.remote_field, parent_instance=instance)
+
+            elif isinstance(model_field, (ManyToManyField, ManyToManyRel)):
+                related_type = get_global_registry().get_type_for_model(
+                    model_field.remote_field.model
+                )
+                q = related_type.get_queryset(root, info)
                 addItems = []
                 disconnectItems = []
                 for create_input in value.get("create", []):
-                    addItems.append( relatedModel.create(root, info, create_input) )
+                    addItems.append( related_type.create(root, info, create_input) )
                 for connect_input in value.get("connect", []):
                     addItems.append(q.get(apply_where(connect_input)))
                 for disconnect_input in value.get("disconnect", []):
                     disconnectItems.append(q.get(apply_where(disconnect_input)))
                 for remove_where_input in value.get("remove", []):
-                    relatedModel.delete(root, info, remove_where_input)
+                    related_type.delete(root, info, remove_where_input)
 
                 getattr(instance, key).add(*addItems)
                 getattr(instance, key).remove(*disconnectItems)
@@ -370,8 +387,10 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
             }
 
     @classmethod
-    def create(cls, root, info, data):
+    def create(cls, root, info, data, field=None, parent_instance=None):
         instance = cls._meta.model()
+        if field is not None:
+            instance.__setattr__(field.name, parent_instance)
         cls.before_mutate(root, info, instance, data)
         cls.before_create(root, info, instance, data)
         cls.mutateItem(root, info, instance, data)
@@ -419,8 +438,10 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
             }
 
     @classmethod
-    def update(cls, root, info, where, data):
+    def update(cls, root, info, where, data, field=None, parent_instance=None):
         instance = cls.get_queryset(root, info).get(apply_where(where))
+        if field is not None:
+            instance.__setattr__(field.name, parent_instance)
         cls.before_mutate(root, info, instance, data)
         cls.before_update(root, info, instance, data)
         cls.mutateItem(root, info, instance, data)

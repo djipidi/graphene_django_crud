@@ -152,18 +152,3 @@ def is_required(field):
         return False
 
     return not blank and default == NOT_PROVIDED
-
-
-MANY_NESTED_FIELD = (ManyToManyField, ManyToOneRel)
-ONE_NESTED_FIELD = (OneToOneRel, OneToOneField, ForeignKey)
-def field_to_relation_type(model, field_name):
-    try:
-        field = get_model_fields(model, to_dict=True)[field_name]
-    except KeyError:
-        return
-    if isinstance(field, MANY_NESTED_FIELD):
-        return "MANY"
-    elif isinstance(field, ONE_NESTED_FIELD):
-        return "ONE"
-    else:
-        return "ATTRIBUTE"

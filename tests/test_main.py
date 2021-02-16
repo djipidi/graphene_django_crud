@@ -43,7 +43,7 @@ mutation personCreate ($input: PersonCreateInput!) {
 '''
 def test_relation():
 
-    variable = {
+    variables = {
       "input" : {
         "name": "A",
         "childs" : {
@@ -65,7 +65,7 @@ def test_relation():
     }
 
     client = Client()
-    response = client.query(MUTATION_CREATE_TEST_A, variable=variable).json()
+    response = client.query(MUTATION_CREATE_TEST_A, variables=variables).json()
 
     assert response["data"]["personCreate"]["ok"]
     assert len(response["data"]["personCreate"]["result"]["childs"]["data"]) == 2

@@ -8,11 +8,11 @@ import json
 class Client(BaseClient):
     url = reverse("graphql")
 
-    def query(self, query, variable=None):
+    def query(self, query, variables=None):
         data = {
             "query": query
         }
-        if variable is not None:
-            data["variables"] = json.dumps(variable)
+        if variables is not None:
+            data["variables"] = json.dumps(variables)
         response = self.post(path=self.url, data=data)
         return response
