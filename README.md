@@ -118,6 +118,7 @@ scalar DateTime
 input DatetimeFilter {
   equals: DateTime
   in: [DateTime]
+  isnull: Boolean
   gt: DateTime
   gte: DateTime
   lt: DateTime
@@ -131,12 +132,12 @@ type ErrorType {
 
 input GroupCreateInput {
   name: String!
-  user: UserCreateNestedManyInput
+  userSet: UserCreateNestedManyInput
 }
 
 input GroupCreateNestedManyInput {
   create: [GroupCreateInput]
-  connect: [GroupWhereUniqueInput]
+  connect: [GroupWhereInput]
 }
 
 type GroupMutationType {
@@ -153,44 +154,34 @@ type GroupNodeType {
 type GroupType {
   id: ID!
   name: String
-  user(where: UserWhereInput, limit: Int, offset: Int, orderBy: [String]): UserNodeType!
+  userSet(where: UserWhereInput, limit: Int, offset: Int, orderBy: [String]): UserNodeType!
 }
 
 input GroupUpdateInput {
   name: String
-  user: UserUpdateNestedManyInput
+  userSet: UserUpdateNestedManyInput
 }
 
 input GroupUpdateNestedManyInput {
   create: [GroupCreateInput]
-  remove: [GroupWhereUniqueInput]
-  connect: [GroupWhereUniqueInput]
-  disconnect: [GroupWhereUniqueInput]
+  remove: [GroupWhereInput]
+  connect: [GroupWhereInput]
+  disconnect: [GroupWhereInput]
 }
 
 input GroupWhereInput {
   id: IntFilter
   name: StringFilter
-  user: UserWhereInput
-}
-
-input GroupWhereUniqueInput {
-  id: ID
-  name: String
-}
-
-input GroupWhereWithOperatorInput {
-  id: IntFilter
-  name: StringFilter
-  user: UserWhereInput
-  OR: [GroupWhereWithOperatorInput]
-  AND: [GroupWhereWithOperatorInput]
-  NOT: GroupWhereWithOperatorInput
+  userSet: UserWhereInput
+  OR: [GroupWhereInput]
+  AND: [GroupWhereInput]
+  NOT: GroupWhereInput
 }
 
 input IntFilter {
   equals: Int
   in: [Int]
+  isnull: Boolean
   gt: Int
   gte: Int
   lt: Int
@@ -203,24 +194,25 @@ input IntFilter {
 
 type Mutation {
   userCreate(input: UserCreateInput!): UserMutationType
-  userUpdate(input: UserUpdateInput!, where: UserWhereUniqueInput!): UserMutationType
-  userDelete(where: UserWhereUniqueInput!): UserMutationType
+  userUpdate(input: UserUpdateInput!, where: UserWhereInput!): UserMutationType
+  userDelete(where: UserWhereInput!): UserMutationType
   groupCreate(input: GroupCreateInput!): GroupMutationType
-  groupUpdate(input: GroupUpdateInput!, where: GroupWhereUniqueInput!): GroupMutationType
-  groupDelete(where: GroupWhereUniqueInput!): GroupMutationType
+  groupUpdate(input: GroupUpdateInput!, where: GroupWhereInput!): GroupMutationType
+  groupDelete(where: GroupWhereInput!): GroupMutationType
 }
 
 type Query {
   me: UserType
-  user(where: UserWhereUniqueInput): UserType
-  users(where: UserWhereWithOperatorInput, limit: Int, offset: Int, orderBy: [String]): UserNodeType
-  group(where: GroupWhereUniqueInput): GroupType
-  groups(where: GroupWhereWithOperatorInput, limit: Int, offset: Int, orderBy: [String]): GroupNodeType
+  user(where: UserWhereInput!): UserType
+  users(where: UserWhereInput, limit: Int, offset: Int, orderBy: [String]): UserNodeType
+  group(where: GroupWhereInput!): GroupType
+  groups(where: GroupWhereInput, limit: Int, offset: Int, orderBy: [String]): GroupNodeType
 }
 
 input StringFilter {
   equals: String
   in: [String]
+  isnull: Boolean
   contains: String
   startswith: String
   endswith: String
@@ -237,20 +229,20 @@ type Subscription {
 }
 
 input UserCreateInput {
-  email: String
-  firstName: String
-  groups: GroupCreateNestedManyInput
-  isActive: Boolean
-  isStaff: Boolean
-  isSuperuser: Boolean
-  lastName: String
   password: String!
+  isSuperuser: Boolean
   username: String!
+  firstName: String
+  lastName: String
+  email: String
+  isStaff: Boolean
+  isActive: Boolean
+  groups: GroupCreateNestedManyInput
 }
 
 input UserCreateNestedManyInput {
   create: [UserCreateInput]
-  connect: [UserWhereUniqueInput]
+  connect: [UserWhereInput]
 }
 
 type UserMutationType {
@@ -265,74 +257,56 @@ type UserNodeType {
 }
 
 type UserType {
-  dateJoined: DateTime
-  email: String
-  firstName: String
-  groups: GroupNodeType!
   id: ID!
-  isActive: Boolean
-  isStaff: Boolean
-  isSuperuser: Boolean
   lastLogin: DateTime
-  lastName: String
+  isSuperuser: Boolean
   username: String
+  firstName: String
+  lastName: String
+  email: String
+  isStaff: Boolean
+  isActive: Boolean
+  dateJoined: DateTime
+  groups(where: GroupWhereInput, limit: Int, offset: Int, orderBy: [String]): GroupNodeType!
   fullName: String
 }
 
 input UserUpdateInput {
-  email: String
-  firstName: String
-  groups: GroupUpdateNestedManyInput
-  isActive: Boolean
-  isStaff: Boolean
-  isSuperuser: Boolean
-  lastName: String
   password: String
+  isSuperuser: Boolean
   username: String
+  firstName: String
+  lastName: String
+  email: String
+  isStaff: Boolean
+  isActive: Boolean
+  groups: GroupUpdateNestedManyInput
 }
 
 input UserUpdateNestedManyInput {
   create: [UserCreateInput]
-  remove: [UserWhereUniqueInput]
-  connect: [UserWhereUniqueInput]
-  disconnect: [UserWhereUniqueInput]
+  remove: [UserWhereInput]
+  connect: [UserWhereInput]
+  disconnect: [UserWhereInput]
 }
 
 input UserWhereInput {
-  dateJoined: DatetimeFilter
-  email: StringFilter
-  firstName: StringFilter
-  groups: GroupWhereInput
   id: IntFilter
-  isActive: Boolean
-  isStaff: Boolean
-  isSuperuser: Boolean
   lastLogin: DatetimeFilter
-  lastName: StringFilter
+  isSuperuser: Boolean
   username: StringFilter
+  firstName: StringFilter
+  lastName: StringFilter
+  email: StringFilter
+  isStaff: Boolean
+  isActive: Boolean
+  dateJoined: DatetimeFilter
+  groups: GroupWhereInput
+  OR: [UserWhereInput]
+  AND: [UserWhereInput]
+  NOT: UserWhereInput
 }
 
-input UserWhereUniqueInput {
-  id: ID
-  username: String
-}
-
-input UserWhereWithOperatorInput {
-  dateJoined: DatetimeFilter
-  email: StringFilter
-  firstName: StringFilter
-  groups: GroupWhereInput
-  id: IntFilter
-  isActive: Boolean
-  isStaff: Boolean
-  isSuperuser: Boolean
-  lastLogin: DatetimeFilter
-  lastName: StringFilter
-  username: StringFilter
-  OR: [UserWhereWithOperatorInput]
-  AND: [UserWhereWithOperatorInput]
-  NOT: UserWhereWithOperatorInput
-}
 ```
 </details>
 
