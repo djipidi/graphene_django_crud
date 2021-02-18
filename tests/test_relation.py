@@ -142,16 +142,14 @@ def test_foreignkey():
 
     response = client.query(testFkACreate_gql, variables=variables).json()
 
-    assert response["data"]["testFkACreate"]["ok"]
-    assert response["data"]["testFkACreate"]["result"]["text"] == "a1"
+    assert response["data"]["testFkACreate"]["ok"] == True
     a1_id = response["data"]["testFkACreate"]["result"]["id"]
-    assert a1_id is not None
-    assert response["data"]["testFkACreate"]["result"]["testFkB"]["text"] == "b1"
+    assert response["data"]["testFkACreate"]["result"]["text"] == "a1"
     b1_id = response["data"]["testFkACreate"]["result"]["testFkB"]["id"]
-    assert b1_id is not None
-    assert response["data"]["testFkACreate"]["result"]["testFkB"]["testFkC"]["text"] == "c1"
+    assert response["data"]["testFkACreate"]["result"]["testFkB"]["text"] == "b1"
     c1_id = response["data"]["testFkACreate"]["result"]["testFkB"]["testFkC"]["id"]
-    assert c1_id is not None
+    assert response["data"]["testFkACreate"]["result"]["testFkB"]["testFkC"]["text"] == "c1"
+
 
     variables = {
         "input": {
@@ -166,14 +164,13 @@ def test_foreignkey():
 
     response = client.query(testFkACreate_gql, variables=variables).json()
 
-    assert response["data"]["testFkACreate"]["ok"]
-    assert response["data"]["testFkACreate"]["result"]["text"] == "a2"
+    assert response["data"]["testFkACreate"]["ok"] == True
     a2_id = response["data"]["testFkACreate"]["result"]["id"]
-    assert a2_id is not None
-    assert response["data"]["testFkACreate"]["result"]["testFkB"]["text"] == "b1"
+    assert response["data"]["testFkACreate"]["result"]["text"] == "a2"
     assert response["data"]["testFkACreate"]["result"]["testFkB"]["id"] == b1_id
-    assert response["data"]["testFkACreate"]["result"]["testFkB"]["testFkC"]["text"] == "c1"
+    assert response["data"]["testFkACreate"]["result"]["testFkB"]["text"] == "b1"
     assert response["data"]["testFkACreate"]["result"]["testFkB"]["testFkC"]["id"] == c1_id
+    assert response["data"]["testFkACreate"]["result"]["testFkB"]["testFkC"]["text"] == "c1"
 
 
     variables = {
@@ -197,34 +194,20 @@ def test_foreignkey():
 
     response = client.query(testFkBCreate_gql, variables=variables).json()
 
-    assert response["data"]["testFkBCreate"]["ok"]
+    assert response["data"]["testFkBCreate"]["ok"] == True
+    b2_id =  response["data"]["testFkBCreate"]["result"]["id"]
     assert response["data"]["testFkBCreate"]["result"]["text"] == "b2"
-    b2_id = response["data"]["testFkBCreate"]["result"]["id"]
-    assert b2_id is not None
-
-    assert response["data"]["testFkBCreate"]["result"]["testFkC"]["text"] == "c2"
-    c2_id = response["data"]["testFkBCreate"]["result"]["testFkC"]["id"]
-    assert c2_id is not None
-
     assert response["data"]["testFkBCreate"]["result"]["testFkAs"]["count"] == 3
-    a1_found = False
-    a3_found = False
-    a4_found = False
-    for a in response["data"]["testFkBCreate"]["result"]["testFkAs"]["data"]:
-        if a["id"] == a1_id:
-            assert a["text"] == "a1"
-            a1_found = True
-        if a["text"] == "a3":
-            a3_id = a["id"]
-            assert a3_id is not None
-            a3_found = True
-        if a["text"] == "a4":
-            a4_id = a["id"]
-            assert a4_id is not None
-            a4_found = True
-    assert a1_found
-    assert a3_found
-    assert a4_found
+    assert len(response["data"]["testFkBCreate"]["result"]["testFkAs"]["data"]) == 3
+    c2_id = response["data"]["testFkBCreate"]["result"]["testFkC"]["id"]
+    assert response["data"]["testFkBCreate"]["result"]["testFkC"]["text"] == "c2"
+    response["data"]["testFkBCreate"]["result"]["testFkAs"]["data"][0]["id"] == a1_id 
+    assert response["data"]["testFkBCreate"]["result"]["testFkAs"]["data"][0]["text"] == "a1"
+    a3_id = response["data"]["testFkBCreate"]["result"]["testFkAs"]["data"][1]["id"]
+    assert response["data"]["testFkBCreate"]["result"]["testFkAs"]["data"][1]["text"] == "a3"
+    a4_id = response["data"]["testFkBCreate"]["result"]["testFkAs"]["data"][2]["id"]
+    assert response["data"]["testFkBCreate"]["result"]["testFkAs"]["data"][2]["text"] == "a4"
+
 
     variables = {
         "input": {
@@ -238,16 +221,15 @@ def test_foreignkey():
     }
 
     response = client.query(testFkBCreate_gql, variables=variables).json()
-    assert response["data"]["testFkBCreate"]["ok"]
-    assert response["data"]["testFkBCreate"]["result"]["text"] == "b3"
-    b3_id = response["data"]["testFkBCreate"]["result"]["id"]
-    assert b3_id is not None
-    assert response["data"]["testFkBCreate"]["result"]["testFkAs"]["count"] == 0
-    assert isinstance(response["data"]["testFkBCreate"]["result"]["testFkAs"]["data"], list)
-    assert len(response["data"]["testFkBCreate"]["result"]["testFkAs"]["data"]) == 0
-    assert response["data"]["testFkBCreate"]["result"]["testFkC"]["text"] == "c1"
-    assert response["data"]["testFkBCreate"]["result"]["testFkC"]["id"] == c1_id
 
+
+    assert response["data"]["testFkBCreate"]["ok"] == True
+    b3_id = response["data"]["testFkBCreate"]["result"]["id"]
+    assert response["data"]["testFkBCreate"]["result"]["text"] == "b3"
+    assert response["data"]["testFkBCreate"]["result"]["testFkAs"]["count"] == 0
+    assert len(response["data"]["testFkBCreate"]["result"]["testFkAs"]["data"]) == 0
+    assert response["data"]["testFkBCreate"]["result"]["testFkC"]["id"] == c1_id
+    assert response["data"]["testFkBCreate"]["result"]["testFkC"]["text"] == "c1"
 
 
     variables = {
@@ -277,52 +259,29 @@ def test_foreignkey():
     }
 
     response = client.query(testFkCCreate_gql, variables=variables).json()
-    assert response["data"]["testFkCCreate"]["ok"]
-    assert response["data"]["testFkCCreate"]["result"]["text"] == "c3"
+
+    assert response["data"]["testFkCCreate"]["ok"] == True
     c3_id = response["data"]["testFkCCreate"]["result"]["id"]
-    assert c3_id is not None
+    assert response["data"]["testFkCCreate"]["result"]["text"] == "c3"
     assert response["data"]["testFkCCreate"]["result"]["testfkbSet"]["count"] == 2
-    b1_found = False
-    b4_found = False
-    for b in response["data"]["testFkCCreate"]["result"]["testfkbSet"]["data"]:
-        if b["id"] == b1_id:
-            assert b["text"] == "b1"
-            b1_found = True
-            assert b["testFkAs"]["count"] == 0
-            assert isinstance(b["testFkAs"]["data"], list)
-            assert len(b["testFkAs"]["data"]) == 0
-        if b["text"] == "b4":
-            b4_id = b["id"]
-            assert b4_id is not None
-            b4_found = True
-            assert b["testFkAs"]["count"] == 4
-            assert isinstance(b["testFkAs"]["data"], list)
-            assert len(b["testFkAs"]["data"]) == 4
-            a1_found = False
-            a2_found = False
-            a5_found = False
-            a6_found = False
-            for a in b["testFkAs"]["data"]:
-                if a["id"] == a1_id:
-                    assert a["text"] == "a1"
-                    a1_found = True
-                if a["id"] == a2_id:
-                    assert a["text"] == "a2"
-                    a2_found = True
-                if a["text"] == "a5":
-                    a5_id = a["id"]
-                    assert a5_id is not None
-                    a5_found = True
-                if a["text"] == "a6":
-                    a6_id = a["id"]
-                    assert a6_id is not None
-                    a6_found = True
-            assert a1_found
-            assert a2_found
-            assert a5_found
-            assert a6_found
-    assert b1_found
-    assert b4_found
+    assert len(response["data"]["testFkCCreate"]["result"]["testfkbSet"]["data"]) == 2
+    assert response["data"]["testFkCCreate"]["result"]["testfkbSet"]["data"][0]["id"] == b1_id
+    assert response["data"]["testFkCCreate"]["result"]["testfkbSet"]["data"][0]["text"] == "b1"
+    b4_id = response["data"]["testFkCCreate"]["result"]["testfkbSet"]["data"][1]["id"]
+    assert response["data"]["testFkCCreate"]["result"]["testfkbSet"]["data"][1]["text"] == "b4"
+    assert response["data"]["testFkCCreate"]["result"]["testfkbSet"]["data"][0]["testFkAs"]["count"] == 0
+    assert len(response["data"]["testFkCCreate"]["result"]["testfkbSet"]["data"][0]["testFkAs"]["data"]) == 0
+    assert response["data"]["testFkCCreate"]["result"]["testfkbSet"]["data"][1]["testFkAs"]["count"] == 4
+    assert len(response["data"]["testFkCCreate"]["result"]["testfkbSet"]["data"][1]["testFkAs"]["data"]) == 4
+    assert response["data"]["testFkCCreate"]["result"]["testfkbSet"]["data"][1]["testFkAs"]["data"][0]["id"] == a1_id
+    assert response["data"]["testFkCCreate"]["result"]["testfkbSet"]["data"][1]["testFkAs"]["data"][0]["text"] == "a1"
+    assert response["data"]["testFkCCreate"]["result"]["testfkbSet"]["data"][1]["testFkAs"]["data"][1]["id"] == a2_id
+    assert response["data"]["testFkCCreate"]["result"]["testfkbSet"]["data"][1]["testFkAs"]["data"][1]["text"] == "a2"
+    a6_id = response["data"]["testFkCCreate"]["result"]["testfkbSet"]["data"][1]["testFkAs"]["data"][2]["id"]
+    assert response["data"]["testFkCCreate"]["result"]["testfkbSet"]["data"][1]["testFkAs"]["data"][2]["text"] == "a5"
+    a6_id = response["data"]["testFkCCreate"]["result"]["testfkbSet"]["data"][1]["testFkAs"]["data"][3]["id"]
+    assert response["data"]["testFkCCreate"]["result"]["testfkbSet"]["data"][1]["testFkAs"]["data"][3]["text"] == "a6"
+
 
 
 testO2oA_Fragment = '''
@@ -480,7 +439,6 @@ def test_onetoone():
     assert response["data"]["testO2oCCreate"]["result"]["testo2ob"]["testO2oA"]["text"] == "a1"
     assert response["data"]["testO2oCCreate"]["result"]["testo2ob"]["testO2oA"]["id"] == a1_id
 
-
 testM2mA_Fragment = '''
 fragment testM2mA on TestM2mAType {
   id
@@ -576,58 +534,27 @@ def test_manytomany():
 
     response = client.query(testM2mACreate_gql, variables=variables).json()
 
-    assert response["data"]["testM2mACreate"]["ok"]
-    assert response["data"]["testM2mACreate"]["result"]["text"] == "a1"
+    assert response["data"]["testM2mACreate"]["ok"] == True
     a1_id = response["data"]["testM2mACreate"]["result"]["id"]
-    assert a1_id is not None
+    assert response["data"]["testM2mACreate"]["result"]["text"] == "a1"
     assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["count"] == 2
     assert len(response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"]) == 2
-    b1_found = False
-    b2_found = False
-
-    for b in response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"]:
-        if b["text"] == "b1":
-            b1_id = b["id"]
-            assert b1_id is not None
-            b1_found = True
-            assert b["testM2mCs"]["count"] == 2
-            assert isinstance(b["testM2mCs"]["data"], list)
-            assert len(b["testM2mCs"]["data"]) == 2
-            c1_found = False
-            c2_found = False
-            for c in b["testM2mCs"]["data"]:
-                if c["text"] == "c1":
-                    c1_id = c["id"]
-                    assert c1_id is not None
-                    c1_found = True
-                if c["text"] == "c2":
-                    c2_id = c["id"]
-                    assert c2_id is not None
-                    c2_found = True
-            assert c1_found
-            assert c2_found
-        if b["text"] == "b2":
-            b2_id = b["id"]
-            assert b2_id is not None
-            b2_found = True
-            assert b["testM2mCs"]["count"] == 2
-            assert isinstance(b["testM2mCs"]["data"], list)
-            assert len(b["testM2mCs"]["data"]) == 2
-            c3_found = False
-            c4_found = False
-            for c in b["testM2mCs"]["data"]:
-                if c["text"] == "c3":
-                    c3_id = c["id"]
-                    assert c3_id is not None
-                    c3_found = True
-                if c["text"] == "c4":
-                    c4_id = c["id"]
-                    assert c4_id is not None
-                    c4_found = True
-            assert c3_found
-            assert c4_found
-    assert b1_found
-    assert b2_found
+    b1_id = response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][0]["id"]
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][0]["text"] == "b1"
+    b2_id = response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][1]["id"]
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][1]["text"] == "b2"
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][0]["testM2mCs"]["count"] == 2
+    assert len(response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][0]["testM2mCs"]["data"]) == 2
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][1]["testM2mCs"]["count"] == 2
+    assert len(response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][1]["testM2mCs"]["data"]) == 2
+    c1_id = response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][0]["testM2mCs"]["data"][0]["id"]
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][0]["testM2mCs"]["data"][0]["text"] == "c1"
+    c2_id = response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][0]["testM2mCs"]["data"][1]["id"]
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][0]["testM2mCs"]["data"][1]["text"] == "c2"
+    c3_id = response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][1]["testM2mCs"]["data"][0]["id"]
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][1]["testM2mCs"]["data"][0]["text"] == "c3"
+    c4_id = response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][1]["testM2mCs"]["data"][1]["id"]
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][1]["testM2mCs"]["data"][1]["text"] == "c4"
 
     variables = {
         "input": {
@@ -653,82 +580,40 @@ def test_manytomany():
     }
     response = client.query(testM2mACreate_gql, variables=variables).json()
 
-    assert response["data"]["testM2mACreate"]["ok"]
-    assert response["data"]["testM2mACreate"]["result"]["text"] == "a2"
+    assert response["data"]["testM2mACreate"]["ok"] == True
     a2_id = response["data"]["testM2mACreate"]["result"]["id"]
-    assert a2_id is not None
+    assert response["data"]["testM2mACreate"]["result"]["text"] == "a2"
     assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["count"] == 3
     assert len(response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"]) == 3
-    b1_found = False
-    b2_found = False
-    b3_found = False
-    for b in response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"]:
-        if b["id"] == b1_id:
-            b1_found = True
-            assert b["text"] == "b1"
-            assert b["testM2mCs"]["count"] == 2
-            assert isinstance(b["testM2mCs"]["data"], list)
-            assert len(b["testM2mCs"]["data"]) == 2
-            c1_found = False
-            c2_found = False
-            for c in b["testM2mCs"]["data"]:
-                if c["id"] == c1_id:
-                    assert c["text"] == "c1"
-                    c1_found = True
-                if c["id"] == c2_id:
-                    assert c["text"] == "c2"
-                    c2_found = True
-            assert c1_found
-            assert c2_found
-        if b["id"] == b2_id:
-            assert b["text"] == "b2"
-            b2_found = True
-            assert b["testM2mCs"]["count"] == 2
-            assert isinstance(b["testM2mCs"]["data"], list)
-            assert len(b["testM2mCs"]["data"]) == 2
-            c3_found = False
-            c4_found = False
-            for c in b["testM2mCs"]["data"]:
-                if c["id"] == c3_id:
-                    assert c["text"] == "c3"
-                    c3_found = True
-                if c["id"] == c4_id:
-                    assert c["text"] == "c4"
-                    c4_found = True
-            assert c3_found
-            assert c4_found
-        if b["text"] == "b3":
-            b3_found = True
-            b3_id = b["id"]
-            assert b3_id is not None
-            c1_found = False
-            c2_found = False
-            c3_found = False
-            c4_found = False
-            assert b["testM2mCs"]["count"] == 4
-            assert isinstance(b["testM2mCs"]["data"], list)
-            assert len(b["testM2mCs"]["data"]) == 4
-            for c in b["testM2mCs"]["data"]:
-                if c["id"] == c1_id:
-                    assert c["text"] == "c1"
-                    c1_found = True
-                if c["id"] == c2_id:
-                    assert c["text"] == "c2"
-                    c2_found = True
-                if c["id"] == c3_id:
-                    assert c["text"] == "c3"
-                    c3_found = True
-                if c["id"] == c4_id:
-                    assert c["text"] == "c4"
-                    c4_found = True
-            assert c1_found
-            assert c2_found
-            assert c3_found
-            assert c4_found
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][0]["id"] == b1_id
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][0]["text"] == "b1"
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][1]["id"] == b2_id
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][1]["text"] == "b2"
+    b3_id = response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][2]["id"]
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][2]["text"] == "b3"
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][0]["testM2mCs"]["count"] == 2
+    assert len(response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][0]["testM2mCs"]["data"]) == 2
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][1]["testM2mCs"]["count"] == 2
+    assert len(response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][1]["testM2mCs"]["data"]) == 2
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][2]["testM2mCs"]["count"] == 4
+    assert len(response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][2]["testM2mCs"]["data"]) == 4
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][0]["testM2mCs"]["data"][0]["id"] == c1_id
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][0]["testM2mCs"]["data"][0]["text"] == "c1"
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][0]["testM2mCs"]["data"][1]["id"] == c2_id
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][0]["testM2mCs"]["data"][1]["text"] == "c2"
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][1]["testM2mCs"]["data"][0]["id"] == c3_id
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][1]["testM2mCs"]["data"][0]["text"] == "c3"
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][1]["testM2mCs"]["data"][1]["id"] == c4_id
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][1]["testM2mCs"]["data"][1]["text"] == "c4"
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][2]["testM2mCs"]["data"][0]["id"] == c1_id
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][2]["testM2mCs"]["data"][0]["text"] == "c1"
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][2]["testM2mCs"]["data"][1]["id"] == c2_id
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][2]["testM2mCs"]["data"][1]["text"] == "c2"
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][2]["testM2mCs"]["data"][2]["id"] == c3_id
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][2]["testM2mCs"]["data"][2]["text"] == "c3"
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][2]["testM2mCs"]["data"][3]["id"] == c4_id
+    assert response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][2]["testM2mCs"]["data"][3]["text"] == "c4"
 
-    assert b1_found
-    assert b2_found
-    assert b3_found
 
     variables = {
     "input": {
@@ -756,43 +641,24 @@ def test_manytomany():
 
     response = client.query(testM2mCCreate_gql, variables=variables).json()
 
-    assert response["data"]["testM2mCCreate"]["ok"]
-    assert response["data"]["testM2mCCreate"]["result"]["text"] == "c5"
+    assert response["data"]["testM2mCCreate"]["ok"] == True
     c5_id = response["data"]["testM2mCCreate"]["result"]["id"]
-    assert c5_id is not None
+    assert response["data"]["testM2mCCreate"]["result"]["text"] == "c5"
     assert response["data"]["testM2mCCreate"]["result"]["testm2mbSet"]["count"] == 2
     assert len(response["data"]["testM2mCCreate"]["result"]["testm2mbSet"]["data"]) == 2
-    b1_found = False
-    b4_found = False
-    for b in response["data"]["testM2mCCreate"]["result"]["testm2mbSet"]["data"]:
-        if b['id'] == b1_id:
-            b1_found = True
-            assert b["text"] == "b1"
-            assert b["testM2mAs"]["count"] == 2
-            assert len(b["testM2mAs"]["data"]) == 2
-
-        if b["text"] == "b4":
-            b4_found = True
-            b4_id = b["id"]
-            assert b4_id is not None
-            assert b["testM2mAs"]["count"] == 2
-            assert len(b["testM2mAs"]["data"]) == 2
-            a1_found = False
-            a3_found = False
-            for a in b["testM2mAs"]["data"]:
-                if a["id"] == a1_id:
-                    a1_found = True
-                    assert a["text"] == "a1"
-                if a["text"] == "a3":
-                    a3_found = True
-                    a3_id = a["id"]
-                    assert a3_id is not None
-            assert a1_found
-            assert a3_found
-
-    assert b1_found
-    assert b4_found
-
-
-
-
+    assert response["data"]["testM2mCCreate"]["result"]["testm2mbSet"]["data"][0]["id"] == b1_id
+    assert response["data"]["testM2mCCreate"]["result"]["testm2mbSet"]["data"][0]["text"] == "b1"
+    b4_id = response["data"]["testM2mCCreate"]["result"]["testm2mbSet"]["data"][1]["id"]
+    assert response["data"]["testM2mCCreate"]["result"]["testm2mbSet"]["data"][1]["text"] == "b4"
+    assert response["data"]["testM2mCCreate"]["result"]["testm2mbSet"]["data"][0]["testM2mAs"]["count"] == 2
+    assert len(response["data"]["testM2mCCreate"]["result"]["testm2mbSet"]["data"][0]["testM2mAs"]["data"]) == 2
+    assert response["data"]["testM2mCCreate"]["result"]["testm2mbSet"]["data"][1]["testM2mAs"]["count"] == 2
+    assert len(response["data"]["testM2mCCreate"]["result"]["testm2mbSet"]["data"][1]["testM2mAs"]["data"]) == 2
+    assert response["data"]["testM2mCCreate"]["result"]["testm2mbSet"]["data"][0]["testM2mAs"]["data"][0]["id"] == a1_id
+    assert response["data"]["testM2mCCreate"]["result"]["testm2mbSet"]["data"][0]["testM2mAs"]["data"][0]["text"] == "a1"
+    assert response["data"]["testM2mCCreate"]["result"]["testm2mbSet"]["data"][0]["testM2mAs"]["data"][1]["id"] == a2_id
+    assert response["data"]["testM2mCCreate"]["result"]["testm2mbSet"]["data"][0]["testM2mAs"]["data"][1]["text"] == "a2"
+    assert response["data"]["testM2mCCreate"]["result"]["testm2mbSet"]["data"][1]["testM2mAs"]["data"][0]["id"] == a1_id
+    assert response["data"]["testM2mCCreate"]["result"]["testm2mbSet"]["data"][1]["testM2mAs"]["data"][0]["text"] == "a1"
+    a3_id = response["data"]["testM2mCCreate"]["result"]["testm2mbSet"]["data"][1]["testM2mAs"]["data"][1]["id"]
+    assert response["data"]["testM2mCCreate"]["result"]["testm2mbSet"]["data"][1]["testM2mAs"]["data"][1]["text"] == "a3"
