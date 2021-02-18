@@ -6,16 +6,18 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - "WhereWithOperatorsInput" merge to "WhereInput" and keep operators
+- Upgrade graphene-django dependency version to >= 2.8.0
 
 ### Added
 
+- Add django dependency to version >= 2.2
 - Add getters 'WhereInputType', 'CreateInputType', UpdateInputType from 'GrapheneDjangoCrud' object
 - Add possibility to extend the create and update input fields
 - Add max limit for batchread request
 
 ### Fixed
 
-- Improve the stability of the relationship fields
+- Improve the stability of the relationship mutations
 
 ## [1.0.3] - 2021-02-04
 

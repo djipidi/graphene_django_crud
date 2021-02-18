@@ -18,9 +18,10 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     install_requires=[
+        'django>=2.2'
         'graphene>=2.1.8,<3',
-        'graphene-django>=2.13.0',
-        'graphene-subscriptions>=1.0.2'
+        'graphene-django>=2.8.0',
+        'graphene-subscriptions>=1.0'
     ],
     python_requires='>=3.6',
 )

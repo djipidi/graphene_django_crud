@@ -74,3 +74,10 @@ def pytest_configure(config):
     management.call_command("migrate", verbosity=0, interactive=False)
     if config.getoption("--staticfiles"):
         management.call_command("collectstatic", verbosity=0, interactive=False)
+
+    import graphene
+    import graphene_django
+
+    print("django version: " + str(django.VERSION))
+    print("graphene version: " + graphene.get_version())
+    print("graphene_django version: " + graphene_django.__version__)
