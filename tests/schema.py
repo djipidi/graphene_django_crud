@@ -8,6 +8,11 @@ class UserType(DjangoGrapheneCRUD):
     class Meta:
         model = User
 
+    @classmethod
+    def before_mutate(cls, root, info, instance, data):
+        if "password" in data.keys():
+            instance.set_password(data.pop("password"))
+
 class GroupType(DjangoGrapheneCRUD):
     class Meta:
         model = Group

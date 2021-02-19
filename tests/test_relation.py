@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
 from tests.client import Client
-from django.contrib.auth.models import User
 
 
 testFkA_Fragment = '''
