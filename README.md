@@ -3,6 +3,37 @@
 Inspired by prisma-nexus and graphene-django-extras, This package
 turns the django orm into a graphql API.
 
+- [Installation](#Installation)
+- [Usage](#Usage)
+  - [Example](#Example)
+  - [Filtering by user](#Filtering-by-user)
+- [GrapheneDjangoCrud Class](#GrapheneDjangoCrud-Class)
+  - [Meta parameters](#Meta-parameters)
+    - [model](#model-required-parameter)
+    - [max_limit](#max_limit)
+    - [only_fields / exclude_fields](#only_fields--exclude_fields)
+    - [input_only_fields / input_exclude_fields](#input_only_fields--input_exclude_fields)
+    - [input_extend_fields](#input_extend_fields)
+  - [Fields](#Fields)
+    - [ReadField](#ReadField)
+    - [BatchReadField](#BatchReadField)
+    - [CreateField](#CreateField)
+    - [UpdateField](#UpdateField)
+    - [DeleteField](#DeleteField)
+    - [CreatedField](#CreatedField)
+    - [UpdatedField](#UpdatedField)
+    - [DeletedField](#DeletedField)
+  - [Input Types](#Input-Types)
+    - [WhereInputType](#WhereInputType)
+    - [CreateInputType](#CreateInputType)
+    - [UpdateInputType](#UpdateInputType)
+  - [overload methods](#overload-methods)
+    - [get_queryset](#get_querysetcls-root-info-kwargs)
+    - [Middleware-methode-before_XXX/after_XXX](#middleware-methode-before_xxxcls-root-info-instance-data--after_xxxcls-root-info-instance-data)
+- [Utils](#Utils)
+    - [where_input_to_Q(where_input: dict) -> Q](#where_input_to_qwhere_input-dict---q)
+- [Scalar filter](#Scalar-filter)
+
 ## Installation
 
 For installing graphene-django-crud, just run this command in your shell:
@@ -13,12 +44,12 @@ pip install graphene-django-crud
 
 ## Usage
 
-The GrapheneDjangoCrud class transforms a django model into a graphene type.
-The type also has fields corresponding to the crud operation.
+The GrapheneDjangoCrud class project a django model into a graphene type.
+The type also has fields to exposes the CRUD operations.
 
 ### Example
 
-You will be able to project the auth django models on your GraphQL API and expose the CRUD operations.
+In this example, you will be able to project the auth django models on your GraphQL API and expose the CRUD operations.
 
 ```python
 # schema.py
@@ -37,7 +68,7 @@ class UserType(DjangoGrapheneCRUD):
 
     @staticmethod
     def resolve_full_name(root, info, **kwargs):
-        return root.first_name + " " + root.last_name
+        return root.get_full_name()
 
     @classmethod
     def get_queryset(cls, root, info, **kwargs):
@@ -310,9 +341,9 @@ input UserWhereInput {
 ```
 </details>
 
-## Filtering by user
+### Filtering by user
 
-To respond to a business logic it is necessary to filtering by user.
+To respond to several use cases, it is necessary to filter the logged in user.
 the graphene module gives access to the user from the context object in info arg.
 The "get_queryset" method which returns by default <model>.objects.all(), but it can be overloaded.
 
@@ -329,9 +360,51 @@ class UserType(DjangoGrapheneCRUD):
             return User.objects.exclude(is_superuser=True)
 ```
 
-## Fields
+## GrapheneDjangoCrud Class
 
-### ReadField
+### Meta parameters 
+
+#### model (required parameter)
+The model used for the definition type
+
+#### max_limit
+default : None  
+To avoid too large transfers, the max_limit parameter imposes a maximum number of return items for batchreadField and nodeField.
+it imposes to use pagination. If the value is None there is no limit.
+
+#### only_fields / exclude_fields
+Tuple of model fields to include/exclude in graphql type.  
+Only one of the two parameters can be declared.
+
+#### input_only_fields / input_exclude_fields
+Tuple of model fields to include/exclude in graphql inputs type.
+Only one of the two parameters can be declared.
+
+#### input_extend_fields
+Field list to extend the create and update input. value must be a list of tuple (name: string, type: graphene.ObjectType)
+The parameter can be processed in the middleware functions (before_XXX / after_XXX).
+
+example:
+```python
+class UserType(DjangoGrapheneCRUD):
+    class Meta:
+        model = User
+        input_extend_fields = (
+            ("fullName": graphene.String()),
+        )
+
+    @classmethod
+    def before_mutate(cls, root, info, instance, data):
+        if "fullName" in data.keys():
+            instance.first_name = data["fullName"].split(" ")[0]
+            instance.last_name = data["fullName"].split(" ")[1]
+        ...
+```
+
+
+### Fields
+
+#### ReadField
 Query field with a required argument "where" that can return only an instance of
 the defined type. Like the get method of the queryset. If multiple values ​​are
 returned, the response will be an error.
@@ -374,7 +447,7 @@ query{
 ```
 </details>
 
-### BatchReadField
+#### BatchReadField
 Query field that can return a node composed of a list items in "data" field and the total number of instances of the result in "count" field.  
 
 Show doc in graphiql for more information
@@ -420,78 +493,54 @@ query{
 ```
 </details>
 
-### CreateField
+#### CreateField
 Mutation field ...
 
 Show doc in graphiql for more information
 
-### UpdateField
+#### UpdateField
 Mutation field ...
 
 Show doc in graphiql for more information
 
-### DeleteField
+#### DeleteField
 Mutation field ...
 
 Show doc in graphiql for more information
 
-### CreatedField
+#### CreatedField
 Subcription field ...
 
 Show doc in graphiql for more information
 
-### UpdatedField
+#### UpdatedField
 Subcription field ...
 
 Show doc in graphiql for more information
 
-### DeletedField
+#### DeletedField
 Subcription field ...
 
 Show doc in graphiql for more information
 
-## Meta parameters 
+### Input Types
 
-### model (required parameter)
-The model used for the definition type
+#### WhereInputType
 
-### max_limit
-default : None  
-To avoid too large transfers, the max_limit parameter imposes a maximum number of return items for batchreadField and nodeField.
-it imposes to use pagination. If the value is None there is no limit.
+Input type composed of the scalar filter of each readable fields of the model. The logical operators "or", "and", "no" are also included.
+the returned arg can be used in queryset with function "where_input_to_Q(where)"
 
-### only_fields / exclude_fields
-Tuple of model fields to include/exclude in graphql type.  
-Only one of the two parameters can be declared.
+#### CreateInputType
 
-### input_only_fields / input_exclude_fields
-Tuple of model fields to include/exclude in graphql inputs type.
-Only one of the two parameters can be declared.
+Input type composed of model fields without the id. If the field is not nullable, the graphene field is required.
 
-### input_extend_fields
-Field list to exted the create and update input. value must be a list of tuple (name: string, type: graphene.ObjectType)
-The parameter can be processed in the middleware functions (before_XXX / after_XXX).
+#### UpdateInputType
 
-example:
-```python
-class UserType(DjangoGrapheneCRUD):
-    class Meta:
-        model = User
-        input_extend_fields = (
-            ("fullName": graphene.String()),
-        )
+Input type composed of each fields of the model. No fields are required.
 
-    @classmethod
-    def before_mutate(cls, root, info, instance, data):
-        if "fullName" in data.keys():
-            instance.first_name = data["fullName"].split(" ")[0]
-            instance.last_name = data["fullName"].split(" ")[1]
-        ...
-```
+### overload methods
 
-## overload methods
-
-### get_queryset(cls, root, info, **kwargs)
+#### get_queryset(cls, root, info, **kwargs)
 ```python
 @classmethod
 def get_queryset(cls, root, info, **kwargs):
@@ -501,7 +550,7 @@ Default it returns "model.objects.all()", the overload is useful for applying fi
 The method is more than a resolver, it is also called in nested request, fetch instances for mutations and subscription verification.
 
 
-### Middleware methode before_XXX(cls, root, info, instance, data) / after_XXX(cls, root, info, instance, data)
+#### Middleware methode before_XXX(cls, root, info, instance, data) / after_XXX(cls, root, info, instance, data)
 ```python
 @classmethod
 def before_mutate(cls, root, info, instance, data):
@@ -538,24 +587,20 @@ def after_delete(cls, root, info, instance, data):
 Methods called before or after a mutation. The "instance" argument is the instance of the model that goes or has been modified retrieved from the "where" argument of the mutation, or it's been created by the model constructor. The "data" argument is a dict of the "input" argument of the mutation.  
 The method is also called in nested mutation.
 
+## Utils
 
+#### where_input_to_Q(where_input: dict) -> Q
 
-## Input Types
+In order to be able to reuse where input generated, the where_input_to_Q function transforms the returned argument into a Q object
 
-### WhereInputType()
+example :
 
-Input type composed of the scalar filter of each readable fields of the model. The logical operators "or", "and", "no" are also included.
-the returned arg can be used in queryset with function "where_input_to_queryset_filter_args(where)"
-
-### CreateInputType()
-
-Input type composed of model fields without the id. If the field is not nullable, the graphene field is required.
-
-### UpdateInputType()
-
-Input type composed of each fields of the model. No fields are required.
+```python
+<model>.objects.filter(where_input_to_Q(where))
+```
 
 ## Scalar Filter
+
 
 ```gql
 input StringFilter {
@@ -625,16 +670,4 @@ input DatetimeFilter {
   lt: DateTime
   lte: DateTime
 }
-```
-
-## Utils
-
-### where_input_to_Q(where_input: dict) -> Q
-
-Function that returns the dict of the where argument to a object Q to be used in queryset.
-
-example :
-
-```python
-<model>.objects.filter(where_input_to_Q(where))
 ```
