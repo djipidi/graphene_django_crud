@@ -84,7 +84,7 @@ class ClassProperty(property):
 class DjangoGrapheneCRUDOptions(BaseOptions):
     model = None
 
-    max_limt = None
+    max_limit = None
 
     only_fields = "__all__"
     exclude_fields = ()
@@ -300,8 +300,12 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
 
     @classmethod
     def mutateItem(cls, root, info, instance, data):
+        model_fields = get_model_fields(cls._meta.model, to_dict=True)
         for key, value in data.items():
-            model_field = get_model_fields(cls._meta.model, to_dict=True)[key]
+            try:
+                model_field = model_fields[key]
+            except KeyError:
+                continue
             if isinstance(model_field, (OneToOneRel ,ManyToOneRel, ManyToManyField, ManyToManyRel)):
                 pass
             elif isinstance(model_field, (ForeignKey, OneToOneField)):
@@ -316,7 +320,10 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 instance.__setattr__(key, value)
         instance.save()
         for key, value in data.items():
-            model_field = get_model_fields(cls._meta.model, to_dict=True)[key]
+            try:
+                model_field = model_fields[key]
+            except KeyError:
+                continue
             if isinstance(model_field, OneToOneRel):
                 related_type = get_global_registry().get_type_for_model(
                     model_field.remote_field.model
