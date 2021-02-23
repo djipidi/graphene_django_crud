@@ -88,7 +88,7 @@ def convert_model_to_input_type(model, input_flag="create", registry=None):
     
     elif input_flag == "update_nested_many":
         items["create"] = graphene.List(convert_model_to_input_type(model, input_flag="create", registry=registry))
-        items["remove"] = graphene.List(convert_model_to_input_type(model, input_flag="where", registry=registry))
+        items["delete"] = graphene.List(convert_model_to_input_type(model, input_flag="where", registry=registry))
         items["connect"] = graphene.List(convert_model_to_input_type(model, input_flag="where", registry=registry))
         items["disconnect"] = graphene.List(convert_model_to_input_type(model, input_flag="where", registry=registry))
 

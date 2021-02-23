@@ -340,6 +340,10 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                     related_type.create(root, info, create_input, field=model_field.remote_field, parent_instance=instance)
                 for connect_input in value.get("connect", []):
                     related_type.update(root, info, connect_input, {}, field=model_field.remote_field, parent_instance=instance)
+                for disconnect_input in value.get("disconnect", []):
+                    related_type.update(root, info, disconnect_input, {}, field=model_field.remote_field, parent_instance=None)
+                for delete_where_input in value.get("delete", []):
+                    related_type.delete(root, info, delete_where_input)
 
             elif isinstance(model_field, (ManyToManyField, ManyToManyRel)):
                 related_type = get_global_registry().get_type_for_model(
@@ -354,8 +358,8 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                     addItems.append(q.get(apply_where(connect_input)))
                 for disconnect_input in value.get("disconnect", []):
                     disconnectItems.append(q.get(apply_where(disconnect_input)))
-                for remove_where_input in value.get("remove", []):
-                    related_type.delete(root, info, remove_where_input)
+                for delete_where_input in value.get("delete", []):
+                    related_type.delete(root, info, delete_where_input)
 
                 getattr(instance, key).add(*addItems)
                 getattr(instance, key).remove(*disconnectItems)
