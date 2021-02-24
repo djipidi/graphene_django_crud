@@ -1,7 +1,7 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
-## [Unreleased]
+## [1.1.0] - 2021-02-24
 
 ### Changed
 
@@ -13,7 +13,7 @@ All notable changes to this project will be documented in this file.
 - Add django dependency to version >= 2.2
 - Add getters 'WhereInputType', 'CreateInputType', UpdateInputType from 'GrapheneDjangoCrud' object
 - Add possibility to extend the create and update input fields
-- Add max limit for batchread request
+- Add max_limit meta parameter for limit batchread request
 
 ### Fixed
 
