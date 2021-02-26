@@ -9,11 +9,11 @@ from .utils import get_related_model, get_model_fields
 from .base_types import mutation_factory_type, node_factory_type
 
 from django.db import models, transaction
+from django.db.models import Q
+from django.core.exceptions import ValidationError
 
 from .converter import convert_model_to_input_type, construct_fields
 from .registry import get_global_registry, Registry
-
-from django.db.models import Q
 
 from graphene_subscriptions.events import CREATED, UPDATED, DELETED
 
@@ -56,6 +56,23 @@ def get_args(where):
             args["__".join(path).replace("__equals","")] = v
     return args
 
+def error_data_from_validation_error(validation_error):
+    ret = []
+    for field, error_list in validation_error.error_dict.items():
+        messages = []
+        for error in error_list:
+            messages.extend(error.messages)
+        ret.append({
+            "field":field,
+            "messages":messages
+        })
+    return ret
+
+def validation_error_with_suffix(validation_error, suffix):
+    error_dict = {}
+    for field, error_list in validation_error.error_dict.items():
+        error_dict[suffix + "." + field] = error_list
+    return ValidationError(error_dict)
 
 def apply_where(where):
 
@@ -74,7 +91,6 @@ def apply_where(where):
         NOT = NOT & ~Q(apply_where(where.pop("NOT")))
 
     return Q(**get_args(where)) & OR & AND & NOT
-
 
 class ClassProperty(property):
     def __get__(self, cls, owner):
@@ -313,11 +329,16 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                     model_field.remote_field.model
                 )
                 if "create" in value.keys():
-                    instance.__setattr__(key, related_type.create(root, info, value["create"]) )
+                    try:
+                        related_instance = related_type.create(root, info, value["create"])
+                    except ValidationError as e:
+                        raise validation_error_with_suffix(e, key + ".create")
+                    instance.__setattr__(key, related_instance )
                 elif "connect" in value.keys():
                     instance.__setattr__(key, related_type.get_queryset(root, info).get(apply_where(value["connect"])) )
             else:
                 instance.__setattr__(key, value)
+        instance.full_clean()
         instance.save()
         for key, value in data.items():
             try:
@@ -329,21 +350,39 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                     model_field.remote_field.model
                 )
                 if "create" in value.keys():
-                    related_type.create(root, info, value["create"], field=model_field.remote_field, parent_instance=instance)
+                    try:
+                        related_type.create(root, info, value["create"], field=model_field.remote_field, parent_instance=instance)
+                    except ValidationError as e:
+                        raise validation_error_with_suffix(e, key + ".create")
                 elif "connect" in value.keys():
-                    related_type.update(root, info, value["connect"], {}, field=model_field.remote_field, parent_instance=instance)
+                    try:
+                        related_type.update(root, info, value["connect"], {}, field=model_field.remote_field, parent_instance=instance)
+                    except ValidationError as e:
+                        raise validation_error_with_suffix(e, key + ".connect")
             elif isinstance(model_field, ManyToOneRel):
                 related_type = get_global_registry().get_type_for_model(
                     model_field.remote_field.model
                 )
-                for create_input in value.get("create", []):
-                    related_type.create(root, info, create_input, field=model_field.remote_field, parent_instance=instance)
-                for connect_input in value.get("connect", []):
-                    related_type.update(root, info, connect_input, {}, field=model_field.remote_field, parent_instance=instance)
-                for disconnect_input in value.get("disconnect", []):
-                    related_type.update(root, info, disconnect_input, {}, field=model_field.remote_field, parent_instance=None)
-                for delete_where_input in value.get("delete", []):
-                    related_type.delete(root, info, delete_where_input)
+                for i, create_input in enumerate(value.get("create", [])):
+                    try:
+                        related_type.create(root, info, create_input, field=model_field.remote_field, parent_instance=instance)
+                    except ValidationError as e:
+                        raise validation_error_with_suffix(e, key + ".create." + str(i))
+                for i, connect_input in enumerate(value.get("connect", [])):
+                    try:
+                        related_type.update(root, info, connect_input, {}, field=model_field.remote_field, parent_instance=instance)
+                    except ValidationError as e:
+                        raise validation_error_with_suffix(e, key + ".connect." + str(i))
+                for i, disconnect_input in enumerate(value.get("disconnect", [])):
+                    try:
+                        related_type.update(root, info, disconnect_input, {}, field=model_field.remote_field, parent_instance=None)
+                    except ValidationError as e:
+                        raise validation_error_with_suffix(e, key + ".disconnect." + str(i))
+                for i, delete_where_input in enumerate(value.get("delete", [])):
+                    try:
+                        related_type.delete(root, info, delete_where_input)
+                    except ValidationError as e:
+                        raise validation_error_with_suffix(e, key + ".delete." + str(i))
 
             elif isinstance(model_field, (ManyToManyField, ManyToManyRel)):
                 related_type = get_global_registry().get_type_for_model(
@@ -352,14 +391,26 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 q = related_type.get_queryset(root, info)
                 addItems = []
                 disconnectItems = []
-                for create_input in value.get("create", []):
-                    addItems.append( related_type.create(root, info, create_input) )
-                for connect_input in value.get("connect", []):
-                    addItems.append(q.get(apply_where(connect_input)))
-                for disconnect_input in value.get("disconnect", []):
-                    disconnectItems.append(q.get(apply_where(disconnect_input)))
-                for delete_where_input in value.get("delete", []):
-                    related_type.delete(root, info, delete_where_input)
+                for i, create_input in enumerate(value.get("create", [])):
+                    try:
+                        addItems.append( related_type.create(root, info, create_input) )
+                    except ValidationError as e:
+                        raise validation_error_with_suffix(e, key + ".create." + str(i))
+                for i, connect_input in enumerate(value.get("connect", [])):
+                    try:
+                        addItems.append(q.get(apply_where(connect_input)))
+                    except ValidationError as e:
+                        raise validation_error_with_suffix(e, key + ".connect." + str(i))
+                for i, disconnect_input in enumerate(value.get("disconnect", [])):
+                    try:
+                        disconnectItems.append(q.get(apply_where(disconnect_input)))
+                    except ValidationError as e:
+                        raise validation_error_with_suffix(e, key + ".disconnect." + str(i))
+                for i, delete_where_input in enumerate(value.get("delete", [])):
+                    try:
+                        related_type.delete(root, info, delete_where_input)
+                    except ValidationError as e:
+                        raise validation_error_with_suffix(e, key + ".delete." + str(i))
 
                 getattr(instance, key).add(*addItems)
                 getattr(instance, key).remove(*disconnectItems)
@@ -390,11 +441,11 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 "ok" : True,
                 "errors" : []
             }
-        except Exception as e:
+        except ValidationError as e:
             return {
                 "result": None,
                 "ok" : False,
-                "errors" : ErrorType.from_errors({"input": [type(e).__name__ + ": " + str(e)]})
+                "errors" : error_data_from_validation_error(e)
             }
 
     @classmethod
@@ -441,11 +492,11 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 "ok" : True,
                 "error" : []
             }
-        except Exception as e:
+        except ValidationError as e:
             return {
                 "result": None,
                 "ok" : False,
-                "errors" : ErrorType.from_errors({"input": [type(e).__name__ + ": " + str(e)]})
+                "errors" : error_data_from_validation_error(e)
             }
 
     @classmethod
@@ -489,11 +540,11 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 "ok" : True,
                 "error" : []
             }
-        except Exception as e:
+        except ValidationError as e:
             return {
                 "result": None,
                 "ok" : False,
-                "errors" : ErrorType.from_errors({"input": [type(e).__name__ + ": " + str(e)]})
+                "errors" : error_data_from_validation_error(e)
             }
 
     @classmethod

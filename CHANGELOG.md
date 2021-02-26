@@ -1,6 +1,13 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+
+## [Unreleased]
+
+### Fixed
+
+- FIX mutation errors are used by all exceptions without processing error messages, now only ValidationError with message processing
+
 ## [1.1.0] - 2021-02-24
 
 ### Changed
