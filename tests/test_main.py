@@ -208,13 +208,11 @@ def test_main():
             "userSet": {
             "connect": [{"id": {"equals": u2_id}}],
             "disconnect": [{"id": {"equals": u1_id}}],
-            "remove": [{"id": {"equals": u3_id}}]
+            "delete": [{"id": {"equals": u3_id}}]
             }
         }
     }
-
     response = client.query(groupUdate_gql, variables=variables).json()
-
     assert response["data"]["groupUpdate"]["ok"] == True
     assert response["data"]["groupUpdate"]["result"]["id"] == "2"
     assert response["data"]["groupUpdate"]["result"]["name"] == "g2_update"
