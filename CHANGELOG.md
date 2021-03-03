@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - FIX mutation errors are used by all exceptions without processing error messages, now only ValidationError with message processing
+- FIX a complex query can return several same instance
 
 ## [1.1.0] - 2021-02-24
 

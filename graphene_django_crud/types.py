@@ -264,7 +264,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
 
     @classmethod
     def read(cls, root, info, **kwargs):
-        return cls.get_queryset(root, info).filter(apply_where(kwargs.get("where", {}))).get()
+        return cls.get_queryset(root, info).filter(apply_where(kwargs.get("where", {}))).distinct().get()
 
 
 
@@ -299,6 +299,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         queryset = queryset.filter(apply_where(kwargs.get("where", {})))
         if "orderBy" in kwargs.keys():
             queryset = queryset.order_by(*kwargs.get("orderBy", []))
+        queryset = queryset.distinct()
 
         start = kwargs.get("offset", 0)
         limit = kwargs.get("limit", cls._meta.max_limit)
@@ -335,7 +336,8 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                         raise validation_error_with_suffix(e, key + ".create")
                     instance.__setattr__(key, related_instance )
                 elif "connect" in value.keys():
-                    instance.__setattr__(key, related_type.get_queryset(root, info).get(apply_where(value["connect"])) )
+                    related_instance = related_type.get_queryset(root, info).filter(apply_where(value["connect"])).distinct().get()
+                    instance.__setattr__(key, related_instance )
             else:
                 instance.__setattr__(key, value)
         instance.full_clean()
@@ -398,12 +400,14 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                         raise validation_error_with_suffix(e, key + ".create." + str(i))
                 for i, connect_input in enumerate(value.get("connect", [])):
                     try:
-                        addItems.append(q.get(apply_where(connect_input)))
+                        related_instance = q.filter(apply_where(connect_input)).distinct().get()
+                        addItems.append(related_instance)
                     except ValidationError as e:
                         raise validation_error_with_suffix(e, key + ".connect." + str(i))
                 for i, disconnect_input in enumerate(value.get("disconnect", [])):
                     try:
-                        disconnectItems.append(q.get(apply_where(disconnect_input)))
+                        related_instance = q.filter(apply_where(disconnect_input)).distinct().get()
+                        disconnectItems.append(related_instance)
                     except ValidationError as e:
                         raise validation_error_with_suffix(e, key + ".disconnect." + str(i))
                 for i, delete_where_input in enumerate(value.get("delete", [])):
@@ -501,7 +505,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
 
     @classmethod
     def update(cls, root, info, where, data, field=None, parent_instance=None):
-        instance = cls.get_queryset(root, info).get(apply_where(where))
+        instance = cls.get_queryset(root, info).filter(apply_where(where)).distinct().get()
         if field is not None:
             instance.__setattr__(field.name, parent_instance)
         cls.before_mutate(root, info, instance, data)
@@ -549,7 +553,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
 
     @classmethod
     def delete(cls, root, info, where):
-        instance = cls.get_queryset(root, info).get(apply_where(where))
+        instance = cls.get_queryset(root, info).filter(apply_where(where)).distinct().get()
         cls.before_mutate(root, info, instance, {})
         cls.before_delete(root, info, instance, {})
         instance.delete()
