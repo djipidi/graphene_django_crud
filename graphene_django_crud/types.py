@@ -114,6 +114,8 @@ class DjangoGrapheneCRUDOptions(BaseOptions):
     registry=None,
 
 
+from graphql.language.ast import FragmentSpread, InlineFragment
+from graphene.utils.str_converters import to_camel_case
 class DjangoGrapheneCRUD(graphene.ObjectType):
     """
         Mutation, query Type Definition
@@ -187,6 +189,92 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
             registry.register_django_type(cls)
 
     @classmethod
+    def _queryset_factory(cls, field_asts=None, fragments=None, node=True, **kwargs):
+        if field_asts:
+            return cls._queryset_factory_analyze(
+                field_asts[0].selection_set,
+                fragments,
+                node=node
+            )
+    @classmethod
+    def _queryset_factory_analyze(
+        cls, selection_set, fragments, ret=None, node=True, suffix=""
+    ):
+        if ret is None:
+            ret = {
+                "select_related" : [],
+                "only" : [],
+            }
+
+        if suffix == "":
+            new_suffix = ""
+        else:
+            new_suffix = suffix + "__"
+
+        model_fields = get_model_fields(cls._meta.model, to_dict=True)
+        fields_name_mapper = {}
+        for k in model_fields.keys():
+            fields_name_mapper[to_camel_case(k)] = k
+
+        for field in selection_set.selections:
+            if isinstance(field, FragmentSpread) and fragments:
+                cls._queryset_factory_analyze(
+                    fragments[field.name.value].selection_set,
+                    fragments,
+                    suffix=suffix,
+                    node=node,
+                    ret=ret
+                )
+                continue
+
+            if isinstance(field, InlineFragment):
+                cls._queryset_factory_analyze(
+                    field.selection_set,
+                    fragments,
+                    suffix=suffix,
+                    node=node,
+                    ret=ret
+                )
+                continue
+
+            if node:
+                if field.name.value == "data":
+                    cls._queryset_factory_analyze(
+                        field.selection_set,
+                        fragments,
+                        suffix=new_suffix,
+                        node=False,
+                        ret=ret
+                    )
+
+            else:
+                try:
+                    model_field = model_fields[fields_name_mapper[field.name.value]]
+                except KeyError:
+                    continue
+                if getattr(field, "selection_set", None):
+                    related_type = get_global_registry().get_type_for_model(
+                        model_field.remote_field.model
+                    )
+                    if isinstance(model_field, (OneToOneField, OneToOneRel, ForeignKey)):
+                        ret["select_related"].append(new_suffix +  fields_name_mapper[field.name.value])
+                        is_node = False
+                    elif isinstance(model_field, (ManyToManyField, ManyToManyRel, ManyToOneRel)):
+                        continue
+                        is_node = True
+                    
+                    related_type._queryset_factory_analyze(
+                        field.selection_set,
+                        fragments,
+                        node=is_node,
+                        suffix = new_suffix + fields_name_mapper[field.name.value],
+                        ret=ret
+                    )
+                else:
+                    ret["only"].append(new_suffix + fields_name_mapper[field.name.value])
+        return ret
+
+    @classmethod
     def generate_signals(cls):
         post_save.connect(post_save_subscription, sender=cls._meta.model)
         post_delete.connect(post_delete_subscription, sender=cls._meta.model)
@@ -244,6 +332,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
     def UpdateInputType(cls, *args, **kwargs):
         return convert_model_to_input_type(cls._meta.model, input_flag="update", registry=cls._meta.registry)
 
+
     @classmethod
     def ReadField(cls, *args, **kwargs):
 
@@ -264,8 +353,13 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
 
     @classmethod
     def read(cls, root, info, **kwargs):
-        return cls.get_queryset(root, info).filter(apply_where(kwargs.get("where", {}))).distinct().get()
+        queryset_factory = cls._queryset_factory(field_asts=info.field_asts, fragments=info.fragments, node=False)
+        queryset = cls.get_queryset(root, info).filter(apply_where(kwargs.get("where", {})))
+        queryset.distinct()
+        queryset = queryset.select_related(*queryset_factory["select_related"])
+        queryset = queryset.only(*queryset_factory["only"])
 
+        return queryset.get()
 
 
     @classmethod
@@ -288,7 +382,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
 
     @classmethod
     def batchread(cls, root, info, related_field=None, **kwargs):
-        
+
         if related_field is not None:
             try:
                 queryset =  cls.get_queryset(root, info) & root.__getattr__(related_field).all()
@@ -296,6 +390,11 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 queryset =  cls.get_queryset(root, info) & root.__getattribute__(related_field).all()
         else:
             queryset = cls.get_queryset(root, info)
+
+        queryset_factory = cls._queryset_factory(field_asts=info.field_asts, fragments=info.fragments, node=True)
+
+        queryset = queryset.select_related(*queryset_factory["select_related"])
+        queryset = queryset.only(*queryset_factory["only"])
         queryset = queryset.filter(apply_where(kwargs.get("where", {})))
         if "orderBy" in kwargs.keys():
             queryset = queryset.order_by(*kwargs.get("orderBy", []))
@@ -463,10 +562,6 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         cls.after_create(root, info, instance, data)
         cls.after_mutate(root, info, instance, data)
         return instance
-
-
-
-
 
     @classmethod
     def UpdateField(cls, *args, **kwargs):
