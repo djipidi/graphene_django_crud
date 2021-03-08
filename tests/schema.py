@@ -1,12 +1,23 @@
 # -*- coding: utf-8 -*-
 from django.contrib.auth.models import User, Group
-from graphene_django_crud import DjangoGrapheneCRUD, where_input_to_Q
+from graphene_django_crud import DjangoGrapheneCRUD, where_input_to_Q, resolver_hints
 import graphene
 from .models import *
+
 
 class UserType(DjangoGrapheneCRUD):
     class Meta:
         model = User
+
+    full_name = graphene.String()
+
+
+    @resolver_hints(
+    only=["first_name", "last_name"]
+    )
+    @staticmethod
+    def resolve_full_name_self(root, info, **kwargs):
+        return root.get_full_name()
 
     @classmethod
     def before_mutate(cls, root, info, instance, data):

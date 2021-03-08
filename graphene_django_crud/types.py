@@ -96,6 +96,14 @@ class ClassProperty(property):
     def __get__(self, cls, owner):
         return self.fget.__get__(None, owner)()
 
+def resolver_hints(select_related=[], only=[], **kwargs):
+    def wrapper(f):
+        f.select_related = select_related
+        f.only = only
+        f.have_resolver_hints = True
+        return f
+    return wrapper
+
 
 class DjangoGrapheneCRUDOptions(BaseOptions):
     model = None
@@ -203,7 +211,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         if ret is None:
             ret = {
                 "select_related" : [],
-                "only" : [],
+                "only" : ["pk"],
             }
 
         if suffix == "":
@@ -213,6 +221,21 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
 
         model_fields = get_model_fields(cls._meta.model, to_dict=True)
         fields_name_mapper = {}
+        computed_field_hints = {}
+        for field_name, field in cls._meta.fields.items():
+            if field_name in model_fields.keys():
+                continue
+            if field.resolver is None:
+                resolver = cls.__dict__.get("resolve_" + field_name , None)
+            else:
+                resolver = field.resolver
+            if resolver is not None and hasattr(resolver, 'have_resolver_hints'):
+                fields_name_mapper[to_camel_case(field_name)] = field_name
+                computed_field_hints[field_name] = {
+                    "only" : resolver.only,
+                    "select_related" : resolver.select_related
+                }
+
         for k in model_fields.keys():
             fields_name_mapper[to_camel_case(k)] = k
 
@@ -251,7 +274,14 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 try:
                     model_field = model_fields[fields_name_mapper[field.name.value]]
                 except KeyError:
+                    try:
+                        computed_field = computed_field_hints[fields_name_mapper[field.name.value]]
+                    except KeyError:
+                        continue
+                    [ret["select_related"].append(x) for x in computed_field["select_related"] if x not in ret["select_related"]]
+                    [ret["only"].append(x) for x in computed_field["only"] if x not in ret["only"]]
                     continue
+
                 if getattr(field, "selection_set", None):
                     related_type = get_global_registry().get_type_for_model(
                         model_field.remote_field.model
