@@ -6,6 +6,7 @@ turns the django orm into a graphql API.
 - [Installation](#Installation)
 - [Usage](#Usage)
   - [Example](#Example)
+  - [Computed field](#Computed-field)
   - [Filtering by user](#Filtering-by-user)
 - [GrapheneDjangoCrud Class](#GrapheneDjangoCrud-Class)
   - [Meta parameters](#Meta-parameters)
@@ -56,7 +57,7 @@ In this example, you will be able to project the auth django models on your Grap
 import graphene
 from graphql import GraphQLError
 from django.contrib.auth.models import User, Group
-from graphene_django_crud.types import DjangoGrapheneCRUD
+from graphene_django_crud.types import DjangoGrapheneCRUDn resolver_hints
 
 class UserType(DjangoGrapheneCRUD):
     class Meta:
@@ -66,6 +67,10 @@ class UserType(DjangoGrapheneCRUD):
 
     full_name = graphene.String()
 
+
+    @resolver_hints(
+      only=["first_name", "last_name"]
+    )
     @staticmethod
     def resolve_full_name(root, info, **kwargs):
         return root.get_full_name()
@@ -340,6 +345,25 @@ input UserWhereInput {
 
 ```
 </details>
+
+### Computed Field
+
+You can add computed fields using the standard Graphene API. However to optimize the SQL query you must specify "only", "select_related" necessary for the resolver using the resolver_hints decorator
+
+```python
+class UserType(DjangoGrapheneCRUD):
+    class Meta:
+        model = User
+
+    full_name = graphene.String()
+
+    @resolver_hints(
+      only=["first_name", "last_name"]
+    )
+    @staticmethod
+    def resolve_full_name(root, info, **kwargs):
+        return root.get_full_name()
+```
 
 ### Filtering by user
 
