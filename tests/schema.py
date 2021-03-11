@@ -16,7 +16,7 @@ class UserType(DjangoGrapheneCRUD):
     only=["first_name", "last_name"]
     )
     @staticmethod
-    def resolve_full_name_self(root, info, **kwargs):
+    def resolve_full_name(root, info, **kwargs):
         return root.get_full_name()
 
     @classmethod
