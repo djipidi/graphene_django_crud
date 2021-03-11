@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Feature/queryset-optimizer]
+
+### Changed
+
+- Need to use the resolver_hints decorator for the creation of computed fields
+
+### Added
+
+- Improve sql performance with use only and select_related
+
 ## [Unreleased]
 
 ### Fixed
