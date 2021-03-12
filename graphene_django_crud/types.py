@@ -433,14 +433,8 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 queryset =  root.__getattr__(related_field).all()
             except:
                 queryset =  root.__getattribute__(related_field).all()
-            return {
-                'count' : queryset.count(),
-                'data' : queryset
-            }
         else:
-            queryset = cls.get_queryset(root, info)
-
-        queryset = cls._queryset_factory(info, field_ast=info.field_asts[0], fragments=info.fragments, node=True)
+            queryset = cls._queryset_factory(info, field_ast=info.field_asts[0], fragments=info.fragments, node=True)
 
         start = kwargs.get("offset", 0)
         limit = kwargs.get("limit", cls._meta.max_limit)
