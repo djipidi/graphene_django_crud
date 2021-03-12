@@ -7,7 +7,7 @@ from graphene_django.types import ErrorType
 from graphql.language.ast import FragmentSpread, InlineFragment, Variable
 from graphene.utils.str_converters import to_camel_case
 
-from .utils import get_related_model, get_model_fields, parse_arguments_ast
+from .utils import get_related_model, get_model_fields, parse_arguments_ast, get_field_ast_by_path
 from .base_types import mutation_factory_type, node_factory_type
 
 from django.db import models, transaction
@@ -587,6 +587,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 "errors" : error_data_from_validation_error(e)
             }
 
+
     @classmethod
     def create(cls, root, info, data, field=None, parent_instance=None):
         instance = cls._meta.model()
@@ -597,7 +598,10 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         cls.mutateItem(root, info, instance, data)
         cls.after_create(root, info, instance, data)
         cls.after_mutate(root, info, instance, data)
-        return instance
+        result_field_ast = get_field_ast_by_path(info.field_asts[0], ["result"])
+        queryset = cls._queryset_factory(info, field_ast=result_field_ast, node=False)
+        queryset = queryset.filter(pk=instance.pk)
+        return queryset.get()
 
     @classmethod
     def UpdateField(cls, *args, **kwargs):
@@ -644,7 +648,10 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         cls.mutateItem(root, info, instance, data)
         cls.after_update(root, info, instance, data)
         cls.after_mutate(root, info, instance, data)
-        return instance
+        result_field_ast = get_field_ast_by_path(info.field_asts[0], ["result"])
+        queryset = cls._queryset_factory(info, field_ast=result_field_ast, node=False)
+        queryset = queryset.filter(pk=instance.pk)
+        return queryset.get()
 
 
 

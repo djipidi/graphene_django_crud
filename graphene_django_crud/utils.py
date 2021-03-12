@@ -163,6 +163,19 @@ def is_required(field):
 
     return not blank and default == NOT_PROVIDED
 
+def get_field_ast_by_path(field_ast, path):
+    path = path.copy()
+    while len(path) != 0:
+        found = False
+        for field in field_ast.selection_set.selections:
+            if field.name.value == path[0]:
+                field_ast = field
+                del path[0]
+                found = True
+                break
+        if not found:
+            assert False, "not found"
+    return field_ast
 
 def parse_ast(ast, variable_values={}):
     if isinstance(ast, Variable):
