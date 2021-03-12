@@ -24,7 +24,7 @@ from django.db.models.base import ModelBase
 from graphene.utils.str_converters import to_snake_case
 from graphene_django.utils import is_valid_django_model
 from graphql import GraphQLList, GraphQLNonNull
-from graphql.language.ast import FragmentSpread, InlineFragment
+from graphql.language.ast import FragmentSpread, InlineFragment, Variable
 
 from django.conf import settings
 
@@ -152,3 +152,43 @@ def is_required(field):
         return False
 
     return not blank and default == NOT_PROVIDED
+
+
+from graphql.language.ast import (
+    BooleanValue,
+    FloatValue,
+    IntValue,
+    ListValue,
+    ObjectValue,
+    StringValue,
+)
+from graphene.types.scalars import MAX_INT, MIN_INT
+
+def parse_ast(ast, variable_values={}):
+        if isinstance(ast, Variable):
+            var_name = ast.name.value
+            value = variable_values.get(var_name)
+            return value
+        elif isinstance(ast, (StringValue, BooleanValue)):
+            return ast.value
+        elif isinstance(ast, IntValue):
+            num = int(ast.value)
+            if MIN_INT <= num <= MAX_INT:
+                return num
+        elif isinstance(ast, FloatValue):
+            return float(ast.value)
+        elif isinstance(ast, ListValue):
+            return [parse_ast(value, variable_values=variable_values) for value in ast.values]
+        elif isinstance(ast, ObjectValue):
+            return {
+                field.name.value: parse_ast(field.value, variable_values=variable_values)
+                for field in ast.fields
+            }
+        else:
+            return None
+
+def parse_arguments_ast(arguments, variable_values={}):
+    ret={}
+    for argument in arguments:
+        ret[argument.name.value] = parse_ast(argument.value, variable_values=variable_values)
+    return ret

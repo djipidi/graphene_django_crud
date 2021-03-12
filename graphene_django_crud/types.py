@@ -4,12 +4,14 @@ from collections import OrderedDict
 import graphene
 from graphene.types.base import BaseOptions
 from graphene_django.types import ErrorType
+from graphql.language.ast import FragmentSpread, InlineFragment, Variable
+from graphene.utils.str_converters import to_camel_case
 
-from .utils import get_related_model, get_model_fields
+from .utils import get_related_model, get_model_fields, parse_arguments_ast
 from .base_types import mutation_factory_type, node_factory_type
 
 from django.db import models, transaction
-from django.db.models import Q
+from django.db.models import Q, Prefetch
 from django.core.exceptions import ValidationError
 
 from .converter import convert_model_to_input_type, construct_fields
@@ -122,8 +124,6 @@ class DjangoGrapheneCRUDOptions(BaseOptions):
     registry=None,
 
 
-from graphql.language.ast import FragmentSpread, InlineFragment
-from graphene.utils.str_converters import to_camel_case
 class DjangoGrapheneCRUD(graphene.ObjectType):
     """
         Mutation, query Type Definition
@@ -197,22 +197,39 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
             registry.register_django_type(cls)
 
     @classmethod
-    def _queryset_factory(cls, field_asts=None, fragments=None, node=True, **kwargs):
-        if field_asts:
-            return cls._queryset_factory_analyze(
-                field_asts[0].selection_set,
-                fragments,
-                node=node
-            )
+    def _queryset_factory(cls, info, field_ast=None, node=True, **kwargs):
+
+        queryset = cls.get_queryset(None, info)
+        arguments = parse_arguments_ast(field_ast.arguments, variable_values=info.variable_values)
+
+        queryset_factory = cls._queryset_factory_analyze(info, field_ast.selection_set, node=node)
+
+        queryset = queryset.select_related(*queryset_factory["select_related"])
+        queryset = queryset.only(*queryset_factory["only"])
+        queryset = queryset.prefetch_related(*queryset_factory["prefetch_related"])
+        queryset = queryset.filter(apply_where(arguments.get("where", {})))
+        if "orderBy" in arguments.keys():
+            queryset = queryset.order_by(*arguments.get("orderBy", []))
+        queryset = queryset.distinct()
+        return queryset
+
     @classmethod
     def _queryset_factory_analyze(
-        cls, selection_set, fragments, ret=None, node=True, suffix=""
+        cls, info, selection_set, node=True, suffix=""
     ):
-        if ret is None:
-            ret = {
-                "select_related" : [],
-                "only" : ["pk"],
-            }
+        def fusion_ret(a, b):
+
+            [a["select_related"].append(x) for x in b["select_related"] if x not in a["select_related"]]
+            [a["prefetch_related"].append(x) for x in b["prefetch_related"]]
+            [a["only"].append(x) for x in b["only"] if x not in a["only"]]
+            return a
+
+
+        ret = {
+            "select_related" : [],
+            "only" : ["pk"],
+            "prefetch_related" : []
+        }
 
         if suffix == "":
             new_suffix = ""
@@ -233,43 +250,43 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 fields_name_mapper[to_camel_case(field_name)] = field_name
                 computed_field_hints[field_name] = {
                     "only" : resolver.only,
-                    "select_related" : resolver.select_related
+                    "select_related" : resolver.select_related,
+                    "prefetch_related": []
                 }
 
         for k in model_fields.keys():
             fields_name_mapper[to_camel_case(k)] = k
 
         for field in selection_set.selections:
-            if isinstance(field, FragmentSpread) and fragments:
-                cls._queryset_factory_analyze(
-                    fragments[field.name.value].selection_set,
-                    fragments,
+            if isinstance(field, FragmentSpread):
+                new_ret = cls._queryset_factory_analyze(
+                    info,
+                    info.fragments[field.name.value].selection_set,
                     suffix=suffix,
                     node=node,
-                    ret=ret
                 )
+                ret = fusion_ret(ret, new_ret)
                 continue
 
             if isinstance(field, InlineFragment):
-                cls._queryset_factory_analyze(
+                new_ret = cls._queryset_factory_analyze(
+                    info,
                     field.selection_set,
-                    fragments,
                     suffix=suffix,
                     node=node,
-                    ret=ret
                 )
+                ret = fusion_ret(ret, new_ret)
                 continue
 
             if node:
                 if field.name.value == "data":
-                    cls._queryset_factory_analyze(
+                    new_ret = cls._queryset_factory_analyze(
+                        info,
                         field.selection_set,
-                        fragments,
                         suffix=new_suffix,
                         node=False,
-                        ret=ret
                     )
-
+                    ret = fusion_ret(ret, new_ret)
             else:
                 try:
                     model_field = model_fields[fields_name_mapper[field.name.value]]
@@ -278,8 +295,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                         computed_field = computed_field_hints[fields_name_mapper[field.name.value]]
                     except KeyError:
                         continue
-                    [ret["select_related"].append(x) for x in computed_field["select_related"] if x not in ret["select_related"]]
-                    [ret["only"].append(x) for x in computed_field["only"] if x not in ret["only"]]
+                    ret = fusion_ret(ret, computed_field)
                     continue
 
                 if getattr(field, "selection_set", None):
@@ -288,18 +304,22 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                     )
                     if isinstance(model_field, (OneToOneField, OneToOneRel, ForeignKey)):
                         ret["select_related"].append(new_suffix +  fields_name_mapper[field.name.value])
-                        is_node = False
+                        new_ret = related_type._queryset_factory_analyze(
+                            info,
+                            field.selection_set,
+                            node=False,
+                            suffix = new_suffix + fields_name_mapper[field.name.value],
+                        )
+                        ret = fusion_ret(ret, new_ret)
                     elif isinstance(model_field, (ManyToManyField, ManyToManyRel, ManyToOneRel)):
-                        continue
-                        is_node = True
-                    
-                    related_type._queryset_factory_analyze(
-                        field.selection_set,
-                        fragments,
-                        node=is_node,
-                        suffix = new_suffix + fields_name_mapper[field.name.value],
-                        ret=ret
-                    )
+                        ret["prefetch_related"].append(
+                            Prefetch(
+                                new_suffix +  fields_name_mapper[field.name.value],
+                                queryset=related_type._queryset_factory(info, field_ast=field, node=True)
+                            )
+                        )
+
+
                 else:
                     ret["only"].append(new_suffix + fields_name_mapper[field.name.value])
         return ret
@@ -383,12 +403,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
 
     @classmethod
     def read(cls, root, info, **kwargs):
-        queryset_factory = cls._queryset_factory(field_asts=info.field_asts, fragments=info.fragments, node=False)
-        queryset = cls.get_queryset(root, info).filter(apply_where(kwargs.get("where", {})))
-        queryset.distinct()
-        queryset = queryset.select_related(*queryset_factory["select_related"])
-        queryset = queryset.only(*queryset_factory["only"])
-
+        queryset = cls._queryset_factory(info, field_ast=info.field_asts[0], node=False)
         return queryset.get()
 
 
@@ -415,20 +430,17 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
 
         if related_field is not None:
             try:
-                queryset =  cls.get_queryset(root, info) & root.__getattr__(related_field).all()
+                queryset =  root.__getattr__(related_field).all()
             except:
-                queryset =  cls.get_queryset(root, info) & root.__getattribute__(related_field).all()
+                queryset =  root.__getattribute__(related_field).all()
+            return {
+                'count' : queryset.count(),
+                'data' : queryset
+            }
         else:
             queryset = cls.get_queryset(root, info)
 
-        queryset_factory = cls._queryset_factory(field_asts=info.field_asts, fragments=info.fragments, node=True)
-
-        queryset = queryset.select_related(*queryset_factory["select_related"])
-        queryset = queryset.only(*queryset_factory["only"])
-        queryset = queryset.filter(apply_where(kwargs.get("where", {})))
-        if "orderBy" in kwargs.keys():
-            queryset = queryset.order_by(*kwargs.get("orderBy", []))
-        queryset = queryset.distinct()
+        queryset = cls._queryset_factory(info, field_ast=info.field_asts[0], fragments=info.fragments, node=True)
 
         start = kwargs.get("offset", 0)
         limit = kwargs.get("limit", cls._meta.max_limit)
