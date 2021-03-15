@@ -325,6 +325,12 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         return ret
 
     @classmethod
+    def _instance_to_queryset(cls, info, instance, field_ast):
+        queryset = cls._queryset_factory(info, field_ast=field_ast, node=False)
+        queryset = queryset.filter(pk=instance.pk)
+        return queryset
+
+    @classmethod
     def generate_signals(cls):
         post_save.connect(post_save_subscription, sender=cls._meta.model)
         post_delete.connect(post_delete_subscription, sender=cls._meta.model)
@@ -599,9 +605,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         cls.after_create(root, info, instance, data)
         cls.after_mutate(root, info, instance, data)
         result_field_ast = get_field_ast_by_path(info, ["result"])
-        queryset = cls._queryset_factory(info, field_ast=result_field_ast, node=False)
-        queryset = queryset.filter(pk=instance.pk)
-        return queryset.get()
+        return cls._instance_to_queryset(info, instance, result_field_ast).get()
 
     @classmethod
     def UpdateField(cls, *args, **kwargs):
@@ -649,11 +653,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         cls.after_update(root, info, instance, data)
         cls.after_mutate(root, info, instance, data)
         result_field_ast = get_field_ast_by_path(info, ["result"])
-        queryset = cls._queryset_factory(info, field_ast=result_field_ast, node=False)
-        queryset = queryset.filter(pk=instance.pk)
-        return queryset.get()
-
-
+        return cls._instance_to_queryset(info, instance, result_field_ast).get()
 
     @classmethod
     def DeleteField(cls, *args, **kwargs):
@@ -717,11 +717,10 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
     def created_resolver(cls, root, info, **kwargs):
         def eventFilter(event):
             if event.operation == CREATED and isinstance(event.instance, cls._meta.model):
-                return cls.get_queryset(root, info).filter(apply_where(kwargs.get("where", {}))).filter(pk=event.instance.pk).exists()
-
+                return cls.get_queryset(root, info).filter(pk=event.instance.pk).exists()
         return root.filter(
             eventFilter
-        ).map(lambda event: event.instance)
+        ).map(lambda event: cls._instance_to_queryset(info, event.instance, info.field_asts[0]).get())
         
     @classmethod
     def UpdatedField(cls, *args, **kwargs):
@@ -744,8 +743,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 return cls.get_queryset(root, info).filter(apply_where(kwargs.get("where", {}))).filter(pk=event.instance.pk).exists()
         return root.filter(
             eventFilter
-        ).map(lambda event: event.instance)
-
+        ).map(lambda event: cls._instance_to_queryset(info, event.instance, info.field_asts[0]).get())
 
     @classmethod
     def DeletedField(cls, *args, **kwargs):
