@@ -68,6 +68,11 @@ def pytest_configure(config):
         AUTHENTICATION_BACKENDS=(
             "django.contrib.auth.backends.ModelBackend",
         ),
+        CHANNEL_LAYERS = {
+            "default": {
+                "BACKEND": "channels.layers.InMemoryChannelLayer"
+            }
+        }
     )
 
     django.setup()
