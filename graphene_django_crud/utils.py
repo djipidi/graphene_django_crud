@@ -163,11 +163,21 @@ def is_required(field):
 
     return not blank and default == NOT_PROVIDED
 
-def get_field_ast_by_path(field_ast, path):
+def get_field_ast_by_path(info, path):
     path = path.copy()
+    field_ast = info.field_asts[0]
     while len(path) != 0:
         found = False
-        for field in field_ast.selection_set.selections:
+        iterator = [f for f in field_ast.selection_set.selections]
+        for field in iterator:
+            if isinstance(field, FragmentSpread):
+                iterator.extend(
+                    [f for f in info.fragments[field.name.value].selection_set.selections]
+                )
+            if isinstance(field, InlineFragment):
+                iterator.extend(
+                    [f for f in field.selection_set.selections]
+                )
             if field.name.value == path[0]:
                 field_ast = field
                 del path[0]
