@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 - FIX mutation errors are used by all exceptions without processing error messages, now only ValidationError with message processing
 - FIX a complex query can return several same instance
+- FIX the createdField does not apply where input
 
 ## [1.1.0] - 2021-02-24
 

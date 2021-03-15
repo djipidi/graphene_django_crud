@@ -579,7 +579,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
     def created_resolver(cls, root, info, **kwargs):
         def eventFilter(event):
             if event.operation == CREATED and isinstance(event.instance, cls._meta.model):
-                return cls.get_queryset(root, info).filter(pk=event.instance.pk).exists()
+                return cls.get_queryset(root, info).filter(apply_where(kwargs.get("where", {}))).filter(pk=event.instance.pk).exists()
 
         return root.filter(
             eventFilter
