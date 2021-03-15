@@ -32,6 +32,7 @@ turns the django orm into a graphql API.
     - [get_queryset](#get_querysetcls-root-info-kwargs)
     - [Middleware-methode-before_XXX/after_XXX](#middleware-methode-before_xxxcls-root-info-instance-data--after_xxxcls-root-info-instance-data)
 - [Utils](#Utils)
+    - [@resolver_hints(only: list[str], select_related:list[str])](#resolver_hintsonly-liststr-select_relatedliststr)
     - [where_input_to_Q(where_input: dict) -> Q](#where_input_to_qwhere_input-dict---q)
 - [Scalar filter](#Scalar-filter)
 
@@ -612,6 +613,12 @@ Methods called before or after a mutation. The "instance" argument is the instan
 The method is also called in nested mutation.
 
 ## Utils
+
+#### @resolver_hints(only: list[str], select_related:list[str])
+
+Each query uses "only", "select_related" and "prefetch_related" methods of queryset to get only the necessary attributes. To extend fields, the decorator informs the query set builder with its arguments which model attributes are needed to resolve the extended field.
+
+show [Computed field](#Computed-field) section for more informations
 
 #### where_input_to_Q(where_input: dict) -> Q
 
