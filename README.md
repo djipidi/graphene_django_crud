@@ -429,109 +429,24 @@ class UserType(DjangoGrapheneCRUD):
 
 ### Fields
 
+The GrapheneDjangoCrud class contains configurable operation publishers that you use for exposing create, read, update, and delete mutations against your projected models
+
+for mutating, relation fields may be connected with an existing record or a sub-create may be inlined (generally referred to as nested mutations). If the relation is a List then multiple connections or sub-creates are permitted.
+
 #### ReadField
-Query field with a required argument "where" that can return only an instance of
-the defined type. Like the get method of the queryset. If multiple values ​​are
-returned, the response will be an error.
-
-Show doc in graphiql for more information
-
-<details>
-  <summary>show query example</summary>
-
-
-```gql
-query{
-    <read_field_name>(where:{id:{equals:1}}){
-        id
-        attribute1
-        attribute2
-    }
-}
-
-# or
-
-query{
-    <read_field_name>(where:{<field>:{equals:1}}){
-        attribute1
-        attribute2
-    }
-}
-
-# response
-
-{
-    "data": {
-        <read_field_name>: {
-            "id": 1,
-            "attribute1": attribute1_value,
-            "attribute2": attribute1_value
-        }
-    }
-}
-```
-</details>
+Query field to allow clients to find one particular record at time of the respective model.
 
 #### BatchReadField
-Query field that can return a node composed of a list items in "data" field and the total number of instances of the result in "count" field.  
-
-Show doc in graphiql for more information
-
-<details>
-  <summary>show query example</summary>
-
-
-```gql
-query{
-    <batch_read_field_name>(where:{id:{in:[1,2,3,4]}}){
-        count
-        data { 
-            id
-            attribute1
-            attribute2
-        }
-    }
-}
-
-# response
-
-{
-    "data": {
-        <batch_read_field_name>: {
-            "count" : n
-            "data": [
-                {
-                    "id": 1,
-                    "attribute1": attribute1_value,
-                    "attribute2": attribute1_value,
-                },
-                {
-                    "id": 2,
-                    "attribute1": attribute1_value,
-                    "attribute2": attribute1_value,
-                },
-                ...
-            ]
-        }
-    }
-}
-```
-</details>
+Query field to allow clients to fetch multiple records at once of the respective model.
 
 #### CreateField
-Mutation field ...
-
-Show doc in graphiql for more information
+Mutation field to allow clients to create one record at time of the respective model.
 
 #### UpdateField
-Mutation field ...
-
-Show doc in graphiql for more information
+Mutation field to allow clients to update one particular record at time of the respective model.
 
 #### DeleteField
-Mutation field ...
-
-Show doc in graphiql for more information
+Mutation field to allow clients to delete one particular record at time of the respective model.
 
 #### CreatedField
 Subcription field ...
@@ -552,8 +467,8 @@ Show doc in graphiql for more information
 
 #### WhereInputType
 
-Input type composed of the scalar filter of each readable fields of the model. The logical operators "or", "and", "no" are also included.
-the returned arg can be used in queryset with function "where_input_to_Q(where)"
+Input type composed of the scalar filter of each readable fields of the model. The logical operators "OR", "AND", "NO" are also included.
+the returned arg can be used in queryset with function [where_input_to_Q](#where_input_to_qwhere_input-dict---q)
 
 #### CreateInputType
 
@@ -572,7 +487,7 @@ def get_queryset(cls, root, info, **kwargs):
     return queryset_class
 ```
 Default it returns "model.objects.all()", the overload is useful for applying filtering based on user.
-The method is more than a resolver, it is also called in nested request, fetch instances for mutations and subscription verification.
+The method is more than a resolver, it is also called in nested request, fetch instances for mutations and subscription filter.
 
 
 #### Middleware methode before_XXX(cls, root, info, instance, data) / after_XXX(cls, root, info, instance, data)
