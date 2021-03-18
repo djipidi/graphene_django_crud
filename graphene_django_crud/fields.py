@@ -10,8 +10,8 @@ from graphene.types import Field, List
 from .base_types import node_factory_type
 
 
-def related_batchread(django_type, related_field, root, info, **Kwargs):
-    return django_type.batchread(root, info, related_field=related_field, **Kwargs)
+def related_batchread(django_type, related_field, parent, info, **Kwargs):
+    return django_type.batchread(parent, info, related_field=related_field, **Kwargs)
 
 
 class DjangoListField(Field):

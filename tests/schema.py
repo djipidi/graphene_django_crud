@@ -13,11 +13,11 @@ class UserType(DjangoGrapheneCRUD):
 
     @resolver_hints(only=["first_name", "last_name"])
     @staticmethod
-    def resolve_full_name(root, info, **kwargs):
-        return root.get_full_name()
+    def resolve_full_name(parent, info, **kwargs):
+        return parent.get_full_name()
 
     @classmethod
-    def before_mutate(cls, root, info, instance, data):
+    def before_mutate(cls, parent, info, instance, data):
         if "password" in data.keys():
             instance.set_password(data.pop("password"))
 
@@ -47,7 +47,7 @@ class ModelTestGenerateSchemaBCustomMutation(graphene.Mutation):
     ok = graphene.Boolean()
     result = graphene.Field(ModelTestGenerateSchemaBType)
 
-    def mutate(root, info, where, create, update):
+    def mutate(parent, info, where, create, update):
         where_input_to_Q(where)
         return {"ok": True, "result": None}
 

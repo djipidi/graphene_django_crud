@@ -29,8 +29,8 @@ turns the django orm into a graphql API.
     - [CreateInputType](#CreateInputType)
     - [UpdateInputType](#UpdateInputType)
   - [overload methods](#overload-methods)
-    - [get_queryset](#get_querysetcls-root-info-kwargs)
-    - [Middleware-methode-before_XXX/after_XXX](#middleware-methode-before_xxxcls-root-info-instance-data--after_xxxcls-root-info-instance-data)
+    - [get_queryset](#get_querysetcls-parent-info-kwargs)
+    - [Middleware-methode-before_XXX/after_XXX](#middleware-methode-before_xxxcls-parent-info-instance-data--after_xxxcls-parent-info-instance-data)
 - [Utils](#Utils)
     - [@resolver_hints(only: list[str], select_related:list[str])](#resolver_hintsonly-liststr-select_relatedliststr)
     - [where_input_to_Q(where_input: dict) -> Q](#where_input_to_qwhere_input-dict---q)
@@ -73,18 +73,18 @@ class UserType(DjangoGrapheneCRUD):
       only=["first_name", "last_name"]
     )
     @staticmethod
-    def resolve_full_name(root, info, **kwargs):
-        return root.get_full_name()
+    def resolve_full_name(parent, info, **kwargs):
+        return parent.get_full_name()
 
     @classmethod
-    def get_queryset(cls, root, info, **kwargs):
+    def get_queryset(cls, parent, info, **kwargs):
         if info.context.user.is_staff:
             return User.objects.all()
         else:
             return User.objects.exclude(is_superuser=True)
 
     @classmethod
-    def before_mutate(cls, root, info, instance, data):
+    def before_mutate(cls, parent, info, instance, data):
         if not info.context.user.is_staff:
             raise GraphQLError('not permited, only staff user')
 
@@ -104,7 +104,7 @@ class Query(graphene.ObjectType):
     group = GroupType.ReadField()
     groups = GroupType.BatchReadField()
 
-    def resolve_me(root, info, **kwargs):
+    def resolve_me(parent, info, **kwargs):
         if not info.context.user.is_authenticated:
             return None
         else:
@@ -362,8 +362,8 @@ class UserType(DjangoGrapheneCRUD):
       only=["first_name", "last_name"]
     )
     @staticmethod
-    def resolve_full_name(root, info, **kwargs):
-        return root.get_full_name()
+    def resolve_full_name(parent, info, **kwargs):
+        return parent.get_full_name()
 ```
 
 ### Filtering by user
@@ -378,7 +378,7 @@ class UserType(DjangoGrapheneCRUD):
         model = User
 
     @classmethod
-    def get_queryset(cls, root, info, **kwargs):
+    def get_queryset(cls, parent, info, **kwargs):
         if info.context.user.is_staff:
             return User.objects.all()
         else:
@@ -419,7 +419,7 @@ class UserType(DjangoGrapheneCRUD):
         )
 
     @classmethod
-    def before_mutate(cls, root, info, instance, data):
+    def before_mutate(cls, parent, info, instance, data):
         if "fullName" in data.keys():
             instance.first_name = data["fullName"].split(" ")[0]
             instance.last_name = data["fullName"].split(" ")[1]
@@ -480,48 +480,48 @@ Input type composed of each fields of the model. No fields are required.
 
 ### overload methods
 
-#### get_queryset(cls, root, info, **kwargs)
+#### get_queryset(cls, parent, info, **kwargs)
 ```python
 @classmethod
-def get_queryset(cls, root, info, **kwargs):
+def get_queryset(cls, parent, info, **kwargs):
     return queryset_class
 ```
 Default it returns "model.objects.all()", the overload is useful for applying filtering based on user.
 The method is more than a resolver, it is also called in nested request, fetch instances for mutations and subscription filter.
 
 
-#### Middleware methode before_XXX(cls, root, info, instance, data) / after_XXX(cls, root, info, instance, data)
+#### Middleware methode before_XXX(cls, parent, info, instance, data) / after_XXX(cls, parent, info, instance, data)
 ```python
 @classmethod
-def before_mutate(cls, root, info, instance, data):
+def before_mutate(cls, parent, info, instance, data):
     pass
 
 @classmethod
-def before_create(cls, root, info, instance, data):
+def before_create(cls, parent, info, instance, data):
     pass
 
 @classmethod
-def before_update(cls, root, info, instance, data):
+def before_update(cls, parent, info, instance, data):
     pass
 
 @classmethod
-def before_delete(cls, root, info, instance, data):
+def before_delete(cls, parent, info, instance, data):
     pass
 
 @classmethod
-def after_mutate(cls, root, info, instance, data):
+def after_mutate(cls, parent, info, instance, data):
     pass
 
 @classmethod
-def after_create(cls, root, info, instance, data):
+def after_create(cls, parent, info, instance, data):
     pass
 
 @classmethod
-def after_update(cls, root, info, instance, data):
+def after_update(cls, parent, info, instance, data):
     pass
 
 @classmethod
-def after_delete(cls, root, info, instance, data):
+def after_delete(cls, parent, info, instance, data):
     pass
 ```
 Methods called before or after a mutation. The "instance" argument is the instance of the model that goes or has been modified retrieved from the "where" argument of the mutation, or it's been created by the model constructor. The "data" argument is a dict of the "input" argument of the mutation.  
