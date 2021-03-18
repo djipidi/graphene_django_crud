@@ -29,12 +29,27 @@ def gen_inputType_filter(name, field, with_number_filter=False, with_text_filter
         items,
     )
 
-IntFilter = gen_inputType_filter("IntFilter", graphene.Int, with_number_filter=True, with_text_filter=True)
-DecimalFilter = gen_inputType_filter("DecimalFilter", graphene.Decimal, with_number_filter=True, with_text_filter=True)
-FloatFilter = gen_inputType_filter("FloatFilter", graphene.Float, with_number_filter=True, with_text_filter=True)
 
-StringFilter = gen_inputType_filter("StringFilter", graphene.String, with_number_filter=False, with_text_filter=True)
+IntFilter = gen_inputType_filter(
+    "IntFilter", graphene.Int, with_number_filter=True, with_text_filter=True
+)
+DecimalFilter = gen_inputType_filter(
+    "DecimalFilter", graphene.Decimal, with_number_filter=True, with_text_filter=True
+)
+FloatFilter = gen_inputType_filter(
+    "FloatFilter", graphene.Float, with_number_filter=True, with_text_filter=True
+)
 
-DateTimeFilter = gen_inputType_filter("DatetimeFilter", graphene.DateTime, with_number_filter=True, with_text_filter=False)
-TimeFilter = gen_inputType_filter("timeFilter", graphene.Time, with_number_filter=True, with_text_filter=False)
-DateFilter = gen_inputType_filter("DateFilter", graphene.Date, with_number_filter=True, with_text_filter=False)
+StringFilter = gen_inputType_filter(
+    "StringFilter", graphene.String, with_number_filter=False, with_text_filter=True
+)
+
+DateTimeFilter = gen_inputType_filter(
+    "DatetimeFilter", graphene.DateTime, with_number_filter=True, with_text_filter=False
+)
+TimeFilter = gen_inputType_filter(
+    "timeFilter", graphene.Time, with_number_filter=True, with_text_filter=False
+)
+DateFilter = gen_inputType_filter(
+    "DateFilter", graphene.Date, with_number_filter=True, with_text_filter=False
+)

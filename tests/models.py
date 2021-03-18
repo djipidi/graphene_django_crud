@@ -1,7 +1,8 @@
 from django.db import models
 
+
 class ModelTestGenerateSchemaA(models.Model):
-    
+
     binary_field = models.BinaryField()
     boolean_field = models.BooleanField()
     boolean_field_nullable = models.BooleanField(null=True, blank=True)
@@ -34,53 +35,86 @@ class ModelTestGenerateSchemaA(models.Model):
     url_field_unique = models.URLField(unique=True)
     uuid_field = models.UUIDField()
     uuid_field_unique = models.UUIDField(unique=True)
-    foreign_key_field = models.ForeignKey('ModelTestGenerateSchemaA', on_delete=models.CASCADE, related_name='foreign_key_related')
-    one_to_one_field = models.OneToOneField('ModelTestGenerateSchemaA', on_delete=models.CASCADE, related_name='one_to_one_related')
-    manytomany_field = models.ManyToManyField('ModelTestGenerateSchemaA', related_name='many_to_many_related')
+    foreign_key_field = models.ForeignKey(
+        "ModelTestGenerateSchemaA",
+        on_delete=models.CASCADE,
+        related_name="foreign_key_related",
+    )
+    one_to_one_field = models.OneToOneField(
+        "ModelTestGenerateSchemaA",
+        on_delete=models.CASCADE,
+        related_name="one_to_one_related",
+    )
+    manytomany_field = models.ManyToManyField(
+        "ModelTestGenerateSchemaA", related_name="many_to_many_related"
+    )
+
 
 class ModelTestGenerateSchemaB(models.Model):
-    foreign_key_field = models.ForeignKey('ModelTestGenerateSchemaA', on_delete=models.CASCADE, related_name='foreign_key_B_related')
-    one_to_one_field = models.OneToOneField('ModelTestGenerateSchemaA', on_delete=models.CASCADE, related_name='one_to_one_B_related')
-    manytomany_field = models.ManyToManyField('ModelTestGenerateSchemaA', related_name='many_to_many_B_related')
+    foreign_key_field = models.ForeignKey(
+        "ModelTestGenerateSchemaA",
+        on_delete=models.CASCADE,
+        related_name="foreign_key_B_related",
+    )
+    one_to_one_field = models.OneToOneField(
+        "ModelTestGenerateSchemaA",
+        on_delete=models.CASCADE,
+        related_name="one_to_one_B_related",
+    )
+    manytomany_field = models.ManyToManyField(
+        "ModelTestGenerateSchemaA", related_name="many_to_many_B_related"
+    )
 
 
 class Person(models.Model):
     name = models.CharField(max_length=100, unique=True, null=True, blank=True)
-    father = models.ForeignKey('self', on_delete=models.CASCADE, related_name="childs", null=True, blank=True)
-    friends = models.ManyToManyField('self')
-
+    father = models.ForeignKey(
+        "self", on_delete=models.CASCADE, related_name="childs", null=True, blank=True
+    )
+    friends = models.ManyToManyField("self")
 
 
 class TestFkA(models.Model):
     text = models.CharField(max_length=100, null=True, blank=True)
-    testFkB = models.ForeignKey('TestFkB', on_delete=models.CASCADE, related_name='testFkAs')
+    testFkB = models.ForeignKey(
+        "TestFkB", on_delete=models.CASCADE, related_name="testFkAs"
+    )
 
 
 class TestFkB(models.Model):
     text = models.CharField(max_length=100, null=True, blank=True)
-    testFkC = models.ForeignKey('TestFkC', on_delete=models.CASCADE)
+    testFkC = models.ForeignKey("TestFkC", on_delete=models.CASCADE)
+
 
 class TestFkC(models.Model):
     text = models.CharField(max_length=100, null=True, blank=True)
 
+
 class TestO2oA(models.Model):
     text = models.CharField(max_length=100, null=True, blank=True)
-    TestO2oB = models.OneToOneField('TestO2oB', on_delete=models.CASCADE, related_name='testO2oA')
+    TestO2oB = models.OneToOneField(
+        "TestO2oB", on_delete=models.CASCADE, related_name="testO2oA"
+    )
+
 
 class TestO2oB(models.Model):
     text = models.CharField(max_length=100, null=True, blank=True)
-    TestO2oC = models.OneToOneField('TestO2oC', on_delete=models.CASCADE)
+    TestO2oC = models.OneToOneField("TestO2oC", on_delete=models.CASCADE)
+
 
 class TestO2oC(models.Model):
     text = models.CharField(max_length=100, null=True, blank=True)
 
+
 class TestM2mA(models.Model):
     text = models.CharField(max_length=100, null=True, blank=True)
-    testM2mBs = models.ManyToManyField('TestM2mB', related_name='testM2mAs')
+    testM2mBs = models.ManyToManyField("TestM2mB", related_name="testM2mAs")
+
 
 class TestM2mB(models.Model):
     text = models.CharField(max_length=100, null=True, blank=True)
-    testM2mCs = models.ManyToManyField('TestM2mC')
+    testM2mCs = models.ManyToManyField("TestM2mC")
+
 
 class TestM2mC(models.Model):
     text = models.CharField(max_length=100, null=True, blank=True)

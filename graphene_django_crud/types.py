@@ -7,7 +7,12 @@ from graphene_django.types import ErrorType
 from graphql.language.ast import FragmentSpread, InlineFragment, Variable
 from graphene.utils.str_converters import to_camel_case
 
-from .utils import get_related_model, get_model_fields, parse_arguments_ast, get_field_ast_by_path
+from .utils import (
+    get_related_model,
+    get_model_fields,
+    parse_arguments_ast,
+    get_field_ast_by_path,
+)
 from .base_types import mutation_factory_type, node_factory_type
 
 from django.db import models, transaction
@@ -21,8 +26,11 @@ from graphene_subscriptions.events import CREATED, UPDATED, DELETED
 
 from graphene.types.utils import yank_fields_from_attrs
 
-from django.db.models.signals import post_save, post_delete, pre_delete 
-from graphene_subscriptions.signals import post_save_subscription, post_delete_subscription
+from django.db.models.signals import post_save, post_delete, pre_delete
+from graphene_subscriptions.signals import (
+    post_save_subscription,
+    post_delete_subscription,
+)
 
 from django.db.models import (
     ManyToOneRel,
@@ -30,8 +38,9 @@ from django.db.models import (
     OneToOneRel,
     ForeignKey,
     ManyToManyField,
-    OneToOneField
+    OneToOneField,
 )
+
 
 def get_paths(d):
     q = [(d, [])]
@@ -40,7 +49,8 @@ def get_paths(d):
         yield p
         if isinstance(n, dict):
             for k, v in n.items():
-                q.append((v, p+[k]))
+                q.append((v, p + [k]))
+
 
 def nested_get(input_dict, nested_key):
     internal_dict_value = input_dict
@@ -50,13 +60,15 @@ def nested_get(input_dict, nested_key):
             return None
     return internal_dict_value
 
+
 def get_args(where):
     args = {}
     for path in get_paths(where):
         v = nested_get(where, path)
-        if not isinstance(v,dict):
-            args["__".join(path).replace("__equals","")] = v
+        if not isinstance(v, dict):
+            args["__".join(path).replace("__equals", "")] = v
     return args
+
 
 def error_data_from_validation_error(validation_error):
     ret = []
@@ -64,11 +76,9 @@ def error_data_from_validation_error(validation_error):
         messages = []
         for error in error_list:
             messages.extend(error.messages)
-        ret.append({
-            "field":field,
-            "messages":messages
-        })
+        ret.append({"field": field, "messages": messages})
     return ret
+
 
 def validation_error_with_suffix(validation_error, suffix):
     error_dict = {}
@@ -76,11 +86,12 @@ def validation_error_with_suffix(validation_error, suffix):
         error_dict[suffix + "." + field] = error_list
     return ValidationError(error_dict)
 
+
 def apply_where(where):
 
     AND = Q()
-    OR =  Q()
-    NOT = Q() 
+    OR = Q()
+    NOT = Q()
     if "OR" in where.keys():
         for w in where.pop("OR"):
             OR = OR | Q(apply_where(w))
@@ -94,9 +105,11 @@ def apply_where(where):
 
     return Q(**get_args(where)) & OR & AND & NOT
 
+
 class ClassProperty(property):
     def __get__(self, cls, owner):
         return self.fget.__get__(None, owner)()
+
 
 def resolver_hints(select_related=[], only=[], **kwargs):
     def wrapper(f):
@@ -104,6 +117,7 @@ def resolver_hints(select_related=[], only=[], **kwargs):
         f.only = only
         f.have_resolver_hints = True
         return f
+
     return wrapper
 
 
@@ -121,12 +135,12 @@ class DjangoGrapheneCRUDOptions(BaseOptions):
 
     interfaces = ()
 
-    registry=None,
+    registry = (None,)
 
 
 class DjangoGrapheneCRUD(graphene.ObjectType):
     """
-        Mutation, query Type Definition
+    Mutation, query Type Definition
     """
 
     class Meta:
@@ -135,13 +149,13 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
     @classmethod
     def __init_subclass_with_meta__(
         cls,
-        model = None,
-        max_limit = None,
+        model=None,
+        max_limit=None,
         only_fields="__all__",
         exclude_fields=(),
-        input_only_fields = "__all__",
-        input_exclude_fields = (),
-        input_extend_fields = (),
+        input_only_fields="__all__",
+        input_exclude_fields=(),
+        input_extend_fields=(),
         description="",
         registry=None,
         skip_registry=False,
@@ -149,9 +163,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
     ):
 
         if not model:
-            raise Exception(
-                "model is required on all DjangoGrapheneCRUD"
-            )
+            raise Exception("model is required on all DjangoGrapheneCRUD")
 
         if not registry:
             registry = get_global_registry()
@@ -161,18 +173,12 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
             'Registry, received "{}".'
         ).format(cls.__name__, registry)
 
-        description = description or "type for {} model".format(
-            model.__name__
-        )
-
+        description = description or "type for {} model".format(model.__name__)
 
         fields = yank_fields_from_attrs(
-            construct_fields(
-                model, registry, only_fields, exclude_fields
-            ),
+            construct_fields(model, registry, only_fields, exclude_fields),
             _as=graphene.Field,
         )
-
 
         _meta = DjangoGrapheneCRUDOptions(cls)
         _meta.model = model
@@ -188,7 +194,6 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
 
         _meta.registry = registry
 
-
         super(DjangoGrapheneCRUD, cls).__init_subclass_with_meta__(
             _meta=_meta, description=description, **options
         )
@@ -200,9 +205,13 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
     def _queryset_factory(cls, info, field_ast=None, node=True, **kwargs):
 
         queryset = cls.get_queryset(None, info)
-        arguments = parse_arguments_ast(field_ast.arguments, variable_values=info.variable_values)
+        arguments = parse_arguments_ast(
+            field_ast.arguments, variable_values=info.variable_values
+        )
 
-        queryset_factory = cls._queryset_factory_analyze(info, field_ast.selection_set, node=node)
+        queryset_factory = cls._queryset_factory_analyze(
+            info, field_ast.selection_set, node=node
+        )
 
         queryset = queryset.select_related(*queryset_factory["select_related"])
         queryset = queryset.only(*queryset_factory["only"])
@@ -214,22 +223,19 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         return queryset
 
     @classmethod
-    def _queryset_factory_analyze(
-        cls, info, selection_set, node=True, suffix=""
-    ):
+    def _queryset_factory_analyze(cls, info, selection_set, node=True, suffix=""):
         def fusion_ret(a, b):
 
-            [a["select_related"].append(x) for x in b["select_related"] if x not in a["select_related"]]
+            [
+                a["select_related"].append(x)
+                for x in b["select_related"]
+                if x not in a["select_related"]
+            ]
             [a["prefetch_related"].append(x) for x in b["prefetch_related"]]
             [a["only"].append(x) for x in b["only"] if x not in a["only"]]
             return a
 
-
-        ret = {
-            "select_related" : [],
-            "only" : ["pk"],
-            "prefetch_related" : []
-        }
+        ret = {"select_related": [], "only": ["pk"], "prefetch_related": []}
 
         if suffix == "":
             new_suffix = ""
@@ -243,15 +249,15 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
             if field_name in model_fields.keys():
                 continue
             if field.resolver is None:
-                resolver = cls.__dict__.get("resolve_" + field_name , None)
+                resolver = cls.__dict__.get("resolve_" + field_name, None)
             else:
                 resolver = field.resolver
-            if resolver is not None and hasattr(resolver, 'have_resolver_hints'):
+            if resolver is not None and hasattr(resolver, "have_resolver_hints"):
                 fields_name_mapper[to_camel_case(field_name)] = field_name
                 computed_field_hints[field_name] = {
-                    "only" : resolver.only,
-                    "select_related" : resolver.select_related,
-                    "prefetch_related": []
+                    "only": resolver.only,
+                    "select_related": resolver.select_related,
+                    "prefetch_related": [],
                 }
 
         for k in model_fields.keys():
@@ -292,7 +298,9 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                     model_field = model_fields[fields_name_mapper[field.name.value]]
                 except KeyError:
                     try:
-                        computed_field = computed_field_hints[fields_name_mapper[field.name.value]]
+                        computed_field = computed_field_hints[
+                            fields_name_mapper[field.name.value]
+                        ]
                     except KeyError:
                         continue
                     ret = fusion_ret(ret, computed_field)
@@ -302,26 +310,35 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                     related_type = get_global_registry().get_type_for_model(
                         model_field.remote_field.model
                     )
-                    if isinstance(model_field, (OneToOneField, OneToOneRel, ForeignKey)):
-                        ret["select_related"].append(new_suffix +  fields_name_mapper[field.name.value])
+                    if isinstance(
+                        model_field, (OneToOneField, OneToOneRel, ForeignKey)
+                    ):
+                        ret["select_related"].append(
+                            new_suffix + fields_name_mapper[field.name.value]
+                        )
                         new_ret = related_type._queryset_factory_analyze(
                             info,
                             field.selection_set,
                             node=False,
-                            suffix = new_suffix + fields_name_mapper[field.name.value],
+                            suffix=new_suffix + fields_name_mapper[field.name.value],
                         )
                         ret = fusion_ret(ret, new_ret)
-                    elif isinstance(model_field, (ManyToManyField, ManyToManyRel, ManyToOneRel)):
+                    elif isinstance(
+                        model_field, (ManyToManyField, ManyToManyRel, ManyToOneRel)
+                    ):
                         ret["prefetch_related"].append(
                             Prefetch(
-                                new_suffix +  fields_name_mapper[field.name.value],
-                                queryset=related_type._queryset_factory(info, field_ast=field, node=True)
+                                new_suffix + fields_name_mapper[field.name.value],
+                                queryset=related_type._queryset_factory(
+                                    info, field_ast=field, node=True
+                                ),
                             )
                         )
 
-
                 else:
-                    ret["only"].append(new_suffix + fields_name_mapper[field.name.value])
+                    ret["only"].append(
+                        new_suffix + fields_name_mapper[field.name.value]
+                    )
         return ret
 
     @classmethod
@@ -378,30 +395,39 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
 
     @classmethod
     def WhereInputType(cls, *args, **kwargs):
-        return convert_model_to_input_type(cls._meta.model, input_flag="where", registry=cls._meta.registry)
+        return convert_model_to_input_type(
+            cls._meta.model, input_flag="where", registry=cls._meta.registry
+        )
 
     @classmethod
     def CreateInputType(cls, *args, **kwargs):
-        return convert_model_to_input_type(cls._meta.model, input_flag="create", registry=cls._meta.registry)
+        return convert_model_to_input_type(
+            cls._meta.model, input_flag="create", registry=cls._meta.registry
+        )
 
     @classmethod
     def UpdateInputType(cls, *args, **kwargs):
-        return convert_model_to_input_type(cls._meta.model, input_flag="update", registry=cls._meta.registry)
-
+        return convert_model_to_input_type(
+            cls._meta.model, input_flag="update", registry=cls._meta.registry
+        )
 
     @classmethod
     def ReadField(cls, *args, **kwargs):
 
         arguments = OrderedDict()
-        arguments.update({
-            "where": graphene.Argument(
-                convert_model_to_input_type(cls._meta.model, input_flag="where", registry=cls._meta.registry),
-                required=True
-            ),
-        })
+        arguments.update(
+            {
+                "where": graphene.Argument(
+                    convert_model_to_input_type(
+                        cls._meta.model, input_flag="where", registry=cls._meta.registry
+                    ),
+                    required=True,
+                ),
+            }
+        )
         return graphene.Field(
             cls,
-            args = arguments,
+            args=arguments,
             resolver=cls.read,
             *args,
             **kwargs,
@@ -412,20 +438,25 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         queryset = cls._queryset_factory(info, field_ast=info.field_asts[0], node=False)
         return queryset.get()
 
-
     @classmethod
     def BatchReadField(cls, *args, **kwargs):
 
         arguments = OrderedDict()
-        arguments.update({
-            "where": graphene.Argument(convert_model_to_input_type(cls._meta.model, input_flag="where", registry=cls._meta.registry)),
-            "limit": graphene.Int(),
-            "offset" : graphene.Int(),
-            "orderBy" : graphene.List(graphene.String)
-        })
+        arguments.update(
+            {
+                "where": graphene.Argument(
+                    convert_model_to_input_type(
+                        cls._meta.model, input_flag="where", registry=cls._meta.registry
+                    )
+                ),
+                "limit": graphene.Int(),
+                "offset": graphene.Int(),
+                "orderBy": graphene.List(graphene.String),
+            }
+        )
         return graphene.Field(
             node_factory_type(cls, registry=cls._meta.registry),
-            args = arguments,
+            args=arguments,
             resolver=cls.batchread,
             *args,
             **kwargs,
@@ -436,25 +467,24 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
 
         if related_field is not None:
             try:
-                queryset =  root.__getattr__(related_field).all()
+                queryset = root.__getattr__(related_field).all()
             except:
-                queryset =  root.__getattribute__(related_field).all()
+                queryset = root.__getattribute__(related_field).all()
         else:
-            queryset = cls._queryset_factory(info, field_ast=info.field_asts[0], fragments=info.fragments, node=True)
+            queryset = cls._queryset_factory(
+                info, field_ast=info.field_asts[0], fragments=info.fragments, node=True
+            )
 
         start = kwargs.get("offset", 0)
         limit = kwargs.get("limit", cls._meta.max_limit)
-        if limit is not  None and cls._meta.max_limit is not None:
+        if limit is not None and cls._meta.max_limit is not None:
             if limit > cls._meta.max_limit:
                 limit = cls._meta.max_limit
         if limit is not None:
             end = start + limit
         else:
             end = None
-        return {
-            'count' : queryset.count(),
-            'data' : queryset[start:end]
-        }
+        return {"count": queryset.count(), "data": queryset[start:end]}
 
     @classmethod
     def mutateItem(cls, root, info, instance, data):
@@ -464,7 +494,9 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 model_field = model_fields[key]
             except KeyError:
                 continue
-            if isinstance(model_field, (OneToOneRel ,ManyToOneRel, ManyToManyField, ManyToManyRel)):
+            if isinstance(
+                model_field, (OneToOneRel, ManyToOneRel, ManyToManyField, ManyToManyRel)
+            ):
                 pass
             elif isinstance(model_field, (ForeignKey, OneToOneField)):
                 related_type = get_global_registry().get_type_for_model(
@@ -472,13 +504,20 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 )
                 if "create" in value.keys():
                     try:
-                        related_instance = related_type.create(root, info, value["create"])
+                        related_instance = related_type.create(
+                            root, info, value["create"]
+                        )
                     except ValidationError as e:
                         raise validation_error_with_suffix(e, key + ".create")
-                    instance.__setattr__(key, related_instance )
+                    instance.__setattr__(key, related_instance)
                 elif "connect" in value.keys():
-                    related_instance = related_type.get_queryset(root, info).filter(apply_where(value["connect"])).distinct().get()
-                    instance.__setattr__(key, related_instance )
+                    related_instance = (
+                        related_type.get_queryset(root, info)
+                        .filter(apply_where(value["connect"]))
+                        .distinct()
+                        .get()
+                    )
+                    instance.__setattr__(key, related_instance)
             else:
                 instance.__setattr__(key, value)
         instance.full_clean()
@@ -494,12 +533,25 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 )
                 if "create" in value.keys():
                     try:
-                        related_type.create(root, info, value["create"], field=model_field.remote_field, parent_instance=instance)
+                        related_type.create(
+                            root,
+                            info,
+                            value["create"],
+                            field=model_field.remote_field,
+                            parent_instance=instance,
+                        )
                     except ValidationError as e:
                         raise validation_error_with_suffix(e, key + ".create")
                 elif "connect" in value.keys():
                     try:
-                        related_type.update(root, info, value["connect"], {}, field=model_field.remote_field, parent_instance=instance)
+                        related_type.update(
+                            root,
+                            info,
+                            value["connect"],
+                            {},
+                            field=model_field.remote_field,
+                            parent_instance=instance,
+                        )
                     except ValidationError as e:
                         raise validation_error_with_suffix(e, key + ".connect")
             elif isinstance(model_field, ManyToOneRel):
@@ -508,19 +560,43 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 )
                 for i, create_input in enumerate(value.get("create", [])):
                     try:
-                        related_type.create(root, info, create_input, field=model_field.remote_field, parent_instance=instance)
+                        related_type.create(
+                            root,
+                            info,
+                            create_input,
+                            field=model_field.remote_field,
+                            parent_instance=instance,
+                        )
                     except ValidationError as e:
                         raise validation_error_with_suffix(e, key + ".create." + str(i))
                 for i, connect_input in enumerate(value.get("connect", [])):
                     try:
-                        related_type.update(root, info, connect_input, {}, field=model_field.remote_field, parent_instance=instance)
+                        related_type.update(
+                            root,
+                            info,
+                            connect_input,
+                            {},
+                            field=model_field.remote_field,
+                            parent_instance=instance,
+                        )
                     except ValidationError as e:
-                        raise validation_error_with_suffix(e, key + ".connect." + str(i))
+                        raise validation_error_with_suffix(
+                            e, key + ".connect." + str(i)
+                        )
                 for i, disconnect_input in enumerate(value.get("disconnect", [])):
                     try:
-                        related_type.update(root, info, disconnect_input, {}, field=model_field.remote_field, parent_instance=None)
+                        related_type.update(
+                            root,
+                            info,
+                            disconnect_input,
+                            {},
+                            field=model_field.remote_field,
+                            parent_instance=None,
+                        )
                     except ValidationError as e:
-                        raise validation_error_with_suffix(e, key + ".disconnect." + str(i))
+                        raise validation_error_with_suffix(
+                            e, key + ".disconnect." + str(i)
+                        )
                 for i, delete_where_input in enumerate(value.get("delete", [])):
                     try:
                         related_type.delete(root, info, delete_where_input)
@@ -536,21 +612,29 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 disconnectItems = []
                 for i, create_input in enumerate(value.get("create", [])):
                     try:
-                        addItems.append( related_type.create(root, info, create_input) )
+                        addItems.append(related_type.create(root, info, create_input))
                     except ValidationError as e:
                         raise validation_error_with_suffix(e, key + ".create." + str(i))
                 for i, connect_input in enumerate(value.get("connect", [])):
                     try:
-                        related_instance = q.filter(apply_where(connect_input)).distinct().get()
+                        related_instance = (
+                            q.filter(apply_where(connect_input)).distinct().get()
+                        )
                         addItems.append(related_instance)
                     except ValidationError as e:
-                        raise validation_error_with_suffix(e, key + ".connect." + str(i))
+                        raise validation_error_with_suffix(
+                            e, key + ".connect." + str(i)
+                        )
                 for i, disconnect_input in enumerate(value.get("disconnect", [])):
                     try:
-                        related_instance = q.filter(apply_where(disconnect_input)).distinct().get()
+                        related_instance = (
+                            q.filter(apply_where(disconnect_input)).distinct().get()
+                        )
                         disconnectItems.append(related_instance)
                     except ValidationError as e:
-                        raise validation_error_with_suffix(e, key + ".disconnect." + str(i))
+                        raise validation_error_with_suffix(
+                            e, key + ".disconnect." + str(i)
+                        )
                 for i, delete_where_input in enumerate(value.get("delete", [])):
                     try:
                         related_type.delete(root, info, delete_where_input)
@@ -565,12 +649,21 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
     def CreateField(cls, *args, **kwargs):
         arguments = OrderedDict()
         arguments.update(
-            {"input": graphene.Argument(convert_model_to_input_type(cls._meta.model, input_flag="create", registry=cls._meta.registry), required=True)}
+            {
+                "input": graphene.Argument(
+                    convert_model_to_input_type(
+                        cls._meta.model,
+                        input_flag="create",
+                        registry=cls._meta.registry,
+                    ),
+                    required=True,
+                )
+            }
         )
 
         return graphene.Field(
             mutation_factory_type(cls, registry=cls._meta.registry),
-            args = arguments,
+            args=arguments,
             resolver=cls.create_resolver,
             *args,
             **kwargs,
@@ -581,18 +674,13 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         try:
             with transaction.atomic():
                 instance = cls.create(root, info, kwargs["input"])
-            return {
-                "result" : instance,
-                "ok" : True,
-                "errors" : []
-            }
+            return {"result": instance, "ok": True, "errors": []}
         except ValidationError as e:
             return {
                 "result": None,
-                "ok" : False,
-                "errors" : error_data_from_validation_error(e)
+                "ok": False,
+                "errors": error_data_from_validation_error(e),
             }
-
 
     @classmethod
     def create(cls, root, info, data, field=None, parent_instance=None):
@@ -610,12 +698,24 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
     @classmethod
     def UpdateField(cls, *args, **kwargs):
         arguments = OrderedDict()
-        arguments.update({
-            "input": graphene.Argument(convert_model_to_input_type(cls._meta.model, input_flag="update", registry=cls._meta.registry), required=True),
-            "where": graphene.Argument(
-                convert_model_to_input_type(cls._meta.model, input_flag="where", registry=cls._meta.registry),
-                required=True),
-        })
+        arguments.update(
+            {
+                "input": graphene.Argument(
+                    convert_model_to_input_type(
+                        cls._meta.model,
+                        input_flag="update",
+                        registry=cls._meta.registry,
+                    ),
+                    required=True,
+                ),
+                "where": graphene.Argument(
+                    convert_model_to_input_type(
+                        cls._meta.model, input_flag="where", registry=cls._meta.registry
+                    ),
+                    required=True,
+                ),
+            }
+        )
 
         return graphene.Field(
             mutation_factory_type(cls, registry=cls._meta.registry),
@@ -630,21 +730,19 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         try:
             with transaction.atomic():
                 instance = cls.update(root, info, kwargs["where"], kwargs["input"])
-            return {
-                "result" : instance,
-                "ok" : True,
-                "error" : []
-            }
+            return {"result": instance, "ok": True, "error": []}
         except ValidationError as e:
             return {
                 "result": None,
-                "ok" : False,
-                "errors" : error_data_from_validation_error(e)
+                "ok": False,
+                "errors": error_data_from_validation_error(e),
             }
 
     @classmethod
     def update(cls, root, info, where, data, field=None, parent_instance=None):
-        instance = cls.get_queryset(root, info).filter(apply_where(where)).distinct().get()
+        instance = (
+            cls.get_queryset(root, info).filter(apply_where(where)).distinct().get()
+        )
         if field is not None:
             instance.__setattr__(field.name, parent_instance)
         cls.before_mutate(root, info, instance, data)
@@ -658,40 +756,42 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
     @classmethod
     def DeleteField(cls, *args, **kwargs):
         arguments = OrderedDict()
-        arguments.update({
-            "where": graphene.Argument(
-                convert_model_to_input_type(cls._meta.model, input_flag="where", registry=cls._meta.registry),
-                required=True
-            ),
-        })
+        arguments.update(
+            {
+                "where": graphene.Argument(
+                    convert_model_to_input_type(
+                        cls._meta.model, input_flag="where", registry=cls._meta.registry
+                    ),
+                    required=True,
+                ),
+            }
+        )
 
         return graphene.Field(
             mutation_factory_type(cls, registry=cls._meta.registry),
             args=arguments,
             resolver=cls.delete_resolver,
             *args,
-            **kwargs
+            **kwargs,
         )
 
     @classmethod
     def delete_resolver(cls, root, info, **kwargs):
         try:
             instance = cls.delete(root, info, kwargs["where"])
-            return {
-                "result" : None,
-                "ok" : True,
-                "error" : []
-            }
+            return {"result": None, "ok": True, "error": []}
         except ValidationError as e:
             return {
                 "result": None,
-                "ok" : False,
-                "errors" : error_data_from_validation_error(e)
+                "ok": False,
+                "errors": error_data_from_validation_error(e),
             }
 
     @classmethod
     def delete(cls, root, info, where):
-        instance = cls.get_queryset(root, info).filter(apply_where(where)).distinct().get()
+        instance = (
+            cls.get_queryset(root, info).filter(apply_where(where)).distinct().get()
+        )
         cls.before_mutate(root, info, instance, {})
         cls.before_delete(root, info, instance, {})
         instance.delete()
@@ -702,9 +802,15 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
     @classmethod
     def CreatedField(cls, *args, **kwargs):
         arguments = OrderedDict()
-        arguments.update({
-            "where": graphene.Argument(convert_model_to_input_type(cls._meta.model, input_flag="where", registry=cls._meta.registry)),
-        })
+        arguments.update(
+            {
+                "where": graphene.Argument(
+                    convert_model_to_input_type(
+                        cls._meta.model, input_flag="where", registry=cls._meta.registry
+                    )
+                ),
+            }
+        )
         return graphene.Field(
             cls.Type,
             args=arguments,
@@ -716,18 +822,31 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
     @classmethod
     def created_resolver(cls, root, info, **kwargs):
         def eventFilter(event):
-            if event.operation == CREATED and isinstance(event.instance, cls._meta.model):
-                return cls.get_queryset(root, info).filter(pk=event.instance.pk).exists()
-        return root.filter(
-            eventFilter
-        ).map(lambda event: cls._instance_to_queryset(info, event.instance, info.field_asts[0]).get())
-        
+            if event.operation == CREATED and isinstance(
+                event.instance, cls._meta.model
+            ):
+                return (
+                    cls.get_queryset(root, info).filter(pk=event.instance.pk).exists()
+                )
+
+        return root.filter(eventFilter).map(
+            lambda event: cls._instance_to_queryset(
+                info, event.instance, info.field_asts[0]
+            ).get()
+        )
+
     @classmethod
     def UpdatedField(cls, *args, **kwargs):
         arguments = OrderedDict()
-        arguments.update({
-            "where": graphene.Argument(convert_model_to_input_type(cls._meta.model, input_flag="where", registry=cls._meta.registry)),
-        })
+        arguments.update(
+            {
+                "where": graphene.Argument(
+                    convert_model_to_input_type(
+                        cls._meta.model, input_flag="where", registry=cls._meta.registry
+                    )
+                ),
+            }
+        )
         return graphene.Field(
             cls.Type,
             args=arguments,
@@ -739,18 +858,34 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
     @classmethod
     def updated_resolver(cls, root, info, **kwargs):
         def eventFilter(event):
-            if event.operation == UPDATED and isinstance(event.instance, cls._meta.model):
-                return cls.get_queryset(root, info).filter(apply_where(kwargs.get("where", {}))).filter(pk=event.instance.pk).exists()
-        return root.filter(
-            eventFilter
-        ).map(lambda event: cls._instance_to_queryset(info, event.instance, info.field_asts[0]).get())
+            if event.operation == UPDATED and isinstance(
+                event.instance, cls._meta.model
+            ):
+                return (
+                    cls.get_queryset(root, info)
+                    .filter(apply_where(kwargs.get("where", {})))
+                    .filter(pk=event.instance.pk)
+                    .exists()
+                )
+
+        return root.filter(eventFilter).map(
+            lambda event: cls._instance_to_queryset(
+                info, event.instance, info.field_asts[0]
+            ).get()
+        )
 
     @classmethod
     def DeletedField(cls, *args, **kwargs):
         arguments = OrderedDict()
-        arguments.update({
-            "where": graphene.Argument(convert_model_to_input_type(cls._meta.model, input_flag="where", registry=cls._meta.registry)),
-        })
+        arguments.update(
+            {
+                "where": graphene.Argument(
+                    convert_model_to_input_type(
+                        cls._meta.model, input_flag="where", registry=cls._meta.registry
+                    )
+                ),
+            }
+        )
         return graphene.Field(
             cls.Type,
             args=arguments,
@@ -761,15 +896,25 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
 
     @classmethod
     def deleted_resolver(cls, root, info, **kwargs):
-        pk_list = [pk for pk in cls.get_queryset(root, info).filter(apply_where(kwargs.get("where", {}))).values_list("pk", flat=True)]
+        pk_list = [
+            pk
+            for pk in cls.get_queryset(root, info)
+            .filter(apply_where(kwargs.get("where", {})))
+            .values_list("pk", flat=True)
+        ]
+
         def eventFilter(event):
             nonlocal pk_list
             ret = False
             if isinstance(event.instance, cls._meta.model):
                 if event.operation == DELETED:
                     ret = event.instance.pk in pk_list
-                pk_list = [pk for pk in cls.get_queryset(root, info).filter(apply_where(kwargs.get("where", {}))).values_list("pk", flat=True)]
+                pk_list = [
+                    pk
+                    for pk in cls.get_queryset(root, info)
+                    .filter(apply_where(kwargs.get("where", {})))
+                    .values_list("pk", flat=True)
+                ]
             return ret
-        return root.filter(
-            eventFilter
-        ).map(lambda event: event.instance)
+
+        return root.filter(eventFilter).map(lambda event: event.instance)

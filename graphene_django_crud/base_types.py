@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 
 import binascii
@@ -13,7 +12,7 @@ from .registry import get_global_registry
 def mutation_factory_type(_type, registry=None, *args, **kwargs):
     if not registry:
         registry = get_global_registry()
-    mutationTypeName =  _type._meta.name.replace("Type","") + "MutationType"
+    mutationTypeName = _type._meta.name.replace("Type", "") + "MutationType"
     mutationType = registry.get_type_for_mutation_type(mutationTypeName)
     if mutationType:
         return mutationType
@@ -21,7 +20,10 @@ def mutation_factory_type(_type, registry=None, *args, **kwargs):
     class MutationGenericType(graphene.ObjectType):
         class Meta:
             name = mutationTypeName
-        ok = graphene.Boolean(description="Boolean field that return mutation result request.")
+
+        ok = graphene.Boolean(
+            description="Boolean field that return mutation result request."
+        )
         errors = graphene.List(ErrorType, description="Errors list for the field")
         result = graphene.Field(_type)
 
@@ -29,10 +31,11 @@ def mutation_factory_type(_type, registry=None, *args, **kwargs):
 
     return MutationGenericType
 
+
 def node_factory_type(_type, registry=None, *args, **kwargs):
     if not registry:
         registry = get_global_registry()
-    nodeTypeName =  _type._meta.name.replace("Type","") + "NodeType"
+    nodeTypeName = _type._meta.name.replace("Type", "") + "NodeType"
     nodeType = registry.get_type_for_node_type(nodeTypeName)
     if nodeType:
         return nodeType
@@ -40,11 +43,13 @@ def node_factory_type(_type, registry=None, *args, **kwargs):
     class NodeGenericType(graphene.ObjectType):
         class Meta:
             name = nodeTypeName
+
         count = graphene.Int()
         data = graphene.List(_type)
 
     registry.register_node_type(nodeTypeName, NodeGenericType)
     return NodeGenericType
+
 
 class Binary(graphene.Scalar):
     """

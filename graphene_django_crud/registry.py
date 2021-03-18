@@ -3,7 +3,6 @@ from graphene.utils.str_converters import to_camel_case
 
 
 class Registry(object):
-
     def __init__(self):
         self._registry = {}
         self._registry_mutation_type = {}
@@ -48,7 +47,6 @@ class Registry(object):
         if not getattr(cls._meta, "skip_registry", False):
             self._registry[cls.__name__] = cls
             self.model_to_type_index[cls._meta.model] = cls
-
 
     def get_type_for_model(self, model, for_input=None):
         return self.model_to_type_index.get(model, None)

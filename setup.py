@@ -1,9 +1,10 @@
 import setuptools
+
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="graphene-django-crud", # Replace with your own username
+    name="graphene-django-crud",  # Replace with your own username
     version="1.1.1",
     author="djipidi",
     author_email="djipidi.dev@gmail.com",
@@ -18,10 +19,10 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     install_requires=[
-        'Django>=2.2',
-        'graphene>=2.1.8,<3',
-        'graphene-django>=2.8.0',
-        'graphene-subscriptions>=1.0'
+        "Django>=2.2",
+        "graphene>=2.1.8,<3",
+        "graphene-django>=2.8.0",
+        "graphene-subscriptions>=1.0",
     ],
-    python_requires='>=3.6',
+    python_requires=">=3.6",
 )

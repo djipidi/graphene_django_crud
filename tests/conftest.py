@@ -26,6 +26,7 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     from django.conf import settings
+
     settings.configure(
         ALLOWED_HOSTS=["*"],
         DEBUG_PROPAGATE_EXCEPTIONS=True,
@@ -65,14 +66,8 @@ def pytest_configure(config):
         GRAPHENE={
             "SCHEMA": "tests.schema.schema",
         },
-        AUTHENTICATION_BACKENDS=(
-            "django.contrib.auth.backends.ModelBackend",
-        ),
-        CHANNEL_LAYERS = {
-            "default": {
-                "BACKEND": "channels.layers.InMemoryChannelLayer"
-            }
-        }
+        AUTHENTICATION_BACKENDS=("django.contrib.auth.backends.ModelBackend",),
+        CHANNEL_LAYERS={"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}},
     )
 
     django.setup()

@@ -18,7 +18,7 @@ from django.db.models import (
     OneToOneRel,
     ForeignKey,
     ManyToManyField,
-    OneToOneField
+    OneToOneField,
 )
 from django.db.models.base import ModelBase
 from graphene.utils.str_converters import to_snake_case
@@ -102,24 +102,23 @@ def get_model_fields(model, only_fields="__all__", exclude_fields=(), to_dict=Fa
     invalid_fields = [field[1] for field in reverse_fields]
 
     local_fields = []
-    for field in all_fields_list: 
+    for field in all_fields_list:
         if field not in invalid_fields:
             if isinstance(field, OneToOneRel):
                 local_fields.append((field.name, field))
             elif isinstance(field, (ManyToManyRel, ManyToOneRel)):
                 if field.related_name == None:
-                    local_fields.append((field.name + '_set', field))
+                    local_fields.append((field.name + "_set", field))
                 else:
                     local_fields.append((field.related_name, field))
 
             else:
                 local_fields.append((field.name, field))
 
-
     all_fields = local_fields + reverse_fields
 
     if settings.DEBUG:
-            all_fields = sorted(all_fields, key=lambda f: f[0])
+        all_fields = sorted(all_fields, key=lambda f: f[0])
     if to_dict:
         fields = {}
     else:
@@ -142,6 +141,7 @@ def get_model_fields(model, only_fields="__all__", exclude_fields=(), to_dict=Fa
                 fields.append((name, field))
     return fields
 
+
 def is_required(field):
     try:
         blank = getattr(field, "blank", getattr(field, "field", None))
@@ -163,6 +163,7 @@ def is_required(field):
 
     return not blank and default == NOT_PROVIDED
 
+
 def get_field_ast_by_path(info, path):
     path = path.copy()
     field_ast = info.field_asts[0]
@@ -172,12 +173,15 @@ def get_field_ast_by_path(info, path):
         for field in iterator:
             if isinstance(field, FragmentSpread):
                 iterator.extend(
-                    [f for f in info.fragments[field.name.value].selection_set.selections]
+                    [
+                        f
+                        for f in info.fragments[
+                            field.name.value
+                        ].selection_set.selections
+                    ]
                 )
             if isinstance(field, InlineFragment):
-                iterator.extend(
-                    [f for f in field.selection_set.selections]
-                )
+                iterator.extend([f for f in field.selection_set.selections])
             if field.name.value == path[0]:
                 field_ast = field
                 del path[0]
@@ -186,6 +190,7 @@ def get_field_ast_by_path(info, path):
         if not found:
             assert False, "not found"
     return field_ast
+
 
 def parse_ast(ast, variable_values={}):
     if isinstance(ast, Variable):
@@ -217,8 +222,9 @@ def parse_ast(ast, variable_values={}):
     else:
         return None
 
+
 def parse_arguments_ast(arguments, variable_values={}):
-    ret={}
+    ret = {}
     for argument in arguments:
         value = parse_ast(argument.value, variable_values=variable_values)
         if value is not None:

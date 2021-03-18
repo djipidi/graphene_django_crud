@@ -9,8 +9,10 @@ from graphene.types import Field, List
 
 from .base_types import node_factory_type
 
+
 def related_batchread(django_type, related_field, root, info, **Kwargs):
     return django_type.batchread(root, info, related_field=related_field, **Kwargs)
+
 
 class DjangoListField(Field):
     def __init__(self, _type, *args, **kwargs):
@@ -18,9 +20,11 @@ class DjangoListField(Field):
         if isinstance(_type, NonNull):
             _type = _type.of_type
         self.django_type = _type
-        
+
         # Django would never return a Set of None  vvvvvvv
-        super(DjangoListField, self).__init__(NonNull(node_factory_type(_type)), *args, **kwargs)
+        super(DjangoListField, self).__init__(
+            NonNull(node_factory_type(_type)), *args, **kwargs
+        )
 
         # assert issubclass(
         #     self._underlying_type, DjangoObjectType
@@ -32,7 +36,6 @@ class DjangoListField(Field):
         while hasattr(_type, "of_type"):
             _type = _type.of_type
         return _type
-
 
     def get_resolver(self, parent_resolver):
 

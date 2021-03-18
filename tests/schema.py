@@ -11,10 +11,7 @@ class UserType(DjangoGrapheneCRUD):
 
     full_name = graphene.String()
 
-
-    @resolver_hints(
-    only=["first_name", "last_name"]
-    )
+    @resolver_hints(only=["first_name", "last_name"])
     @staticmethod
     def resolve_full_name(root, info, **kwargs):
         return root.get_full_name()
@@ -24,20 +21,22 @@ class UserType(DjangoGrapheneCRUD):
         if "password" in data.keys():
             instance.set_password(data.pop("password"))
 
+
 class GroupType(DjangoGrapheneCRUD):
     class Meta:
         model = Group
+
 
 class ModelTestGenerateSchemaAType(DjangoGrapheneCRUD):
     class Meta:
         model = ModelTestGenerateSchemaA
 
+
 class ModelTestGenerateSchemaBType(DjangoGrapheneCRUD):
     class Meta:
         model = ModelTestGenerateSchemaB
-        input_extend_fields = (
-            ("extend", graphene.Int()),
-        )
+        input_extend_fields = (("extend", graphene.Int()),)
+
 
 class ModelTestGenerateSchemaBCustomMutation(graphene.Mutation):
     class Arguments:
@@ -50,10 +49,8 @@ class ModelTestGenerateSchemaBCustomMutation(graphene.Mutation):
 
     def mutate(root, info, where, create, update):
         where_input_to_Q(where)
-        return {
-            "ok" : True,
-            "result" : None
-        }
+        return {"ok": True, "result": None}
+
 
 class PersonType(DjangoGrapheneCRUD):
     class Meta:
@@ -62,39 +59,48 @@ class PersonType(DjangoGrapheneCRUD):
 
 class TestFkAType(DjangoGrapheneCRUD):
     class Meta:
-        model=TestFkA
+        model = TestFkA
+
 
 class TestFkBType(DjangoGrapheneCRUD):
     class Meta:
-        model=TestFkB
+        model = TestFkB
+
 
 class TestFkCType(DjangoGrapheneCRUD):
     class Meta:
-        model=TestFkC
+        model = TestFkC
+
 
 class TestO2oAType(DjangoGrapheneCRUD):
     class Meta:
-        model=TestO2oA
+        model = TestO2oA
+
 
 class TestO2oBType(DjangoGrapheneCRUD):
     class Meta:
-        model=TestO2oB
+        model = TestO2oB
+
 
 class TestO2oCType(DjangoGrapheneCRUD):
     class Meta:
-        model=TestO2oC
+        model = TestO2oC
+
 
 class TestM2mAType(DjangoGrapheneCRUD):
     class Meta:
-        model=TestM2mA
+        model = TestM2mA
+
 
 class TestM2mBType(DjangoGrapheneCRUD):
     class Meta:
-        model=TestM2mB
+        model = TestM2mB
+
 
 class TestM2mCType(DjangoGrapheneCRUD):
     class Meta:
-        model=TestM2mC
+        model = TestM2mC
+
 
 class Query(graphene.ObjectType):
     user = UserType.ReadField()
@@ -102,7 +108,6 @@ class Query(graphene.ObjectType):
 
     group = GroupType.ReadField()
     groups = GroupType.BatchReadField()
-
 
     test_generate_schema_a = ModelTestGenerateSchemaAType.ReadField()
     test_generate_schema_as = ModelTestGenerateSchemaAType.BatchReadField()
@@ -139,6 +144,7 @@ class Query(graphene.ObjectType):
 
     testM2mC = TestM2mCType.ReadField()
     testM2mCs = TestM2mCType.BatchReadField()
+
 
 class Mutation(graphene.ObjectType):
     user_create = UserType.CreateField()
@@ -198,6 +204,7 @@ class Mutation(graphene.ObjectType):
     testM2mC_update = TestM2mCType.UpdateField()
     testM2mC_delete = TestM2mCType.DeleteField()
 
+
 class Subscription(graphene.ObjectType):
     user_created = UserType.CreatedField()
     user_updated = UserType.UpdatedField()
@@ -216,8 +223,4 @@ class Subscription(graphene.ObjectType):
     person_deleted = PersonType.DeletedField()
 
 
-schema = graphene.Schema(
-    query=Query, 
-    mutation=Mutation, 
-    subscription=Subscription
-    )
+schema = graphene.Schema(query=Query, mutation=Mutation, subscription=Subscription)
