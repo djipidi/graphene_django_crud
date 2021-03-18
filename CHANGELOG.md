@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Feature/queryset-optimizer]
+## [Unreleased]
 
 ### Changed
 
@@ -10,9 +10,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Improve sql performance with use only and select_related
-
-## [Unreleased]
+- Improve sql performance with use only, select_related, prefetch_related
 
 ## [1.1.1] - 2021-03-15
 
