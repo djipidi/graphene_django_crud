@@ -3,11 +3,6 @@ import re
 from collections import OrderedDict
 
 from django.conf import settings
-from django.contrib.contenttypes.fields import (
-    GenericForeignKey,
-    GenericRelation,
-    GenericRel,
-)
 from django.db import models
 from django.utils.encoding import force_text
 import graphene
@@ -32,11 +27,7 @@ from graphene.utils.str_converters import to_camel_case, to_const
 from graphene_django.compat import ArrayField, HStoreField, RangeField, JSONField
 from graphene_django.utils import import_single_dispatch
 
-from .base_types import (
-    GenericForeignKeyType,
-    GenericForeignKeyInputType,
-    Binary,
-)
+from .base_types import Binary
 from .fields import DjangoListField
 from .utils import is_required, get_model_fields, get_related_model
 
@@ -447,105 +438,3 @@ def convert_field_to_djangomodel(
         )
 
     return Dynamic(dynamic_type)
-
-
-# @convert_django_field.register(GenericForeignKey)
-# def convert_generic_foreign_key_to_object(
-#     field, registry=None, input_flag=None
-# ):
-#     def dynamic_type():
-#         key = "{}_{}".format(field.name, field.model.__name__.lower())
-#         if input_flag is not None:
-#             key = "{}_{}".format(key, input_flag)
-
-#         key = to_camel_case(key)
-#         model = field.model
-#         ct_field = None
-#         fk_field = None
-#         required = False
-#         for f in get_model_fields(model):
-#             if f[0] == field.ct_field:
-#                 ct_field = f[1]
-#             elif f[0] == field.fk_field:
-#                 fk_field = f[1]
-#             if fk_field is not None and ct_field is not None:
-#                 break
-
-#         if ct_field is not None and fk_field is not None:
-#             required = (is_required(ct_field) and is_required(fk_field)) or required
-
-#         if input_flag:
-#             return GenericForeignKeyInputType(
-#                 description="Input Type for a GenericForeignKey field",
-#                 required=required and input_flag == "create",
-#             )
-
-#         _type = registry.get_type_for_enum(key)
-#         if not _type:
-#             _type = GenericForeignKeyType
-
-#         # return Field(_type, description=field.help_text or field.verbose_name, required=field.null)
-#         return Field(
-#             _type,
-#             description="Type for a GenericForeignKey field",
-#             required=required and input_flag == "create",
-#         )
-
-#     return Dynamic(dynamic_type)
-
-
-# @convert_django_field.register(GenericRelation)
-# def convert_generic_relation_to_object_list(
-#     field, registry=None, input_flag=None
-# ):
-#     model = field.related_model
-
-#     def dynamic_type():
-#         if input_flag:
-#             return
-
-#         _type = registry.get_type_for_model(model)
-#         if not _type:
-#             return
-#         return DjangoListField(_type)
-
-#     return Dynamic(dynamic_type)
-
-
-# @convert_django_field.register(ArrayField)
-# def convert_postgres_array_to_list(
-#     field, registry=None, input_flag=None
-# ):
-#     base_type = convert_django_field(field.base_field)
-#     if not isinstance(base_type, (List, NonNull)):
-#         base_type = type(base_type)
-#     return List(
-#         base_type,
-#         description=field.help_text or field.verbose_name,
-#         required=is_required(field) and input_flag == "create",
-#     )
-
-
-# @convert_django_field.register(HStoreField)
-# @convert_django_field.register(JSONField)
-# def convert_postgres_field_to_string(
-#     field, registry=None, input_flag=None
-# ):
-#     return JSONString(
-#         description=field.help_text or field.verbose_name,
-#         required=is_required(field) and input_flag == "create",
-#     )
-
-
-# @convert_django_field.register(RangeField)
-# def convert_postgres_range_to_string(
-#     field, registry=None, input_flag=None
-# ):
-#     inner_type = convert_django_field(field.base_field)
-#     if not isinstance(inner_type, (List, NonNull)):
-#         inner_type = type(inner_type)
-#     return List(
-#         inner_type,
-#         description=field.help_text or field.verbose_name,
-#         required=is_required(field) and input_flag == "create",
-#     )

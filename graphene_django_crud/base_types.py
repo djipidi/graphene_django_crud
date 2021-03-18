@@ -46,37 +46,6 @@ def node_factory_type(_type, registry=None, *args, **kwargs):
     registry.register_node_type(nodeTypeName, NodeGenericType)
     return NodeGenericType
 
-def GenericForeignKeyTypeResolver(attr_name, root, instance, info):
-    if attr_name == "app_label":
-        return instance._meta.app_label
-    elif attr_name == "id":
-        return instance.id
-    elif attr_name == "model_name":
-        return instance._meta.model.__name__
-
-
-class GenericForeignKeyType(graphene.ObjectType):
-    app_label = graphene.String()
-    id = graphene.ID()
-    model_name = graphene.String()
-
-    class Meta:
-        description = " Auto generated Type for a model's GenericForeignKey field "
-        default_resolver = GenericForeignKeyTypeResolver
-
-
-class GenericForeignKeyInputType(graphene.InputObjectType):
-    app_label = graphene.Argument(graphene.String, required=True)
-    id = graphene.Argument(graphene.ID, required=True)
-    model_name = graphene.Argument(graphene.String, required=True)
-
-    class Meta:
-        description = " Auto generated InputType for a model's GenericForeignKey field "
-
-
-# ************************************************ #
-# ************** CUSTOM BASE TYPES *************** #
-# ************************************************ #
 class Binary(graphene.Scalar):
     """
     BinaryArray is used to convert a Django BinaryField to the string form
