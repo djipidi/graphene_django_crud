@@ -40,23 +40,9 @@ NAME_PATTERN = r"^[_a-zA-Z][_a-zA-Z0-9]*$"
 COMPILED_NAME_PATTERN = re.compile(NAME_PATTERN)
 
 
-def convert_model_to_input_type(model, input_flag="create", registry=None):
-
-    input_type_name = "{}_{}_input".format(model.__name__, input_flag.capitalize())
-    input_type_name = to_camel_case(input_type_name)
-    input_type = registry.get_type_for_input(input_type_name)
-    if input_type:
-        return input_type
-
-    def embeded_list_fields():
-        return graphene.List(
-            convert_model_to_input_type(model, input_flag="where", registry=registry)
-        )
-
-    def embeded_field():
-        return graphene.Field(
-            convert_model_to_input_type(model, input_flag="where", registry=registry)
-        )
+def convert_model_to_input_type(
+    model, input_flag="create", registry=None, exclude=None, only=None
+):
 
     djangoType = registry.get_type_for_model(model)
     if "create" in input_flag or "update" in input_flag:
@@ -70,6 +56,33 @@ def convert_model_to_input_type(model, input_flag="create", registry=None):
             model,
             only_fields=djangoType._meta.only_fields,
             exclude_fields=djangoType._meta.exclude_fields,
+        )
+    without = ""
+    if exclude is not None or only is not None:
+        assert not (
+            exclude is not None and only is not None
+        ), "Only one of only or exclude parameter can be declared"
+        if only is not None:
+            exclude_fields = [name for name, field in model_fields if name not in only]
+        elif exclude is not None:
+            exclude_fields = [name for name, field in model_fields if name in exclude]
+        exclude_fields.sort()
+        without = "without_" + "_".join(exclude_fields) + "_"
+
+    input_type_name = "{}_{}_{}input".format(model.__name__, input_flag, without)
+    input_type_name = to_camel_case(input_type_name)
+    input_type = registry.get_type_for_input(input_type_name)
+    if input_type:
+        return input_type
+
+    def embeded_list_fields():
+        return graphene.List(
+            convert_model_to_input_type(model, input_flag="where", registry=registry)
+        )
+
+    def embeded_field():
+        return graphene.Field(
+            convert_model_to_input_type(model, input_flag="where", registry=registry)
         )
 
     items = OrderedDict()
@@ -378,13 +391,19 @@ def convert_onetoone_field_to_djangomodel(field, registry=None, input_flag=None)
             elif input_flag == "create":
                 return graphene.Field(
                     convert_model_to_input_type(
-                        model, input_flag="create_nested", registry=registry
+                        model,
+                        input_flag="create_nested",
+                        registry=registry,
+                        exclude=[field.remote_field.name],
                     )
                 )
             elif input_flag == "update":
                 return graphene.Field(
                     convert_model_to_input_type(
-                        model, input_flag="update_nested", registry=registry
+                        model,
+                        input_flag="update_nested",
+                        registry=registry,
+                        exclude=[field.remote_field.name],
                     )
                 )
 
@@ -393,10 +412,65 @@ def convert_onetoone_field_to_djangomodel(field, registry=None, input_flag=None)
     return Dynamic(dynamic_type)
 
 
-@convert_django_field.register(models.ManyToManyRel)
 @convert_django_field.register(models.ManyToOneRel)
+def convert_many_to_one_to_djangomodel(field, registry=None, input_flag=None):
+    model = field.related_model
+
+    def dynamic_type():
+        _type = registry.get_type_for_model(model)
+        if not _type:
+            return
+
+        if input_flag:
+            # return DjangoListField(ID)
+            if input_flag == "where":
+                return graphene.Field(
+                    convert_model_to_input_type(
+                        model, input_flag="where", registry=registry
+                    )
+                )
+            elif input_flag == "create":
+                return graphene.Field(
+                    convert_model_to_input_type(
+                        model,
+                        input_flag="create_nested_many",
+                        registry=registry,
+                        exclude=[field.remote_field.name],
+                    )
+                )
+            elif input_flag == "update":
+                return graphene.Field(
+                    convert_model_to_input_type(
+                        model,
+                        input_flag="update_nested_many",
+                        registry=registry,
+                        exclude=[field.remote_field.name],
+                    )
+                )
+        else:
+            args = OrderedDict()
+            args.update(
+                {
+                    "where": graphene.Argument(
+                        convert_model_to_input_type(
+                            model, input_flag="where", registry=registry
+                        )
+                    ),
+                    "limit": graphene.Int(),
+                    "offset": graphene.Int(),
+                    "orderBy": graphene.List(graphene.String),
+                }
+            )
+            return DjangoListField(
+                _type, required=is_required(field) and input_flag == "create", args=args
+            )
+
+    return Dynamic(dynamic_type)
+
+
+@convert_django_field.register(models.ManyToManyRel)
 @convert_django_field.register(models.ManyToManyField)
-def convert_many_rel_to_djangomodel(field, registry=None, input_flag=None):
+def convert_many_to_many_to_djangomodel(field, registry=None, input_flag=None):
     model = field.related_model
 
     def dynamic_type():
@@ -446,8 +520,7 @@ def convert_many_rel_to_djangomodel(field, registry=None, input_flag=None):
 
 
 @convert_django_field.register(models.OneToOneField)
-@convert_django_field.register(models.ForeignKey)
-def convert_field_to_djangomodel(field, registry=None, input_flag=None):
+def convert_ForeignKey_field_to_djangomodel(field, registry=None, input_flag=None):
     model = get_related_model(field)
 
     def dynamic_type():
@@ -467,10 +540,53 @@ def convert_field_to_djangomodel(field, registry=None, input_flag=None):
                         model, input_flag="where", registry=registry
                     )
                 )
-            elif input_flag == "where_unique":
+            elif input_flag == "create":
                 return graphene.Field(
                     convert_model_to_input_type(
-                        model, input_flag="where_unique", registry=registry
+                        model,
+                        input_flag="create_nested",
+                        registry=registry,
+                        exclude=[field.remote_field.name],
+                    )
+                )
+            elif input_flag == "update":
+                return graphene.Field(
+                    convert_model_to_input_type(
+                        model,
+                        input_flag="update_nested",
+                        registry=registry,
+                        exclude=[field.remote_field.name],
+                    )
+                )
+
+        return Field(
+            _type,
+            description=field.help_text or field.verbose_name,
+            required=is_required(field) and input_flag == "create",
+        )
+
+    return Dynamic(dynamic_type)
+
+
+@convert_django_field.register(models.ForeignKey)
+def convert_ForeignKey_field_to_djangomodel(field, registry=None, input_flag=None):
+    model = get_related_model(field)
+
+    def dynamic_type():
+
+        _type = registry.get_type_for_model(model, for_input=input_flag)
+        if not _type:
+            return
+        # Avoid create field for auto generate OneToOneField product of an inheritance
+        if isinstance(field, models.OneToOneField) and issubclass(
+            field.model, field.related_model
+        ):
+            return
+        if input_flag:
+            if input_flag == "where":
+                return graphene.Field(
+                    convert_model_to_input_type(
+                        model, input_flag="where", registry=registry
                     )
                 )
             elif input_flag == "create":
