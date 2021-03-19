@@ -43,6 +43,24 @@ class ModelTestGenerateSchemaBCustomMutation(graphene.Mutation):
         where = graphene.Argument(ModelTestGenerateSchemaBType.WhereInputType())
         create = graphene.Argument(ModelTestGenerateSchemaBType.CreateInputType())
         update = graphene.Argument(ModelTestGenerateSchemaBType.UpdateInputType())
+        where_only = graphene.Argument(
+            ModelTestGenerateSchemaBType.CreateInputType(only=("foreign_key_field",))
+        )
+        where_exclude = graphene.Argument(
+            ModelTestGenerateSchemaBType.CreateInputType(exclude=("foreign_key_field",))
+        )
+        create_only = graphene.Argument(
+            ModelTestGenerateSchemaBType.CreateInputType(only=("foreign_key_field",))
+        )
+        create_exclude = graphene.Argument(
+            ModelTestGenerateSchemaBType.CreateInputType(exclude=("foreign_key_field",))
+        )
+        update_only = graphene.Argument(
+            ModelTestGenerateSchemaBType.CreateInputType(only=("foreign_key_field",))
+        )
+        update_exclude = graphene.Argument(
+            ModelTestGenerateSchemaBType.CreateInputType(exclude=("foreign_key_field",))
+        )
 
     ok = graphene.Boolean()
     result = graphene.Field(ModelTestGenerateSchemaBType)

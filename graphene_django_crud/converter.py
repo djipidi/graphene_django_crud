@@ -66,6 +66,9 @@ def convert_model_to_input_type(
             exclude_fields = [name for name, field in model_fields if name not in only]
         elif exclude is not None:
             exclude_fields = [name for name, field in model_fields if name in exclude]
+        model_fields = [
+            (name, field) for name, field in model_fields if name not in exclude_fields
+        ]
         exclude_fields.sort()
         without = "without_" + "_".join(exclude_fields) + "_"
 
