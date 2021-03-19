@@ -394,21 +394,33 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         return cls
 
     @classmethod
-    def WhereInputType(cls, *args, **kwargs):
+    def WhereInputType(cls, only=None, exclude=None, *args, **kwargs):
         return convert_model_to_input_type(
-            cls._meta.model, input_flag="where", registry=cls._meta.registry
+            cls._meta.model,
+            input_flag="where",
+            registry=cls._meta.registry,
+            only=only,
+            exclude=exclude,
         )
 
     @classmethod
-    def CreateInputType(cls, *args, **kwargs):
+    def CreateInputType(cls, only=None, exclude=None, *args, **kwargs):
         return convert_model_to_input_type(
-            cls._meta.model, input_flag="create", registry=cls._meta.registry
+            cls._meta.model,
+            input_flag="create",
+            registry=cls._meta.registry,
+            only=only,
+            exclude=exclude,
         )
 
     @classmethod
-    def UpdateInputType(cls, *args, **kwargs):
+    def UpdateInputType(cls, only=None, exclude=None, *args, **kwargs):
         return convert_model_to_input_type(
-            cls._meta.model, input_flag="update", registry=cls._meta.registry
+            cls._meta.model,
+            input_flag="update",
+            registry=cls._meta.registry,
+            only=only,
+            exclude=exclude,
         )
 
     @classmethod
