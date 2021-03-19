@@ -433,6 +433,8 @@ The GrapheneDjangoCrud class contains configurable operation publishers that you
 
 for mutating, relation fields may be connected with an existing record or a sub-create may be inlined (generally referred to as nested mutations). If the relation is a List then multiple connections or sub-creates are permitted.
 
+Inlined mutations are very similar to top-level ones but have the important difference that the sub-create has excluded the field where supplying its relation to the type of parent Object being created would normally be. This is because a sub-create forces its record to relate to the parent one.
+
 #### ReadField
 Query field to allow clients to find one particular record at time of the respective model.
 
