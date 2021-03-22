@@ -105,6 +105,15 @@ def apply_where(where):
 
     return Q(**get_args(where)) & OR & AND & NOT
 
+def apply_order_by(order_by):
+        args = []
+        for rule in order_by:
+            for path in get_paths(rule):
+                v = nested_get(rule, path)
+                if not isinstance(v, dict):
+                    prefix = "-" if v == "DESC" else ""
+                    args.append(prefix +  "__".join(path))
+        return args
 
 class ClassProperty(property):
     def __get__(self, cls, owner):
@@ -218,7 +227,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         queryset = queryset.prefetch_related(*queryset_factory["prefetch_related"])
         queryset = queryset.filter(apply_where(arguments.get("where", {})))
         if "orderBy" in arguments.keys():
-            queryset = queryset.order_by(*arguments.get("orderBy", []))
+            queryset = queryset.order_by(*apply_order_by(arguments.get("orderBy", [])))
         queryset = queryset.distinct()
         return queryset
 
@@ -463,7 +472,11 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 ),
                 "limit": graphene.Int(),
                 "offset": graphene.Int(),
-                "orderBy": graphene.List(graphene.String),
+                "orderBy": graphene.List(
+                    convert_model_to_input_type(
+                        cls._meta.model, input_flag="order_by", registry=cls._meta.registry
+                    )
+                ),
             }
         )
         return graphene.Field(

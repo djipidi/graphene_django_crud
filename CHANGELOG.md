@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 - Need to use the resolver_hints decorator for the creation of computed fields
 - Remove related_field in createNestedInput and updateNestedInput for ManyToOneRel, OnetoOneField and OnetoOneRel fields
+- Normalise oderByInput with the other inputs
 
 ### Added
 

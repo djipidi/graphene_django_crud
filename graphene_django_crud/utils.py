@@ -35,6 +35,7 @@ from graphql.language.ast import (
     ListValue,
     ObjectValue,
     StringValue,
+    EnumValue,
 )
 from django.conf import settings
 
@@ -205,10 +206,12 @@ def parse_ast(ast, variable_values={}):
             return num
     elif isinstance(ast, FloatValue):
         return float(ast.value)
+    elif isinstance(ast, EnumValue):
+        return ast.value
     elif isinstance(ast, ListValue):
         ret = []
         for ast_value in ast.values:
-            value = parse_ast(value, variable_values=variable_values)
+            value = parse_ast(ast_value, variable_values=variable_values)
             if value is not None:
                 ret.append(value)
         return ret

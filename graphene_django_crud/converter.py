@@ -27,7 +27,7 @@ from graphene.utils.str_converters import to_camel_case, to_const
 from graphene_django.compat import ArrayField, HStoreField, RangeField, JSONField
 from graphene_django.utils import import_single_dispatch
 
-from .base_types import Binary
+from .base_types import Binary, OrderEnum
 from .fields import DjangoListField
 from .utils import is_required, get_model_fields, get_related_model
 
@@ -264,6 +264,8 @@ def convert_django_field(field, registry=None, input_flag=None):
 @convert_django_field.register(models.GenericIPAddressField)
 @convert_django_field.register(models.FileField)
 def convert_field_to_string(field, registry=None, input_flag=None):
+    if input_flag == "order_by":
+        return OrderEnum()
     if input_flag == "where":
         return StringFilter()
     return String(
@@ -274,7 +276,8 @@ def convert_field_to_string(field, registry=None, input_flag=None):
 
 @convert_django_field.register(models.AutoField)
 def convert_field_to_id(field, registry=None, input_flag=None):
-
+    if input_flag == "order_by":
+        return OrderEnum()
     if input_flag:
         if input_flag == "where":
             return IntFilter()
@@ -289,6 +292,8 @@ def convert_field_to_id(field, registry=None, input_flag=None):
 
 @convert_django_field.register(models.UUIDField)
 def convert_field_to_uuid(field, registry=None, input_flag=None):
+    if input_flag == "order_by":
+        return OrderEnum()
     return UUID(
         description=field.help_text or field.verbose_name,
         required=is_required(field) and input_flag == "create",
@@ -301,6 +306,8 @@ def convert_field_to_uuid(field, registry=None, input_flag=None):
 @convert_django_field.register(models.BigIntegerField)
 @convert_django_field.register(models.IntegerField)
 def convert_field_to_int(field, registry=None, input_flag=None):
+    if input_flag == "order_by":
+        return OrderEnum()
     if input_flag == "where":
         return IntFilter()
     return Int(
@@ -311,6 +318,8 @@ def convert_field_to_int(field, registry=None, input_flag=None):
 
 @convert_django_field.register(models.BooleanField)
 def convert_field_to_boolean(field, registry=None, input_flag=None):
+    if input_flag == "order_by":
+        return OrderEnum()
     required = is_required(field) and input_flag == "create"
     if required:
         return NonNull(Boolean, description=field.help_text or field.verbose_name)
@@ -319,6 +328,8 @@ def convert_field_to_boolean(field, registry=None, input_flag=None):
 
 @convert_django_field.register(models.NullBooleanField)
 def convert_field_to_nullboolean(field, registry=None, input_flag=None):
+    if input_flag == "order_by":
+        return OrderEnum()
     return Boolean(
         description=field.help_text or field.verbose_name,
         required=is_required(field) and input_flag == "create",
@@ -327,6 +338,8 @@ def convert_field_to_nullboolean(field, registry=None, input_flag=None):
 
 @convert_django_field.register(models.BinaryField)
 def convert_binary_to_string(field, registry=None, input_flag=None):
+    if input_flag == "order_by":
+        return OrderEnum()
     return Binary(
         description=field.help_text or field.verbose_name,
         required=is_required(field) and input_flag == "create",
@@ -337,6 +350,8 @@ def convert_binary_to_string(field, registry=None, input_flag=None):
 @convert_django_field.register(models.FloatField)
 @convert_django_field.register(models.DurationField)
 def convert_field_to_float(field, registry=None, input_flag=None):
+    if input_flag == "order_by":
+        return OrderEnum()
     if input_flag == "where":
         return FloatFilter()
     return Float(
@@ -347,6 +362,8 @@ def convert_field_to_float(field, registry=None, input_flag=None):
 
 @convert_django_field.register(models.DateField)
 def convert_date_to_string(field, registry=None, input_flag=None):
+    if input_flag == "order_by":
+        return OrderEnum()
     if input_flag == "where":
         return DateFilter()
     return Date(
@@ -357,6 +374,8 @@ def convert_date_to_string(field, registry=None, input_flag=None):
 
 @convert_django_field.register(models.DateTimeField)
 def convert_datetime_to_string(field, registry=None, input_flag=None):
+    if input_flag == "order_by":
+        return OrderEnum()
     if input_flag == "where":
         return DateTimeFilter()
     return DateTime(
@@ -367,6 +386,8 @@ def convert_datetime_to_string(field, registry=None, input_flag=None):
 
 @convert_django_field.register(models.TimeField)
 def convert_time_to_string(field, registry=None, input_flag=None):
+    if input_flag == "order_by":
+        return OrderEnum()
     if input_flag == "where":
         return TimeFilter()
     return Time(
@@ -377,6 +398,8 @@ def convert_time_to_string(field, registry=None, input_flag=None):
 
 @convert_django_field.register(models.OneToOneRel)
 def convert_onetoone_field_to_djangomodel(field, registry=None, input_flag=None):
+    if input_flag == "order_by":
+        return OrderEnum()
     model = field.related_model
 
     def dynamic_type():
@@ -385,7 +408,13 @@ def convert_onetoone_field_to_djangomodel(field, registry=None, input_flag=None)
             return
 
         if input_flag:
-            if input_flag == "where":
+            if input_flag == "order_by":
+                return graphene.Field(
+                        convert_model_to_input_type(
+                            model, input_flag="order_by", registry=registry
+                        )
+                    )
+            elif input_flag == "where":
                 return graphene.Field(
                     convert_model_to_input_type(
                         model, input_flag="where", registry=registry
@@ -426,7 +455,13 @@ def convert_many_to_one_to_djangomodel(field, registry=None, input_flag=None):
 
         if input_flag:
             # return DjangoListField(ID)
-            if input_flag == "where":
+            if input_flag == "order_by":
+                return graphene.Field(
+                        convert_model_to_input_type(
+                            model, input_flag="order_by", registry=registry
+                        )
+                    )
+            elif input_flag == "where":
                 return graphene.Field(
                     convert_model_to_input_type(
                         model, input_flag="where", registry=registry
@@ -461,7 +496,11 @@ def convert_many_to_one_to_djangomodel(field, registry=None, input_flag=None):
                     ),
                     "limit": graphene.Int(),
                     "offset": graphene.Int(),
-                    "orderBy": graphene.List(graphene.String),
+                    "order_by": graphene.List(
+                        convert_model_to_input_type(
+                            model, input_flag="order_by", registry=registry
+                        )
+                    ),
                 }
             )
             return DjangoListField(
@@ -483,7 +522,13 @@ def convert_many_to_many_to_djangomodel(field, registry=None, input_flag=None):
 
         if input_flag:
             # return DjangoListField(ID)
-            if input_flag == "where":
+            if input_flag == "order_by":
+                return graphene.Field(
+                        convert_model_to_input_type(
+                            model, input_flag="order_by", registry=registry
+                        )
+                    )
+            elif input_flag == "where":
                 return graphene.Field(
                     convert_model_to_input_type(
                         model, input_flag="where", registry=registry
@@ -512,7 +557,11 @@ def convert_many_to_many_to_djangomodel(field, registry=None, input_flag=None):
                     ),
                     "limit": graphene.Int(),
                     "offset": graphene.Int(),
-                    "orderBy": graphene.List(graphene.String),
+                    "order_by": graphene.List(
+                        convert_model_to_input_type(
+                            model, input_flag="order_by", registry=registry
+                        )
+                    ),
                 }
             )
             return DjangoListField(
@@ -527,7 +576,6 @@ def convert_ForeignKey_field_to_djangomodel(field, registry=None, input_flag=Non
     model = get_related_model(field)
 
     def dynamic_type():
-
         _type = registry.get_type_for_model(model, for_input=input_flag)
         if not _type:
             return
@@ -537,7 +585,14 @@ def convert_ForeignKey_field_to_djangomodel(field, registry=None, input_flag=Non
         ):
             return
         if input_flag:
-            if input_flag == "where":
+            if input_flag == "order_by":
+                return graphene.Field(
+                        convert_model_to_input_type(
+                            model, input_flag="order_by", registry=registry
+                        )
+                    )
+
+            elif input_flag == "where":
                 return graphene.Field(
                     convert_model_to_input_type(
                         model, input_flag="where", registry=registry
@@ -586,7 +641,13 @@ def convert_ForeignKey_field_to_djangomodel(field, registry=None, input_flag=Non
         ):
             return
         if input_flag:
-            if input_flag == "where":
+            if input_flag == "order_by":
+                return graphene.Field(
+                        convert_model_to_input_type(
+                            model, input_flag="order_by", registry=registry
+                        )
+                    )
+            elif input_flag == "where":
                 return graphene.Field(
                     convert_model_to_input_type(
                         model, input_flag="where", registry=registry
