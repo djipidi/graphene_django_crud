@@ -12,6 +12,7 @@ from .utils import (
     get_model_fields,
     parse_arguments_ast,
     get_field_ast_by_path,
+    resolve_arguments,
 )
 from .base_types import mutation_factory_type, node_factory_type
 
@@ -105,15 +106,17 @@ def apply_where(where):
 
     return Q(**get_args(where)) & OR & AND & NOT
 
+
 def apply_order_by(order_by):
-        args = []
-        for rule in order_by:
-            for path in get_paths(rule):
-                v = nested_get(rule, path)
-                if not isinstance(v, dict):
-                    prefix = "-" if v == "DESC" else ""
-                    args.append(prefix +  "__".join(path))
-        return args
+    args = []
+    for rule in order_by:
+        for path in get_paths(rule):
+            v = nested_get(rule, path)
+            if not isinstance(v, dict):
+                prefix = "-" if v == "DESC" else ""
+                args.append(prefix + "__".join(path))
+    return args
+
 
 class ClassProperty(property):
     def __get__(self, cls, owner):
@@ -221,13 +224,18 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         queryset_factory = cls._queryset_factory_analyze(
             info, field_ast.selection_set, node=node
         )
-
         queryset = queryset.select_related(*queryset_factory["select_related"])
         queryset = queryset.only(*queryset_factory["only"])
         queryset = queryset.prefetch_related(*queryset_factory["prefetch_related"])
-        queryset = queryset.filter(apply_where(arguments.get("where", {})))
-        if "orderBy" in arguments.keys():
-            queryset = queryset.order_by(*apply_order_by(arguments.get("orderBy", [])))
+        if "where" in arguments.keys():
+            where = resolve_arguments(cls.WhereInputType(), arguments.get("where", {}))
+            queryset = queryset.filter(apply_where(where))
+        if "orderBy" in arguments.keys() or "order_by" in arguments.keys():
+            order_by = arguments.get("orderBy", [])
+            if isinstance(order_by, dict):
+                order_by = [order_by]
+            order_by = resolve_arguments(cls.OrderByInputType(), order_by)
+            queryset = queryset.order_by(*apply_order_by(order_by))
         queryset = queryset.distinct()
         return queryset
 
@@ -413,6 +421,16 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         )
 
     @classmethod
+    def OrderByInputType(cls, only=None, exclude=None, *args, **kwargs):
+        return convert_model_to_input_type(
+            cls._meta.model,
+            input_flag="order_by",
+            registry=cls._meta.registry,
+            only=only,
+            exclude=exclude,
+        )
+
+    @classmethod
     def CreateInputType(cls, only=None, exclude=None, *args, **kwargs):
         return convert_model_to_input_type(
             cls._meta.model,
@@ -474,7 +492,9 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 "offset": graphene.Int(),
                 "orderBy": graphene.List(
                     convert_model_to_input_type(
-                        cls._meta.model, input_flag="order_by", registry=cls._meta.registry
+                        cls._meta.model,
+                        input_flag="order_by",
+                        registry=cls._meta.registry,
                     )
                 ),
             }

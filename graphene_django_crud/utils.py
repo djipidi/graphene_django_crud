@@ -21,9 +21,10 @@ from django.db.models import (
     OneToOneField,
 )
 from django.db.models.base import ModelBase
-from graphene.utils.str_converters import to_snake_case
+from graphene.utils.str_converters import to_snake_case, to_camel_case
 from graphene_django.utils import is_valid_django_model
 from graphene.types.scalars import MAX_INT, MIN_INT
+from graphene import Dynamic
 from graphql import GraphQLList, GraphQLNonNull
 from graphql.language.ast import (
     FragmentSpread,
@@ -163,6 +164,33 @@ def is_required(field):
         return False
 
     return not blank and default == NOT_PROVIDED
+
+
+def get_input_type_field(input_type, gql_name):
+    fields = input_type._meta.fields
+    for name, field in fields.items():
+        if to_camel_case(gql_name) == to_camel_case(name):
+            return name, field
+
+
+def resolve_arguments(input_type, arguments):
+    if isinstance(arguments, list):
+        ret = []
+        for arg in arguments:
+            ret.append(resolve_arguments(input_type, arg))
+    else:
+        ret = {}
+        for gql_name, value in arguments.items():
+            name, field = get_input_type_field(input_type, gql_name)
+            if isinstance(field, Dynamic):
+                field_type = field.get_type().type
+            else:
+                field_type = field.type
+            if isinstance(value, dict):
+                ret[name] = resolve_arguments(field_type, value)
+            else:
+                ret[name] = value
+    return ret
 
 
 def get_field_ast_by_path(info, path):
