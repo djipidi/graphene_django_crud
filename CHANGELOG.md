@@ -2,27 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## \[Unreleased\]
 
 ### Changed
 
 - Need to use the resolver_hints decorator for the creation of computed fields
-- Remove related_field in createNestedInput and updateNestedInput for ManyToOneRel, OnetoOneField and OnetoOneRel fields
+- Remove related_field in createNestedInput and updateNestedInput for
+  ManyToOneRel, OnetoOneField and OnetoOneRel fields
 - Normalise oderByInput with the other inputs
 
 ### Added
 
 - Improve sql performance with use only, select_related, prefetch_related
 
-## [1.1.1] - 2021-03-15
+## \[1.1.1\] - 2021-03-15
 
 ### Fixed
 
-- FIX mutation errors are used by all exceptions without processing error messages, now only ValidationError with message processing
+- FIX mutation errors are used by all exceptions without processing error
+  messages, now only ValidationError with message processing
 - FIX a complex query can return several same instance
 - FIX the createdField does not apply where input
 
-## [1.1.0] - 2021-02-24
+## \[1.1.0\] - 2021-02-24
 
 ### Changed
 
@@ -32,7 +34,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Add django dependency to version >= 2.2
-- Add getters 'WhereInputType', 'CreateInputType', UpdateInputType from 'GrapheneDjangoCrud' object
+- Add getters 'WhereInputType', 'CreateInputType', UpdateInputType from
+  'GrapheneDjangoCrud' object
 - Add possibility to extend the create and update input fields
 - Add max_limit meta parameter for limit batchread request
 
@@ -40,7 +43,7 @@ All notable changes to this project will be documented in this file.
 
 - Improve the stability of the relationship mutations
 
-## [1.0.3] - 2021-02-04
+## \[1.0.3\] - 2021-02-04
 
 ### Changed
 
@@ -58,15 +61,18 @@ All notable changes to this project will be documented in this file.
 - FIX error in mutation resolver with foreignKeyField not null
 - FIX "InputTypeFilter" of FloatField, Datefield and TimeField is not generated
 
-## [1.0.2] - 2021-01-20
+## \[1.0.2\] - 2021-01-20
 
 ### Fixed
 
 - FIX do not apply the default ordering in batchread query
-- FIX do not apply the filter of the get_queryset method in the nested batchread query
+- FIX do not apply the filter of the get_queryset method in the nested batchread
+  query
 - FIX "where" argument of ReadField is not required
 
-## [1.0.1] - 2021-01-12
+## \[1.0.1\] - 2021-01-12
 
 ### Added
-- GrapheneDjangoCrud class to transform django model to graphene type with crud field
+
+- GrapheneDjangoCrud class to transform django model to graphene type with crud
+  field
