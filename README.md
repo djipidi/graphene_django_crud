@@ -26,6 +26,7 @@ turns the django orm into a graphql API.
     - [DeletedField](#DeletedField)
   - [Input Types](#Input-Types)
     - [WhereInputType](#WhereInputType)
+    - [OrderByInputType](#OrderByInputType)
     - [CreateInputType](#CreateInputType)
     - [UpdateInputType](#UpdateInputType)
   - [overload methods](#overload-methods)
@@ -471,6 +472,10 @@ Show doc in graphiql for more information
 
 Input type composed of the scalar filter of each readable fields of the model. The logical operators "OR", "AND", "NO" are also included.
 the returned arg can be used in queryset with function [where_input_to_Q](#where_input_to_qwhere_input-dict---q)
+
+#### OrderByInputType
+
+Input type composed of the orderByEnum of each readable fields of the model.
 
 #### CreateInputType
 
