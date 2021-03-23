@@ -166,8 +166,8 @@ def is_required(field):
     return not blank and default == NOT_PROVIDED
 
 
-def get_input_type_field(input_type, gql_name):
-    fields = input_type._meta.fields
+def get_type_field(gql_type, gql_name):
+    fields = gql_type._meta.fields
     for name, field in fields.items():
         if to_camel_case(gql_name) == to_camel_case(name):
             return name, field
@@ -181,7 +181,7 @@ def resolve_arguments(input_type, arguments):
     else:
         ret = {}
         for gql_name, value in arguments.items():
-            name, field = get_input_type_field(input_type, gql_name)
+            name, field = get_type_field(input_type, gql_name)
             if isinstance(field, Dynamic):
                 field_type = field.get_type().type
             else:

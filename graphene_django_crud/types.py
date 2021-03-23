@@ -13,6 +13,7 @@ from .utils import (
     parse_arguments_ast,
     get_field_ast_by_path,
     resolve_arguments,
+    get_type_field,
 )
 from .base_types import mutation_factory_type, node_factory_type
 
@@ -260,7 +261,6 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
             new_suffix = suffix + "__"
 
         model_fields = get_model_fields(cls._meta.model, to_dict=True)
-        fields_name_mapper = {}
         computed_field_hints = {}
         for field_name, field in cls._meta.fields.items():
             if field_name in model_fields.keys():
@@ -270,15 +270,11 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
             else:
                 resolver = field.resolver
             if resolver is not None and hasattr(resolver, "have_resolver_hints"):
-                fields_name_mapper[to_camel_case(field_name)] = field_name
                 computed_field_hints[field_name] = {
                     "only": resolver.only,
                     "select_related": resolver.select_related,
                     "prefetch_related": [],
                 }
-
-        for k in model_fields.keys():
-            fields_name_mapper[to_camel_case(k)] = k
 
         for field in selection_set.selections:
             if isinstance(field, FragmentSpread):
@@ -311,13 +307,12 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                     )
                     ret = fusion_ret(ret, new_ret)
             else:
+                real_name = get_type_field(cls, field.name.value)[0]
                 try:
-                    model_field = model_fields[fields_name_mapper[field.name.value]]
+                    model_field = model_fields[real_name]
                 except KeyError:
                     try:
-                        computed_field = computed_field_hints[
-                            fields_name_mapper[field.name.value]
-                        ]
+                        computed_field = computed_field_hints[real_name]
                     except KeyError:
                         continue
                     ret = fusion_ret(ret, computed_field)
@@ -330,14 +325,12 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                     if isinstance(
                         model_field, (OneToOneField, OneToOneRel, ForeignKey)
                     ):
-                        ret["select_related"].append(
-                            new_suffix + fields_name_mapper[field.name.value]
-                        )
+                        ret["select_related"].append(new_suffix + real_name)
                         new_ret = related_type._queryset_factory_analyze(
                             info,
                             field.selection_set,
                             node=False,
-                            suffix=new_suffix + fields_name_mapper[field.name.value],
+                            suffix=new_suffix + real_name,
                         )
                         ret = fusion_ret(ret, new_ret)
                     elif isinstance(
@@ -345,7 +338,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                     ):
                         ret["prefetch_related"].append(
                             Prefetch(
-                                new_suffix + fields_name_mapper[field.name.value],
+                                new_suffix + real_name,
                                 queryset=related_type._queryset_factory(
                                     info, field_ast=field, node=True
                                 ),
@@ -353,9 +346,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                         )
 
                 else:
-                    ret["only"].append(
-                        new_suffix + fields_name_mapper[field.name.value]
-                    )
+                    ret["only"].append(new_suffix + real_name)
         return ret
 
     @classmethod
@@ -719,6 +710,10 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         try:
             with transaction.atomic():
                 instance = cls.create(parent, info, kwargs["input"])
+                result_field_ast = get_field_ast_by_path(info, ["result"])
+                instance = cls._instance_to_queryset(
+                    info, instance, result_field_ast
+                ).get()
             return {"result": instance, "ok": True, "errors": []}
         except ValidationError as e:
             return {
@@ -737,8 +732,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         cls.mutateItem(parent, info, instance, data)
         cls.after_create(parent, info, instance, data)
         cls.after_mutate(parent, info, instance, data)
-        result_field_ast = get_field_ast_by_path(info, ["result"])
-        return cls._instance_to_queryset(info, instance, result_field_ast).get()
+        return instance
 
     @classmethod
     def UpdateField(cls, *args, **kwargs):
@@ -775,6 +769,10 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         try:
             with transaction.atomic():
                 instance = cls.update(parent, info, kwargs["where"], kwargs["input"])
+                result_field_ast = get_field_ast_by_path(info, ["result"])
+                instance = cls._instance_to_queryset(
+                    info, instance, result_field_ast
+                ).get()
             return {"result": instance, "ok": True, "error": []}
         except ValidationError as e:
             return {
@@ -795,8 +793,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         cls.mutateItem(parent, info, instance, data)
         cls.after_update(parent, info, instance, data)
         cls.after_mutate(parent, info, instance, data)
-        result_field_ast = get_field_ast_by_path(info, ["result"])
-        return cls._instance_to_queryset(info, instance, result_field_ast).get()
+        return instance
 
     @classmethod
     def DeleteField(cls, *args, **kwargs):
