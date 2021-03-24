@@ -15,6 +15,10 @@ All notable changes to this project will be documented in this file.
 
 - Improve sql performance with use only, select_related, prefetch_related
 
+### Fixed
+
+- FIX WhereInput, OrderByInput don't use related_query_name
+
 ## \[1.1.1\] - 2021-03-15
 
 ### Fixed

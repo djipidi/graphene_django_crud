@@ -84,7 +84,9 @@ def get_related_model(field):
     return field.remote_field.model
 
 
-def get_model_fields(model, only_fields="__all__", exclude_fields=(), to_dict=False):
+def get_model_fields(
+    model, only_fields="__all__", exclude_fields=(), to_dict=False, for_queryset=False
+):
     # Backward compatibility patch for Django versions lower than 1.11.x
     if DJANGO_VERSION >= (1, 11):
         private_fields = model._meta.private_fields
@@ -107,12 +109,24 @@ def get_model_fields(model, only_fields="__all__", exclude_fields=(), to_dict=Fa
     for field in all_fields_list:
         if field not in invalid_fields:
             if isinstance(field, OneToOneRel):
-                local_fields.append((field.name, field))
-            elif isinstance(field, (ManyToManyRel, ManyToOneRel)):
-                if field.related_name == None:
-                    local_fields.append((field.name + "_set", field))
+                if for_queryset:
+                    if field.related_query_name is None:
+                        local_fields.append((field.name, field))
+                    else:
+                        local_fields.append((field.related_query_name, field))
                 else:
-                    local_fields.append((field.related_name, field))
+                    local_fields.append((field.name, field))
+            elif isinstance(field, (ManyToManyRel, ManyToOneRel)):
+                if for_queryset:
+                    if field.related_query_name == None:
+                        local_fields.append((field.name, field))
+                    else:
+                        local_fields.append((field.related_query_name, field))
+                else:
+                    if field.related_name == None:
+                        local_fields.append((field.get_accessor_name(), field))
+                    else:
+                        local_fields.append((field.related_name, field))
 
             else:
                 local_fields.append((field.name, field))

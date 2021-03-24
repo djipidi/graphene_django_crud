@@ -45,6 +45,7 @@ def convert_model_to_input_type(
 ):
 
     djangoType = registry.get_type_for_model(model)
+    for_queryset = "order_by" in input_flag or "where" in input_flag
     if "create" in input_flag or "update" in input_flag:
         model_fields = get_model_fields(
             model,
@@ -56,6 +57,7 @@ def convert_model_to_input_type(
             model,
             only_fields=djangoType._meta.only_fields,
             exclude_fields=djangoType._meta.exclude_fields,
+            for_queryset=for_queryset,
         )
     without = ""
     if exclude is not None or only is not None:
@@ -410,10 +412,10 @@ def convert_onetoone_field_to_djangomodel(field, registry=None, input_flag=None)
         if input_flag:
             if input_flag == "order_by":
                 return graphene.Field(
-                        convert_model_to_input_type(
-                            model, input_flag="order_by", registry=registry
-                        )
+                    convert_model_to_input_type(
+                        model, input_flag="order_by", registry=registry
                     )
+                )
             elif input_flag == "where":
                 return graphene.Field(
                     convert_model_to_input_type(
@@ -457,10 +459,10 @@ def convert_many_to_one_to_djangomodel(field, registry=None, input_flag=None):
             # return DjangoListField(ID)
             if input_flag == "order_by":
                 return graphene.Field(
-                        convert_model_to_input_type(
-                            model, input_flag="order_by", registry=registry
-                        )
+                    convert_model_to_input_type(
+                        model, input_flag="order_by", registry=registry
                     )
+                )
             elif input_flag == "where":
                 return graphene.Field(
                     convert_model_to_input_type(
@@ -524,10 +526,10 @@ def convert_many_to_many_to_djangomodel(field, registry=None, input_flag=None):
             # return DjangoListField(ID)
             if input_flag == "order_by":
                 return graphene.Field(
-                        convert_model_to_input_type(
-                            model, input_flag="order_by", registry=registry
-                        )
+                    convert_model_to_input_type(
+                        model, input_flag="order_by", registry=registry
                     )
+                )
             elif input_flag == "where":
                 return graphene.Field(
                     convert_model_to_input_type(
@@ -587,10 +589,10 @@ def convert_ForeignKey_field_to_djangomodel(field, registry=None, input_flag=Non
         if input_flag:
             if input_flag == "order_by":
                 return graphene.Field(
-                        convert_model_to_input_type(
-                            model, input_flag="order_by", registry=registry
-                        )
+                    convert_model_to_input_type(
+                        model, input_flag="order_by", registry=registry
                     )
+                )
 
             elif input_flag == "where":
                 return graphene.Field(
@@ -643,10 +645,10 @@ def convert_ForeignKey_field_to_djangomodel(field, registry=None, input_flag=Non
         if input_flag:
             if input_flag == "order_by":
                 return graphene.Field(
-                        convert_model_to_input_type(
-                            model, input_flag="order_by", registry=registry
-                        )
+                    convert_model_to_input_type(
+                        model, input_flag="order_by", registry=registry
                     )
+                )
             elif input_flag == "where":
                 return graphene.Field(
                     convert_model_to_input_type(
