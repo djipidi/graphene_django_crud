@@ -1,4 +1,2 @@
-from .schema import *
-
-UserType.generate_signals()
-GroupType.generate_signals()
+# -*- coding: utf-8 -*-
+from .djangocontribauth.signal import *
