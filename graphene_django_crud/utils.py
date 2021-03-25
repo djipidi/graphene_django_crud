@@ -24,7 +24,7 @@ from django.db.models.base import ModelBase
 from graphene.utils.str_converters import to_snake_case, to_camel_case
 from graphene_django.utils import is_valid_django_model
 from graphene.types.scalars import MAX_INT, MIN_INT
-from graphene import Dynamic
+from graphene import Dynamic, List
 from graphql import GraphQLList, GraphQLNonNull
 from graphql.language.ast import (
     FragmentSpread,
@@ -184,7 +184,16 @@ def get_type_field(gql_type, gql_name):
     fields = gql_type._meta.fields
     for name, field in fields.items():
         if to_camel_case(gql_name) == to_camel_case(name):
-            return name, field
+            if isinstance(field, Dynamic):
+                a = field.get_type()
+                field = field.get_type()
+            else:
+                field = field
+            if isinstance(field, List):
+                field_type = field.of_type
+            else:
+                field_type = field.type
+            return name, field_type
 
 
 def resolve_arguments(input_type, arguments):
@@ -195,12 +204,8 @@ def resolve_arguments(input_type, arguments):
     else:
         ret = {}
         for gql_name, value in arguments.items():
-            name, field = get_type_field(input_type, gql_name)
-            if isinstance(field, Dynamic):
-                field_type = field.get_type().type
-            else:
-                field_type = field.type
-            if isinstance(value, dict):
+            name, field_type = get_type_field(input_type, gql_name)
+            if isinstance(value, (dict, list)):
                 ret[name] = resolve_arguments(field_type, value)
             else:
                 ret[name] = value
