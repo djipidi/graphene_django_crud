@@ -60,7 +60,7 @@ GraphQL API and expose the CRUD operations.
 import graphene
 from graphql import GraphQLError
 from django.contrib.auth.models import User, Group
-from graphene_django_crud.types import DjangoGrapheneCRUDn resolver_hints
+from graphene_django_crud.types import DjangoGrapheneCRUD, resolver_hints
 
 class UserType(DjangoGrapheneCRUD):
     class Meta:
@@ -190,10 +190,16 @@ type GroupNodeType {
   data: [GroupType]
 }
 
+input GroupOrderByInput {
+  id: OrderEnum
+  name: OrderEnum
+  user: UserOrderByInput
+}
+
 type GroupType {
   id: ID!
   name: String
-  userSet(where: UserWhereInput, limit: Int, offset: Int, orderBy: [String]): UserNodeType!
+  userSet(where: UserWhereInput, limit: Int, offset: Int, orderBy: [UserOrderByInput]): UserNodeType!
 }
 
 input GroupUpdateInput {
@@ -203,7 +209,7 @@ input GroupUpdateInput {
 
 input GroupUpdateNestedManyInput {
   create: [GroupCreateInput]
-  remove: [GroupWhereInput]
+  delete: [GroupWhereInput]
   connect: [GroupWhereInput]
   disconnect: [GroupWhereInput]
 }
@@ -211,7 +217,7 @@ input GroupUpdateNestedManyInput {
 input GroupWhereInput {
   id: IntFilter
   name: StringFilter
-  userSet: UserWhereInput
+  user: UserWhereInput
   OR: [GroupWhereInput]
   AND: [GroupWhereInput]
   NOT: GroupWhereInput
@@ -240,12 +246,17 @@ type Mutation {
   groupDelete(where: GroupWhereInput!): GroupMutationType
 }
 
+enum OrderEnum {
+  ASC
+  DESC
+}
+
 type Query {
   me: UserType
   user(where: UserWhereInput!): UserType
-  users(where: UserWhereInput, limit: Int, offset: Int, orderBy: [String]): UserNodeType
+  users(where: UserWhereInput, limit: Int, offset: Int, orderBy: [UserOrderByInput]): UserNodeType
   group(where: GroupWhereInput!): GroupType
-  groups(where: GroupWhereInput, limit: Int, offset: Int, orderBy: [String]): GroupNodeType
+  groups(where: GroupWhereInput, limit: Int, offset: Int, orderBy: [GroupOrderByInput]): GroupNodeType
 }
 
 input StringFilter {
@@ -268,15 +279,15 @@ type Subscription {
 }
 
 input UserCreateInput {
-  password: String!
-  isSuperuser: Boolean
-  username: String!
-  firstName: String
-  lastName: String
   email: String
-  isStaff: Boolean
-  isActive: Boolean
+  firstName: String
   groups: GroupCreateNestedManyInput
+  isActive: Boolean
+  isStaff: Boolean
+  isSuperuser: Boolean
+  lastName: String
+  password: String!
+  username: String!
 }
 
 input UserCreateNestedManyInput {
@@ -295,52 +306,66 @@ type UserNodeType {
   data: [UserType]
 }
 
+input UserOrderByInput {
+  dateJoined: OrderEnum
+  email: OrderEnum
+  firstName: OrderEnum
+  groups: GroupOrderByInput
+  id: OrderEnum
+  isActive: OrderEnum
+  isStaff: OrderEnum
+  isSuperuser: OrderEnum
+  lastLogin: OrderEnum
+  lastName: OrderEnum
+  username: OrderEnum
+}
+
 type UserType {
-  id: ID!
-  lastLogin: DateTime
-  isSuperuser: Boolean
-  username: String
-  firstName: String
-  lastName: String
-  email: String
-  isStaff: Boolean
-  isActive: Boolean
   dateJoined: DateTime
-  groups(where: GroupWhereInput, limit: Int, offset: Int, orderBy: [String]): GroupNodeType!
+  email: String
+  firstName: String
+  groups(where: GroupWhereInput, limit: Int, offset: Int, orderBy: [GroupOrderByInput]): GroupNodeType!
+  id: ID!
+  isActive: Boolean
+  isStaff: Boolean
+  isSuperuser: Boolean
+  lastLogin: DateTime
+  lastName: String
+  username: String
   fullName: String
 }
 
 input UserUpdateInput {
-  password: String
-  isSuperuser: Boolean
-  username: String
-  firstName: String
-  lastName: String
   email: String
-  isStaff: Boolean
-  isActive: Boolean
+  firstName: String
   groups: GroupUpdateNestedManyInput
+  isActive: Boolean
+  isStaff: Boolean
+  isSuperuser: Boolean
+  lastName: String
+  password: String
+  username: String
 }
 
 input UserUpdateNestedManyInput {
   create: [UserCreateInput]
-  remove: [UserWhereInput]
+  delete: [UserWhereInput]
   connect: [UserWhereInput]
   disconnect: [UserWhereInput]
 }
 
 input UserWhereInput {
-  id: IntFilter
-  lastLogin: DatetimeFilter
-  isSuperuser: Boolean
-  username: StringFilter
-  firstName: StringFilter
-  lastName: StringFilter
-  email: StringFilter
-  isStaff: Boolean
-  isActive: Boolean
   dateJoined: DatetimeFilter
+  email: StringFilter
+  firstName: StringFilter
   groups: GroupWhereInput
+  id: IntFilter
+  isActive: Boolean
+  isStaff: Boolean
+  isSuperuser: Boolean
+  lastLogin: DatetimeFilter
+  lastName: StringFilter
+  username: StringFilter
   OR: [UserWhereInput]
   AND: [UserWhereInput]
   NOT: UserWhereInput
