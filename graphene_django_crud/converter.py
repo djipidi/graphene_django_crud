@@ -192,7 +192,7 @@ def get_choices(choices):
 
 def convert_django_field_with_choices(field, registry=None, input_flag=None):
     choices = getattr(field, "choices", None)
-    if choices:
+    if choices and not input_flag == "order_by":
         meta = field.model._meta
 
         name = "{}_{}_{}".format(meta.object_name, field.name, "Enum")
