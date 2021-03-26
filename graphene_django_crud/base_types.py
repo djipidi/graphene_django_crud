@@ -50,9 +50,10 @@ def node_factory_type(_type, registry=None, *args, **kwargs):
     registry.register_node_type(nodeTypeName, NodeGenericType)
     return NodeGenericType
 
+
 class OrderEnum(graphene.Enum):
-    ASC = "asc"
-    DESC = "desc"
+    ASC = "ASC"
+    DESC = "DESC"
 
 
 class Binary(graphene.Scalar):

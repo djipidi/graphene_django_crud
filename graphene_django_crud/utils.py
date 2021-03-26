@@ -24,7 +24,7 @@ from django.db.models.base import ModelBase
 from graphene.utils.str_converters import to_snake_case, to_camel_case
 from graphene_django.utils import is_valid_django_model
 from graphene.types.scalars import MAX_INT, MIN_INT
-from graphene import Dynamic, List
+from graphene import Dynamic, List, Enum
 from graphql import GraphQLList, GraphQLNonNull
 from graphql.language.ast import (
     FragmentSpread,
@@ -208,7 +208,10 @@ def resolve_argument(input_type, argument):
             if isinstance(value, (dict, list)):
                 ret[name] = resolve_argument(field_type, value)
             else:
-                ret[name] = value
+                if isinstance(field_type, type(Enum)):
+                    ret[name] = field_type.__dict__[value].value
+                else:
+                    ret[name] = value
     else:
         return argument
     return ret
