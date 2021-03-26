@@ -194,14 +194,19 @@ def test_main():
             "lastName": "u3ln",
             "groups": {
                 "connect": [
-                    {"id": {"equals": g1_id}},
+                    {"AND": [{"id": {"equals": g1_id}}, {"name": {"equals": "g1"}}]},
                 ],
                 "create": [
                     {
                         "name": "g2",
                         "userSet": {
                             "connect": [
-                                {"id": {"equals": u1_id}},
+                                {
+                                    "AND": [
+                                        {"id": {"equals": u1_id}},
+                                        {"username": {"equals": "u1"}},
+                                    ]
+                                },
                                 {"id": {"equals": u2_id}},
                             ],
                             "create": [
@@ -318,6 +323,7 @@ def test_main():
     u4_id = response["data"]["groupUpdate"]["result"]["userSet"]["data"][1]["id"]
     u5_id = response["data"]["groupUpdate"]["result"]["userSet"]["data"][2]["id"]
 
+    variables = {"where": {"groups": {"id": {"in": [g1_id, g2_id]}}}}
     expected_response = {
         "data": {
             "users": {
@@ -376,10 +382,22 @@ def test_main():
         }
     }
 
-    response = client.query(users_gql).json()
+    response = client.query(users_gql, variables=variables).json()
     verify_response(expected_response, response)
 
-    variables = {"where": {"groups": {"id": {"equals": g2_id}}}}
+    variables = {
+        "where": {
+            "AND": [
+                {"username": {"contains": "u"}},
+                {
+                    "OR": [
+                        {"groups": {"id": {"equals": g2_id}}},
+                        {"groups": {"user": {"isSuperuser": True}}},
+                    ]
+                },
+            ]
+        }
+    }
     expected_response = {
         "data": {
             "users": {
