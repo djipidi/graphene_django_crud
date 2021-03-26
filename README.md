@@ -375,7 +375,7 @@ class UserType(DjangoGrapheneCRUD):
 
 To respond to several use cases, it is necessary to filter the logged in user.
 the graphene module gives access to the user from the context object in info
-arg. The "get_queryset" method which returns by default \<model\>.objects.all(),
+arg. The "get_queryset" method which returns by default \<model>.objects.all(),
 but it can be overloaded.
 
 ```python
@@ -482,21 +482,18 @@ respective model.
 
 #### CreatedField
 
-Subcription field ...
-
-Show doc in graphiql for more information
+Subscription field to allow customers to subscribe to the creatied of instances
+of the respective model.
 
 #### UpdatedField
 
-Subcription field ...
-
-Show doc in graphiql for more information
+Subscription field to allow customers to subscribe to the updated of instances
+of the respective model.
 
 #### DeletedField
 
-Subcription field ...
-
-Show doc in graphiql for more information
+Subscription field to allow customers to subscribe to the deleted of instances
+of the respective model.
 
 ### Input Types
 
