@@ -12,7 +12,7 @@ from .utils import (
     get_model_fields,
     parse_arguments_ast,
     get_field_ast_by_path,
-    resolve_arguments,
+    resolve_argument,
     get_type_field,
 )
 from .base_types import mutation_factory_type, node_factory_type
@@ -229,13 +229,13 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         queryset = queryset.only(*queryset_factory["only"])
         queryset = queryset.prefetch_related(*queryset_factory["prefetch_related"])
         if "where" in arguments.keys():
-            where = resolve_arguments(cls.WhereInputType(), arguments.get("where", {}))
+            where = resolve_argument(cls.WhereInputType(), arguments.get("where", {}))
             queryset = queryset.filter(apply_where(where))
         if "orderBy" in arguments.keys() or "order_by" in arguments.keys():
             order_by = arguments.get("orderBy", [])
             if isinstance(order_by, dict):
                 order_by = [order_by]
-            order_by = resolve_arguments(cls.OrderByInputType(), order_by)
+            order_by = resolve_argument(cls.OrderByInputType(), order_by)
             queryset = queryset.order_by(*apply_order_by(order_by))
         queryset = queryset.distinct()
         return queryset

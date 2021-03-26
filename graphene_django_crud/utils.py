@@ -196,19 +196,21 @@ def get_type_field(gql_type, gql_name):
             return name, field_type
 
 
-def resolve_arguments(input_type, arguments):
-    if isinstance(arguments, list):
+def resolve_argument(input_type, argument):
+    if isinstance(argument, list):
         ret = []
-        for arg in arguments:
-            ret.append(resolve_arguments(input_type, arg))
-    else:
+        for arg in argument:
+            ret.append(resolve_argument(input_type, arg))
+    elif isinstance(argument, dict):
         ret = {}
-        for gql_name, value in arguments.items():
+        for gql_name, value in argument.items():
             name, field_type = get_type_field(input_type, gql_name)
             if isinstance(value, (dict, list)):
-                ret[name] = resolve_arguments(field_type, value)
+                ret[name] = resolve_argument(field_type, value)
             else:
                 ret[name] = value
+    else:
+        return argument
     return ret
 
 
