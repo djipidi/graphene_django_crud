@@ -59,6 +59,60 @@ def convert_model_to_input_type(
             exclude_fields=djangoType._meta.exclude_fields,
             for_queryset=for_queryset,
         )
+
+    if "where" in input_flag:
+        if (
+            djangoType._meta.where_only_fields != "__all__"
+            or len(djangoType._meta.where_exclude_fields) > 0
+        ):
+            assert not (
+                djangoType._meta.where_only_fields != "__all__"
+                and len(djangoType._meta.where_exclude_fields) > 0
+            ), "Only one of where_only_fields or where_exclude_fields parameter can be declared"
+            if djangoType._meta.where_only_fields != "__all__":
+                exclude_fields = [
+                    name
+                    for name, field in model_fields
+                    if name not in djangoType._meta.where_only_fields
+                ]
+            else:
+                exclude_fields = [
+                    name
+                    for name, field in model_fields
+                    if name in djangoType._meta.where_exclude_fields
+                ]
+            model_fields = [
+                (name, field)
+                for name, field in model_fields
+                if name not in exclude_fields
+            ]
+    elif "order_by" in input_flag:
+        if (
+            djangoType._meta.order_by_only_fields != "__all__"
+            or len(djangoType._meta.order_by_exclude_fields) > 0
+        ):
+            assert not (
+                djangoType._meta.order_by_only_fields != "__all__"
+                and len(djangoType._meta.order_by_exclude_fields) > 0
+            ), "Only one of order_by_only_fields or order_by_exclude_fields parameter can be declared"
+            if djangoType._meta.order_by_only_fields != "__all__":
+                exclude_fields = [
+                    name
+                    for name, field in model_fields
+                    if name not in djangoType._meta.order_by_only_fields
+                ]
+            else:
+                exclude_fields = [
+                    name
+                    for name, field in model_fields
+                    if name in djangoType._meta.order_by_exclude_fields
+                ]
+            model_fields = [
+                (name, field)
+                for name, field in model_fields
+                if name not in exclude_fields
+            ]
+
     without = ""
     if exclude is not None or only is not None:
         assert not (
