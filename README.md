@@ -15,6 +15,8 @@ django orm into a graphql API.
     - [only_fields / exclude_fields](#only_fields--exclude_fields)
     - [input_only_fields / input_exclude_fields](#input_only_fields--input_exclude_fields)
     - [input_extend_fields](#input_extend_fields)
+    - [where_only_fields / where_exclude_fields](#where_only_fields--where_exclude_fields)
+    - [order_by_only_fields / order_by_exclude_fields](#order_by_only_fields--order_by_exclude_fields)
   - [Fields](#Fields)
     - [ReadField](#ReadField)
     - [BatchReadField](#BatchReadField)
@@ -438,12 +440,12 @@ Only one of the two parameters can be declared.
 
 #### input_only_fields / input_exclude_fields
 
-Tuple of model fields to include/exclude in graphql inputs type. Only one of the
-two parameters can be declared.
+Tuple of model fields to include/exclude in graphql create and update inputs
+type. Only one of the two parameters can be declared.
 
 #### input_extend_fields
 
-Field list to extend the create and update input. value must be a list of tuple
+Field list to extend the create and update inputs. value must be a list of tuple
 (name: string, type: graphene.ObjectType) The parameter can be processed in the
 middleware functions (before_XXX / after_XXX).
 
@@ -464,6 +466,16 @@ class UserType(DjangoGrapheneCRUD):
             instance.last_name = data["fullName"].split(" ")[1]
         ...
 ```
+
+#### where_only_fields / where_exclude_fields
+
+Tuple of model fields to include/exclude in graphql where input type. Only one
+of the two parameters can be declared.
+
+#### order_by_only_fields / order_by_exclude_fields
+
+Tuple of model fields to include/exclude in graphql order_by input type. Only
+one of the two parameters can be declared.
 
 ### Fields
 

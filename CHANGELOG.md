@@ -4,20 +4,25 @@ All notable changes to this project will be documented in this file.
 
 ## \[Unreleased\]
 
+### Breaking change:
+
+- Normalize oderByInput with the other inputs, it is no longer a list of strings
+- Need to use the resolver_hints decorator for the creation of computed fields
+
 ### Changed
 
-- Need to use the resolver_hints decorator for the creation of computed fields
 - Remove related_field in createNestedInput and updateNestedInput for
   ManyToOneRel, OnetoOneField and OnetoOneRel fields
-- Normalise oderByInput with the other inputs
 
 ### Added
 
 - Improve sql performance with use only, select_related, prefetch_related
+- Meta Parameter where_only_fields / where_exclude_fields, order_by_only_fields /
+  order_by_exclude_fields
 
 ### Fixed
 
-- FIX WhereInput, OrderByInput don't use related_query_name
+- FIX WhereInput don't use related_query_name
 
 ## \[1.1.1\] - 2021-03-15
 
