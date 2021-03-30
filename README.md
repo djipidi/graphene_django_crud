@@ -164,6 +164,13 @@ input DatetimeFilter {
   gte: DateTime
   lt: DateTime
   lte: DateTime
+  year: IntFilter
+  month: IntFilter
+  day: IntFilter
+  weekDay: IntFilter
+  hour: IntFilter
+  minute: IntFilter
+  second: IntFilter
 }
 
 type ErrorType {
@@ -681,6 +688,9 @@ input timeFilter {
   gte: Time
   lt: Time
   lte: Time
+  hour: IntFilter
+  minute: IntFilter
+  second: IntFilter
 }
 
 input DateFilter {
@@ -691,6 +701,10 @@ input DateFilter {
   gte: Date
   lt: Date
   lte: Date
+  year: IntFilter
+  month: IntFilter
+  day: IntFilter
+  weekDay: IntFilter
 }
 
 input DatetimeFilter {
@@ -701,5 +715,12 @@ input DatetimeFilter {
   gte: DateTime
   lt: DateTime
   lte: DateTime
+  year: IntFilter
+  month: IntFilter
+  day: IntFilter
+  weekDay: IntFilter
+  hour: IntFilter
+  minute: IntFilter
+  second: IntFilter
 }
 ```

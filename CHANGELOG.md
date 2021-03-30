@@ -19,6 +19,8 @@ All notable changes to this project will be documented in this file.
 - Improve sql performance with use only, select_related, prefetch_related
 - Meta Parameter where_only_fields / where_exclude_fields, order_by_only_fields /
   order_by_exclude_fields
+- add year, month, day, week_day parameters in the dateFilter
+- add hour, minute, second parameters in the timeFilter
 
 ### Fixed
 
