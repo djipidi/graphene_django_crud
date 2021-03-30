@@ -218,6 +218,10 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 }
 
         for field in selection_set.selections:
+
+            if field.name.value.startswith("__"):
+                continue
+
             if isinstance(field, FragmentSpread):
                 new_ret = cls._queryset_factory_analyze(
                     info,
