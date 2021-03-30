@@ -461,8 +461,6 @@ def convert_time_to_string(field, registry=None, input_flag=None):
 
 @convert_django_field.register(models.OneToOneRel)
 def convert_onetoone_field_to_djangomodel(field, registry=None, input_flag=None):
-    if input_flag == "order_by":
-        return OrderEnum()
     model = field.related_model
 
     def dynamic_type():
