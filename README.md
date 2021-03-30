@@ -382,7 +382,82 @@ input UserWhereInput {
 
 ```
 
-</details>
+</details> 
+
+Queries example:
+
+```gql
+
+query{
+  user(where: {id: {equals:1}}){
+    id
+    username
+    firstName
+    lastName
+  }
+}
+
+
+query{
+  users(
+    where: {
+      OR: [
+        {isStaff: true},
+        {isSuperuser: true},
+        {groups: {name: {equals: "admin"}}},
+      ]
+    }
+    orderBy: [{username: ASC}],
+    limit: 100,
+    offset: 0
+  ){
+    count
+    data{
+      id
+      username
+      firstName
+      lastName
+      groups{
+        count
+        data{
+          id
+          name
+        }
+      }
+    }
+  }
+}
+
+mutation{
+  groupCreate(
+    input: {
+      name: "admin",
+      userSet: {
+        create: [
+          {username: "woody", password: "raC4RjDU"},
+        ],
+        connect: [
+          {id: {equals: 1}}
+        ]
+      },
+    }
+  ){
+    ok
+    result{
+      id
+      name
+      userSet{
+        count
+        data{
+          id
+          username
+        }
+      }
+    }
+  }
+}
+
+```
 
 ### Computed Field
 
