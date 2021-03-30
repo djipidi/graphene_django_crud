@@ -37,6 +37,7 @@ django orm into a graphql API.
 - [Utils](#Utils)
   - [@resolver_hints(only: list\[str\], select_related:list\[str\])](#resolver_hintsonly-liststr-select_relatedliststr)
   - [where_input_to_Q(where_input: dict) -> Q](#where_input_to_qwhere_input-dict---q)
+  - [order_by_input_to_args(order_by_input: list\[dict\]) -> list\[str\]](#order_by_input_to_argsorder_by_input-listdict---liststr)
 - [Scalar filter](#Scalar-filter)
 
 ## Installation
@@ -712,6 +713,18 @@ example :
 
 ```python
 <model>.objects.filter(where_input_to_Q(where))
+```
+
+#### order_by_input_to_args(order_by_input: list\[dict\]) -> list\[str\]
+
+In order to be able to reuse order_by input generated, the
+order_by_input_to_args function transforms the returned argument into args for
+order_by method of queryset.
+
+example :
+
+```python
+<model>.objects.all().order_by(order_by_input_to_args(where))
 ```
 
 ## Scalar Filter
