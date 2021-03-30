@@ -3,22 +3,23 @@
 from collections import OrderedDict
 import graphene
 from graphene.types.base import BaseOptions
-from graphene_django.types import ErrorType
-from graphql.language.ast import FragmentSpread, InlineFragment, Variable
-from graphene.utils.str_converters import to_camel_case
+from graphql.language.ast import FragmentSpread, InlineFragment
 
 from .utils import (
-    get_related_model,
     get_model_fields,
     parse_arguments_ast,
     get_field_ast_by_path,
     resolve_argument,
     get_type_field,
+    where_input_to_Q,
+    order_by_input_to_args,
+    error_data_from_validation_error,
+    validation_error_with_suffix,
 )
 from .base_types import mutation_factory_type, node_factory_type
 
-from django.db import models, transaction
-from django.db.models import Q, Prefetch
+from django.db import transaction
+from django.db.models import Prefetch
 from django.core.exceptions import ValidationError
 
 from .converter import convert_model_to_input_type, construct_fields
@@ -42,81 +43,6 @@ from django.db.models import (
     ManyToManyField,
     OneToOneField,
 )
-
-
-def get_paths(d):
-    q = [(d, [])]
-    while q:
-        n, p = q.pop(0)
-        yield p
-        if isinstance(n, dict):
-            for k, v in n.items():
-                q.append((v, p + [k]))
-
-
-def nested_get(input_dict, nested_key):
-    internal_dict_value = input_dict
-    for k in nested_key:
-        internal_dict_value = internal_dict_value.get(k, None)
-        if internal_dict_value is None:
-            return None
-    return internal_dict_value
-
-
-def get_args(where):
-    args = {}
-    for path in get_paths(where):
-        v = nested_get(where, path)
-        if not isinstance(v, dict):
-            args["__".join(path).replace("__equals", "")] = v
-    return args
-
-
-def error_data_from_validation_error(validation_error):
-    ret = []
-    for field, error_list in validation_error.error_dict.items():
-        messages = []
-        for error in error_list:
-            messages.extend(error.messages)
-        ret.append({"field": field, "messages": messages})
-    return ret
-
-
-def validation_error_with_suffix(validation_error, suffix):
-    error_dict = {}
-    for field, error_list in validation_error.error_dict.items():
-        error_dict[suffix + "." + field] = error_list
-    return ValidationError(error_dict)
-
-
-def apply_where(where):
-
-    AND = Q()
-    OR = Q()
-    NOT = Q()
-    if "OR" in where.keys():
-        for w in where.pop("OR"):
-            OR = OR | Q(apply_where(w))
-
-    if "AND" in where.keys():
-        for w in where.pop("AND"):
-            AND = AND & Q(apply_where(w))
-
-    if "NOT" in where.keys():
-        NOT = NOT & ~Q(apply_where(where.pop("NOT")))
-
-    return Q(**get_args(where)) & OR & AND & NOT
-
-
-def apply_order_by(order_by):
-    args = []
-    for rule in order_by:
-        for path in get_paths(rule):
-            v = nested_get(rule, path)
-            if not isinstance(v, dict):
-                prefix = "-" if v == "DESC" else ""
-                args.append(prefix + "__".join(path))
-    return args
 
 
 class ClassProperty(property):
@@ -245,13 +171,13 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         queryset = queryset.prefetch_related(*queryset_factory["prefetch_related"])
         if "where" in arguments.keys():
             where = resolve_argument(cls.WhereInputType(), arguments.get("where", {}))
-            queryset = queryset.filter(apply_where(where))
+            queryset = queryset.filter(where_input_to_Q(where))
         if "orderBy" in arguments.keys() or "order_by" in arguments.keys():
             order_by = arguments.get("orderBy", [])
             if isinstance(order_by, dict):
                 order_by = [order_by]
             order_by = resolve_argument(cls.OrderByInputType(), order_by)
-            queryset = queryset.order_by(*apply_order_by(order_by))
+            queryset = queryset.order_by(*order_by_input_to_args(order_by))
         queryset = queryset.distinct()
         return queryset
 
@@ -564,7 +490,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 elif "connect" in value.keys():
                     related_instance = (
                         related_type.get_queryset(parent, info)
-                        .filter(apply_where(value["connect"]))
+                        .filter(where_input_to_Q(value["connect"]))
                         .distinct()
                         .get()
                     )
@@ -669,7 +595,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 for i, connect_input in enumerate(value.get("connect", [])):
                     try:
                         related_instance = (
-                            q.filter(apply_where(connect_input)).distinct().get()
+                            q.filter(where_input_to_Q(connect_input)).distinct().get()
                         )
                         addItems.append(related_instance)
                     except ValidationError as e:
@@ -679,7 +605,9 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 for i, disconnect_input in enumerate(value.get("disconnect", [])):
                     try:
                         related_instance = (
-                            q.filter(apply_where(disconnect_input)).distinct().get()
+                            q.filter(where_input_to_Q(disconnect_input))
+                            .distinct()
+                            .get()
                         )
                         disconnectItems.append(related_instance)
                     except ValidationError as e:
@@ -799,7 +727,10 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
     @classmethod
     def update(cls, parent, info, where, data, field=None, parent_instance=None):
         instance = (
-            cls.get_queryset(parent, info).filter(apply_where(where)).distinct().get()
+            cls.get_queryset(parent, info)
+            .filter(where_input_to_Q(where))
+            .distinct()
+            .get()
         )
         if field is not None:
             instance.__setattr__(field.name, parent_instance)
@@ -847,7 +778,10 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
     @classmethod
     def delete(cls, parent, info, where):
         instance = (
-            cls.get_queryset(parent, info).filter(apply_where(where)).distinct().get()
+            cls.get_queryset(parent, info)
+            .filter(where_input_to_Q(where))
+            .distinct()
+            .get()
         )
         cls.before_mutate(parent, info, instance, {})
         cls.before_delete(parent, info, instance, {})
@@ -920,7 +854,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
             ):
                 return (
                     cls.get_queryset(parent, info)
-                    .filter(apply_where(kwargs.get("where", {})))
+                    .filter(where_input_to_Q(kwargs.get("where", {})))
                     .filter(pk=event.instance.pk)
                     .exists()
                 )
@@ -956,7 +890,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         pk_list = [
             pk
             for pk in cls.get_queryset(parent, info)
-            .filter(apply_where(kwargs.get("where", {})))
+            .filter(where_input_to_Q(kwargs.get("where", {})))
             .values_list("pk", flat=True)
         ]
 
@@ -969,7 +903,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 pk_list = [
                     pk
                     for pk in cls.get_queryset(parent, info)
-                    .filter(apply_where(kwargs.get("where", {})))
+                    .filter(where_input_to_Q(kwargs.get("where", {})))
                     .values_list("pk", flat=True)
                 ]
             return ret

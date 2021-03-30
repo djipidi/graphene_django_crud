@@ -1,12 +1,7 @@
 # -*- coding: utf-8 -*-
 from functools import partial
-
-from django.db.models.query import QuerySet
-
 from graphene import NonNull
-
 from graphene.types import Field, List
-
 from .base_types import node_factory_type
 
 

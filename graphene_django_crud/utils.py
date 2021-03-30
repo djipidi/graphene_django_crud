@@ -6,12 +6,10 @@ from collections import OrderedDict
 import six
 from django import VERSION as DJANGO_VERSION
 from django.apps import apps
-from django.contrib.contenttypes.fields import GenericForeignKey, GenericRel
 from django.core.exceptions import ValidationError, ImproperlyConfigured
 from django.db.models import (
     NOT_PROVIDED,
-    QuerySet,
-    Manager,
+    Q,
     Model,
     ManyToOneRel,
     ManyToManyRel,
@@ -20,12 +18,9 @@ from django.db.models import (
     ManyToManyField,
     OneToOneField,
 )
-from django.db.models.base import ModelBase
-from graphene.utils.str_converters import to_snake_case, to_camel_case
-from graphene_django.utils import is_valid_django_model
+from graphene.utils.str_converters import to_camel_case
 from graphene.types.scalars import MAX_INT, MIN_INT
 from graphene import Dynamic, List, Enum
-from graphql import GraphQLList, GraphQLNonNull
 from graphql.language.ast import (
     FragmentSpread,
     InlineFragment,
@@ -285,3 +280,78 @@ def parse_arguments_ast(arguments, variable_values={}):
         if value is not None:
             ret[argument.name.value] = value
     return ret
+
+
+def get_paths(d):
+    q = [(d, [])]
+    while q:
+        n, p = q.pop(0)
+        yield p
+        if isinstance(n, dict):
+            for k, v in n.items():
+                q.append((v, p + [k]))
+
+
+def nested_get(input_dict, nested_key):
+    internal_dict_value = input_dict
+    for k in nested_key:
+        internal_dict_value = internal_dict_value.get(k, None)
+        if internal_dict_value is None:
+            return None
+    return internal_dict_value
+
+
+def get_args(where):
+    args = {}
+    for path in get_paths(where):
+        v = nested_get(where, path)
+        if not isinstance(v, dict):
+            args["__".join(path).replace("__equals", "")] = v
+    return args
+
+
+def where_input_to_Q(where):
+
+    AND = Q()
+    OR = Q()
+    NOT = Q()
+    if "OR" in where.keys():
+        for w in where.pop("OR"):
+            OR = OR | Q(where_input_to_Q(w))
+
+    if "AND" in where.keys():
+        for w in where.pop("AND"):
+            AND = AND & Q(where_input_to_Q(w))
+
+    if "NOT" in where.keys():
+        NOT = NOT & ~Q(where_input_to_Q(where.pop("NOT")))
+
+    return Q(**get_args(where)) & OR & AND & NOT
+
+
+def order_by_input_to_args(order_by):
+    args = []
+    for rule in order_by:
+        for path in get_paths(rule):
+            v = nested_get(rule, path)
+            if not isinstance(v, dict):
+                prefix = "-" if v == "DESC" else ""
+                args.append(prefix + "__".join(path))
+    return args
+
+
+def error_data_from_validation_error(validation_error):
+    ret = []
+    for field, error_list in validation_error.error_dict.items():
+        messages = []
+        for error in error_list:
+            messages.extend(error.messages)
+        ret.append({"field": field, "messages": messages})
+    return ret
+
+
+def validation_error_with_suffix(validation_error, suffix):
+    error_dict = {}
+    for field, error_list in validation_error.error_dict.items():
+        error_dict[suffix + "." + field] = error_list
+    return ValidationError(error_dict)

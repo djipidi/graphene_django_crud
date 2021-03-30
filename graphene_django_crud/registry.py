@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from graphene.utils.str_converters import to_camel_case
 
 
 class Registry(object):
