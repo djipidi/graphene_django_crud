@@ -506,74 +506,9 @@ def convert_onetoone_field_to_djangomodel(field, registry=None, input_flag=None)
 
 
 @convert_django_field.register(models.ManyToOneRel)
-def convert_many_to_one_to_djangomodel(field, registry=None, input_flag=None):
-    model = field.related_model
-
-    def dynamic_type():
-        _type = registry.get_type_for_model(model)
-        if not _type:
-            return
-
-        if input_flag:
-            # return DjangoListField(ID)
-            if input_flag == "order_by":
-                return graphene.Field(
-                    convert_model_to_input_type(
-                        model, input_flag="order_by", registry=registry
-                    )
-                )
-            elif input_flag == "where":
-                return graphene.Field(
-                    convert_model_to_input_type(
-                        model, input_flag="where", registry=registry
-                    )
-                )
-            elif input_flag == "create":
-                return graphene.Field(
-                    convert_model_to_input_type(
-                        model,
-                        input_flag="create_nested_many",
-                        registry=registry,
-                        exclude=[field.remote_field.name],
-                    )
-                )
-            elif input_flag == "update":
-                return graphene.Field(
-                    convert_model_to_input_type(
-                        model,
-                        input_flag="update_nested_many",
-                        registry=registry,
-                        exclude=[field.remote_field.name],
-                    )
-                )
-        else:
-            args = OrderedDict()
-            args.update(
-                {
-                    "where": graphene.Argument(
-                        convert_model_to_input_type(
-                            model, input_flag="where", registry=registry
-                        )
-                    ),
-                    "limit": graphene.Int(),
-                    "offset": graphene.Int(),
-                    "order_by": graphene.List(
-                        convert_model_to_input_type(
-                            model, input_flag="order_by", registry=registry
-                        )
-                    ),
-                }
-            )
-            return DjangoListField(
-                _type, required=is_required(field) and input_flag == "create", args=args
-            )
-
-    return Dynamic(dynamic_type)
-
-
 @convert_django_field.register(models.ManyToManyRel)
 @convert_django_field.register(models.ManyToManyField)
-def convert_many_to_many_to_djangomodel(field, registry=None, input_flag=None):
+def convert_many_rel_djangomodel(field, registry=None, input_flag=None):
     model = field.related_model
 
     def dynamic_type():
