@@ -27,7 +27,7 @@ from graphene.utils.str_converters import to_camel_case, to_const
 from graphene_django.utils import import_single_dispatch
 
 from .base_types import Binary, OrderEnum
-from .fields import DjangoListField
+from .fields import DjangoListField, DjangoConnectionField
 from .utils import is_required, get_model_fields, get_related_model
 
 from .input_types import (
@@ -221,7 +221,7 @@ def convert_model_to_input_type(
 
 
 def assert_valid_name(name):
-    """ Helper to assert that provided names are valid. """
+    """Helper to assert that provided names are valid."""
     assert COMPILED_NAME_PATTERN.match(
         name
     ), 'Names must match /{}/ but "{}" does not.'.format(NAME_PATTERN, name)
@@ -500,7 +500,7 @@ def convert_onetoone_field_to_djangomodel(field, registry=None, input_flag=None)
                     )
                 )
 
-        return Field(_type, required=is_required(field) and input_flag == "create")
+        return Field(_type)
 
     return Dynamic(dynamic_type)
 
@@ -543,7 +543,7 @@ def convert_many_rel_djangomodel(field, registry=None, input_flag=None):
                     )
                 )
         else:
-            args = OrderedDict()
+            args = dict()
             args.update(
                 {
                     "where": graphene.Argument(
@@ -551,8 +551,6 @@ def convert_many_rel_djangomodel(field, registry=None, input_flag=None):
                             model, input_flag="where", registry=registry
                         )
                     ),
-                    "limit": graphene.Int(),
-                    "offset": graphene.Int(),
                     "order_by": graphene.List(
                         convert_model_to_input_type(
                             model, input_flag="order_by", registry=registry
@@ -560,9 +558,11 @@ def convert_many_rel_djangomodel(field, registry=None, input_flag=None):
                     ),
                 }
             )
-            return DjangoListField(
-                _type, required=is_required(field) and input_flag == "create", args=args
-            )
+
+            if _type._meta.connection:
+                return DjangoConnectionField(_type, **args)
+
+            return DjangoListField(_type, **args)
 
     return Dynamic(dynamic_type)
 
@@ -616,7 +616,6 @@ def convert_ForeignKey_field_to_djangomodel(field, registry=None, input_flag=Non
         return Field(
             _type,
             description=field.help_text or field.verbose_name,
-            required=is_required(field) and input_flag == "create",
         )
 
     return Dynamic(dynamic_type)
@@ -665,7 +664,6 @@ def convert_ForeignKey_field_to_djangomodel(field, registry=None, input_flag=Non
         return Field(
             _type,
             description=field.help_text or field.verbose_name,
-            required=is_required(field) and input_flag == "create",
         )
 
     return Dynamic(dynamic_type)
