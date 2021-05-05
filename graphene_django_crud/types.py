@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from collections import OrderedDict
+from django.utils.functional import SimpleLazyObject
 import graphene
 from graphene.types.objecttype import ObjectTypeOptions
 from graphene.types.base import BaseOptions
+from graphene_django.utils.utils import is_valid_django_model
 from graphql.language.ast import FragmentSpread, InlineFragment
 from graphene.relay import Connection, Node
 
@@ -359,6 +361,23 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
 
     def resolve_id(self, info):
         return self.pk
+
+    @classmethod
+    def is_type_of(cls, root, info):
+        if isinstance(root, SimpleLazyObject):
+            root._setup()
+            root = root._wrapped
+        if isinstance(root, cls):
+            return True
+        if not is_valid_django_model(type(root)):
+            raise Exception(('Received incompatible instance "{}".').format(root))
+
+        if cls._meta.model._meta.proxy:
+            model = root._meta.model
+        else:
+            model = root._meta.model._meta.concrete_model
+
+        return model == cls._meta.model
 
     @classmethod
     def before_mutate(cls, parent, info, instance, data):
