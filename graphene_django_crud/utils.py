@@ -18,6 +18,7 @@ from django.db.models import (
     ManyToManyField,
     OneToOneField,
 )
+from graphql_relay import from_global_id
 from graphene.utils.str_converters import to_camel_case
 from graphene.types.scalars import MAX_INT, MIN_INT
 from graphene import Dynamic, List, Enum
@@ -304,9 +305,27 @@ def nested_get(input_dict, nested_key):
 def get_args(where):
     args = {}
     for path in get_paths(where):
-        v = nested_get(where, path)
-        if not isinstance(v, dict):
-            args["__".join(path).replace("__equals", "")] = v
+        arg_value = nested_get(where, path)
+        if not isinstance(arg_value, dict):
+            arg_key = "__".join(path).replace("__equals", "")
+            if (
+                arg_key == "id"
+                or arg_key.endswith("__id")
+                or arg_key == "id__in"
+                or arg_key.endswith("__id__in")
+            ):
+                if isinstance(arg_value, list):
+                    try:
+                        arg_value = [from_global_id(value)[1] for value in arg_value]
+                    except:
+                        pass
+                else:
+                    try:
+                        arg_value = from_global_id(arg_value)[1]
+                    except:
+                        pass
+
+            args[arg_key] = arg_value
     return args
 
 

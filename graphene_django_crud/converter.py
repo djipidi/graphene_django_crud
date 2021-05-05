@@ -31,6 +31,7 @@ from .fields import DjangoListField, DjangoConnectionField
 from .utils import is_required, get_model_fields, get_related_model
 
 from .input_types import (
+    IdFilter,
     IntFilter,
     DecimalFilter,
     FloatFilter,
@@ -88,6 +89,9 @@ def convert_model_to_input_type(
                     for name, field in model_fields
                     if name in djangoType._meta.where_exclude_fields
                 ]
+            assert (
+                not "id" in exclude_fields
+            ), "the id field is required for whereInputType"
             model_fields = [
                 (name, field)
                 for name, field in model_fields
@@ -194,8 +198,10 @@ def convert_model_to_input_type(
         # items["disconnect"] = graphene.Field(convert_model_to_input_type(model, input_flag="where", registry=registry))
 
     else:
+        if input_flag == "where":
+            items["id"] = IdFilter()
         for name, field in model_fields:
-            if name == "id" and ("create" in input_flag or "update" in input_flag):
+            if name == "id" and input_flag in ["create", "update", "where"]:
                 continue
 
             converted = convert_django_field_with_choices(
@@ -302,9 +308,10 @@ def construct_fields(
         _model_fields = sorted(_model_fields, key=lambda f: f[0])
 
     fields = OrderedDict()
-
+    fields["id"] = ID(description="unique identification field")
     for name, field in _model_fields:
-
+        if name == "id":
+            continue
         converted = convert_django_field_with_choices(field, registry)
         fields[name] = converted
     return fields
