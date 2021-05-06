@@ -20,6 +20,11 @@ from .choices_converter.schema import (
     Mutation as choicesConverterMutation,
     Subscription as choicesConverterSubscription,
 )
+from .relay.schema import (
+    Query as relayQuery,
+    Mutation as relayMutation,
+    Subscription as relaySubscription,
+)
 
 
 class Query(
@@ -27,6 +32,7 @@ class Query(
     djangocontribauthQuery,
     generateSchemaQuery,
     choicesConverterQuery,
+    relayQuery,
     graphene.ObjectType,
 ):
     pass
@@ -37,6 +43,7 @@ class Mutation(
     djangocontribauthMutation,
     generateSchemaMutation,
     choicesConverterMutation,
+    relayMutation,
     graphene.ObjectType,
 ):
     pass
@@ -47,6 +54,7 @@ class Subscription(
     djangocontribauthSubscription,
     generateSchemaSubscription,
     choicesConverterSubscription,
+    relaySubscription,
     graphene.ObjectType,
 ):
     pass
