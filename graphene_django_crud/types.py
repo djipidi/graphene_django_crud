@@ -354,9 +354,10 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
 
     @classmethod
     def get_node(cls, info, id):
-        queryset = cls.get_queryset(None, info)
         try:
-            return cls._queryset_factory(info, field_ast=info.field_asts[0], node=False).get(pk=id)
+            return cls._queryset_factory(
+                info, field_ast=info.field_asts[0], node=False
+            ).get(pk=id)
         except cls._meta.model.DoesNotExist:
             return None
 
