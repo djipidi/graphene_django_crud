@@ -2,12 +2,14 @@
 
 Inspired by prisma-nexus and graphene-django-extras, This package turns the
 django orm into a graphql API.
+django orm into a graphql API with optimized queryset and nested mutation.
 
 - [Graphene-Django-Crud](#graphene-django-crud)
   - [Installation](#installation)
   - [Usage](#usage)
     - [Example](#example)
     - [Computed Field](#computed-field)
+    - [User permissions](#user-permissions)
     - [Filtering by user](#filtering-by-user)
     - [Use with relay](#use-with-relay)
   - [GrapheneDjangoCrud Class](#graphenedjangocrud-class)
@@ -35,11 +37,11 @@ django orm into a graphql API.
       - [UpdateInputType](#updateinputtype)
     - [overload methods](#overload-methods)
       - [get_queryset(cls, parent, info, \*\*kwargs)](#get_querysetcls-parent-info-kwargs)
-      - [Middleware methode before_XXX(cls, parent, info, instance, data) / after_XXX(cls, parent, info, instance, data)](#middleware-methode-before_xxxcls-parent-info-instance-data--after_xxxcls-parent-info-instance-data)
+      - [Middleware methods before_XXX(cls, parent, info, instance, data) / after_XXX(cls, parent, info, instance, data)](#middleware-methods-before_xxxcls-parent-info-instance-data--after_xxxcls-parent-info-instance-data)
   - [Utils](#utils)
-    - [@resolver_hints(only: list\[str\], select_related:list\[str\])](#resolver_hintsonly-liststr-select_relatedliststr)
-    - [where_input_to_Q(where_input: dict) -> Q](#where_input_to_qwhere_input-dict---q)
-    - [order_by_input_to_args(order_by_input: list\[dict\]) -> list\[str\]](#order_by_input_to_argsorder_by_input-listdict---liststr)
+      - [@resolver_hints(only: list\[str\], select_related:list\[str\])](#resolver_hintsonly-liststr-select_relatedliststr)
+      - [where_input_to_Q(where_input: dict) -> Q](#where_input_to_qwhere_input-dict---q)
+      - [order_by_input_to_args(order_by_input: list\[dict\]) -> list\[str\]](#order_by_input_to_argsorder_by_input-listdict---liststr)
   - [Scalar Filter](#scalar-filter)
 
 ## Installation
@@ -85,10 +87,10 @@ class UserType(DjangoGrapheneCRUD):
 
     @classmethod
     def get_queryset(cls, parent, info, **kwargs):
-        if info.context.user.is_staff:
+        if info.context.user.is_authenticated:
             return User.objects.all()
         else:
-            return User.objects.exclude(is_superuser=True)
+            return User.objects.none()
 
     @classmethod
     def before_mutate(cls, parent, info, instance, data):
@@ -483,6 +485,34 @@ class UserType(DjangoGrapheneCRUD):
         return parent.get_full_name()
 ```
 
+### User permissions
+
+[The Middleware methods](#middleware-methods-before_xxxcls-parent-info-instance-data--after_xxxcls-parent-info-instance-data)
+are called for each modification of model instances during mutations and nested
+mutations. it can be used to check permissions.
+
+```python
+class UserType(DjangoGrapheneCRUD):
+    class Meta:
+        model = User
+
+    @classmethod
+    def before_create(cls, parent, info, instance, data):
+        if not info.context.user.has_perm("add_user"):
+            raise GraphQLError('not authorized, you must have add_user permission')
+
+    @classmethod
+    def before_update(cls, parent, info, instance, data):
+        if not info.context.user.has_perm("change_user"):
+            raise GraphQLError('not authorized, you must have change_user permission')
+
+    @classmethod
+    def before_delete(cls, parent, info, instance, data):
+        if not info.context.user.has_perm("delete_user"):
+            raise GraphQLError('not authorized, you must have delete_user permission')
+
+```
+
 ### Filtering by user
 
 To respond to several use cases, it is necessary to filter the logged in user.
@@ -497,10 +527,10 @@ class UserType(DjangoGrapheneCRUD):
 
     @classmethod
     def get_queryset(cls, parent, info, **kwargs):
-        if info.context.user.is_staff:
+        if info.context.user.is_authenticated:
             return User.objects.all()
         else:
-            return User.objects.exclude(is_superuser=True)
+            return User.objects.none()
 ```
 
 ### Use with relay
@@ -575,7 +605,7 @@ class UserType(DjangoGrapheneCRUD):
     class Meta:
         model = User
         input_extend_fields = (
-            ("fullName": graphene.String()),
+            ("fullName", graphene.String()),
         )
 
     @classmethod
@@ -687,7 +717,7 @@ Default it returns "model.objects.all()", the overload is useful for applying
 filtering based on user. The method is more than a resolver, it is also called
 in nested request, fetch instances for mutations and subscription filter.
 
-#### Middleware methode before_XXX(cls, parent, info, instance, data) / after_XXX(cls, parent, info, instance, data)
+#### Middleware methods before_XXX(cls, parent, info, instance, data) / after_XXX(cls, parent, info, instance, data)
 
 ```python
 @classmethod
