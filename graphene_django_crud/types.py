@@ -252,9 +252,6 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
 
         for field in selection_set.selections:
 
-            if field.name.value.startswith("__"):
-                continue
-
             if isinstance(field, FragmentSpread):
                 new_ret = cls._queryset_factory_analyze(
                     info,
@@ -266,13 +263,17 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 continue
 
             if isinstance(field, InlineFragment):
-                new_ret = cls._queryset_factory_analyze(
-                    info,
-                    field.selection_set,
-                    suffix=suffix,
-                    node=node,
-                )
-                ret = fusion_ret(ret, new_ret)
+                if field.type_condition.name.value == cls.__name__:
+                    new_ret = cls._queryset_factory_analyze(
+                        info,
+                        field.selection_set,
+                        suffix=suffix,
+                        node=node,
+                    )
+                    ret = fusion_ret(ret, new_ret)
+                continue
+
+            if field.name.value.startswith("__"):
                 continue
 
             if node:
@@ -355,7 +356,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
     def get_node(cls, info, id):
         queryset = cls.get_queryset(None, info)
         try:
-            return queryset.get(pk=id)
+            return cls._queryset_factory(info, field_ast=info.field_asts[0], node=False).get(pk=id)
         except cls._meta.model.DoesNotExist:
             return None
 
