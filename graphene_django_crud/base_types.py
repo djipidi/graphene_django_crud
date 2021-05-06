@@ -47,6 +47,14 @@ def node_factory_type(_type, registry=None, *args, **kwargs):
         count = graphene.Int()
         data = graphene.List(_type)
 
+        @classmethod
+        def resolve_data(cls, parent, info, **kwarg):
+            return parent["iterable"][parent["start"] : parent["end"]]
+
+        @classmethod
+        def resolve_count(cls, parent, info, **kwarg):
+            return parent["iterable"].count()
+
     registry.register_node_type(nodeTypeName, NodeGenericType)
     return NodeGenericType
 

@@ -3,42 +3,44 @@
 Inspired by prisma-nexus and graphene-django-extras, This package turns the
 django orm into a graphql API.
 
-- [Installation](#Installation)
-- [Usage](#Usage)
-  - [Example](#Example)
-  - [Computed field](#Computed-field)
-  - [Filtering by user](#Filtering-by-user)
-- [GrapheneDjangoCrud Class](#GrapheneDjangoCrud-Class)
-  - [Meta parameters](#Meta-parameters)
-    - [model](#model-required-parameter)
-    - [max_limit](#max_limit)
-    - [only_fields / exclude_fields](#only_fields--exclude_fields)
-    - [input_only_fields / input_exclude_fields](#input_only_fields--input_exclude_fields)
-    - [input_extend_fields](#input_extend_fields)
-    - [where_only_fields / where_exclude_fields](#where_only_fields--where_exclude_fields)
-    - [order_by_only_fields / order_by_exclude_fields](#order_by_only_fields--order_by_exclude_fields)
-  - [Fields](#Fields)
-    - [ReadField](#ReadField)
-    - [BatchReadField](#BatchReadField)
-    - [CreateField](#CreateField)
-    - [UpdateField](#UpdateField)
-    - [DeleteField](#DeleteField)
-    - [CreatedField](#CreatedField)
-    - [UpdatedField](#UpdatedField)
-    - [DeletedField](#DeletedField)
-  - [Input Types](#Input-Types)
-    - [WhereInputType](#WhereInputType)
-    - [OrderByInputType](#OrderByInputType)
-    - [CreateInputType](#CreateInputType)
-    - [UpdateInputType](#UpdateInputType)
-  - [overload methods](#overload-methods)
-    - [get_queryset](#get_querysetcls-parent-info-kwargs)
-    - [Middleware-methode-before_XXX/after_XXX](#middleware-methode-before_xxxcls-parent-info-instance-data--after_xxxcls-parent-info-instance-data)
-- [Utils](#Utils)
-  - [@resolver_hints(only: list\[str\], select_related:list\[str\])](#resolver_hintsonly-liststr-select_relatedliststr)
-  - [where_input_to_Q(where_input: dict) -> Q](#where_input_to_qwhere_input-dict---q)
-  - [order_by_input_to_args(order_by_input: list\[dict\]) -> list\[str\]](#order_by_input_to_argsorder_by_input-listdict---liststr)
-- [Scalar filter](#Scalar-filter)
+- [Graphene-Django-Crud](#graphene-django-crud)
+  - [Installation](#installation)
+  - [Usage](#usage)
+    - [Example](#example)
+    - [Computed Field](#computed-field)
+    - [Filtering by user](#filtering-by-user)
+    - [Use with relay](#use-with-relay)
+  - [GrapheneDjangoCrud Class](#graphenedjangocrud-class)
+    - [Meta parameters](#meta-parameters)
+      - [model (required parameter)](#model-required-parameter)
+      - [max_limit](#max_limit)
+      - [only_fields / exclude_fields](#only_fields--exclude_fields)
+      - [input_only_fields / input_exclude_fields](#input_only_fields--input_exclude_fields)
+      - [input_extend_fields](#input_extend_fields)
+      - [where_only_fields / where_exclude_fields](#where_only_fields--where_exclude_fields)
+      - [order_by_only_fields / order_by_exclude_fields](#order_by_only_fields--order_by_exclude_fields)
+    - [Fields](#fields)
+      - [ReadField](#readfield)
+      - [BatchReadField](#batchreadfield)
+      - [CreateField](#createfield)
+      - [UpdateField](#updatefield)
+      - [DeleteField](#deletefield)
+      - [CreatedField](#createdfield)
+      - [UpdatedField](#updatedfield)
+      - [DeletedField](#deletedfield)
+    - [Input Types](#input-types)
+      - [WhereInputType](#whereinputtype)
+      - [OrderByInputType](#orderbyinputtype)
+      - [CreateInputType](#createinputtype)
+      - [UpdateInputType](#updateinputtype)
+    - [overload methods](#overload-methods)
+      - [get_queryset(cls, parent, info, \*\*kwargs)](#get_querysetcls-parent-info-kwargs)
+      - [Middleware methode before_XXX(cls, parent, info, instance, data) / after_XXX(cls, parent, info, instance, data)](#middleware-methode-before_xxxcls-parent-info-instance-data--after_xxxcls-parent-info-instance-data)
+  - [Utils](#utils)
+    - [@resolver_hints(only: list\[str\], select_related:list\[str\])](#resolver_hintsonly-liststr-select_relatedliststr)
+    - [where_input_to_Q(where_input: dict) -> Q](#where_input_to_qwhere_input-dict---q)
+    - [order_by_input_to_args(order_by_input: list\[dict\]) -> list\[str\]](#order_by_input_to_argsorder_by_input-listdict---liststr)
+  - [Scalar Filter](#scalar-filter)
 
 ## Installation
 
@@ -501,6 +503,40 @@ class UserType(DjangoGrapheneCRUD):
             return User.objects.exclude(is_superuser=True)
 ```
 
+### Use with relay
+
+The configuration is the same as graphene-django, just added the "relay.Node"
+interface.
+
+```python
+
+class CategoryType(DjangoGrapheneCRUD):
+    class Meta:
+        model = Category
+        interfaces = (relay.Node, )
+
+
+class IngredientType(DjangoGrapheneCRUD):
+    class Meta:
+        model = Ingredient
+        interfaces = (relay.Node, )
+
+
+class Query(graphene.ObjectType):
+
+    node = relay.Node.Field()
+
+    category = CategoryType.ReadField()
+    all_categories = CategoryType.BatchReadField()
+
+    ingredient = IngredientType.ReadField()
+    all_ingredients = IngredientType.BatchReadField()
+
+```
+
+Relay.global_id as well as model id are supported to write the query using the
+"id" field of whereInputType.
+
 ## GrapheneDjangoCrud Class
 
 ### Meta parameters
@@ -512,14 +548,14 @@ The model used for the definition type
 #### max_limit
 
 default : None\
-To avoid too large transfers, the max_limit parameter imposes a maximum number
-of return items for batchreadField and nodeField. it imposes to use pagination.
-If the value is None there is no limit.
+To avoid too large transfers, the max_limit parameter imposes a
+maximum number of return items for batchreadField and nodeField. it imposes to
+use pagination. If the value is None there is no limit.
 
 #### only_fields / exclude_fields
 
-Tuple of model fields to include/exclude in graphql type.\
-Only one of the two parameters can be declared.
+Tuple of model fields to include/exclude in graphql type. Only one of the two
+parameters can be declared.
 
 #### input_only_fields / input_exclude_fields
 
@@ -690,8 +726,8 @@ def after_delete(cls, parent, info, instance, data):
 Methods called before or after a mutation. The "instance" argument is the
 instance of the model that goes or has been modified retrieved from the "where"
 argument of the mutation, or it's been created by the model constructor. The
-"data" argument is a dict of the "input" argument of the mutation.\
-The method is also called in nested mutation.
+"data" argument is a dict of the "input" argument of the mutation. The method is
+also called in nested mutation.
 
 ## Utils
 

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## \[Unreleased\]
+
+### Added
+
+- relay integration
+
 ## \[1.2.0\] - 2021-04-02
 
 ### Breaking change:

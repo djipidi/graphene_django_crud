@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
 
 from collections import OrderedDict
+from django.utils.functional import SimpleLazyObject
 import graphene
+from graphene.types.objecttype import ObjectTypeOptions
 from graphene.types.base import BaseOptions
+from graphene_django.utils.utils import is_valid_django_model
 from graphql.language.ast import FragmentSpread, InlineFragment
+from graphene.relay import Connection, Node
+
+from .fields import DjangoConnectionField, DjangoListField
 
 from .utils import (
     get_model_fields,
@@ -60,7 +66,7 @@ def resolver_hints(select_related=[], only=[], **kwargs):
     return wrapper
 
 
-class DjangoGrapheneCRUDOptions(BaseOptions):
+class DjangoGrapheneCRUDOptions(ObjectTypeOptions):
     model = None
 
     max_limit = None
@@ -78,7 +84,7 @@ class DjangoGrapheneCRUDOptions(BaseOptions):
     order_by_only_fields = "__all__"
     order_by_exclude_fields = ()
 
-    interfaces = ()
+    connection = None
 
     registry = (None,)
 
@@ -106,6 +112,10 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         order_by_only_fields="__all__",
         order_by_exclude_fields=(),
         description="",
+        connection=None,
+        connection_class=None,
+        use_connection=None,
+        interfaces=(),
         registry=None,
         skip_registry=False,
         **options,
@@ -129,6 +139,25 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
             _as=graphene.Field,
         )
 
+        if use_connection is None and interfaces:
+            use_connection = any(
+                (issubclass(interface, Node) for interface in interfaces)
+            )
+
+        if use_connection and not connection:
+            # We create the connection automatically
+            if not connection_class:
+                connection_class = Connection
+
+            connection = connection_class.create_type(
+                "{}Connection".format(options.get("name") or cls.__name__), node=cls
+            )
+
+        if connection is not None:
+            assert issubclass(connection, Connection), (
+                "The connection must be a Connection. Received {}"
+            ).format(connection.__name__)
+
         _meta = DjangoGrapheneCRUDOptions(cls)
         _meta.model = model
         _meta.max_limit = max_limit
@@ -146,10 +175,15 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         _meta.order_by_only_fields = order_by_only_fields
         _meta.order_by_exclude_fields = order_by_exclude_fields
 
+        _meta.connection = connection
+        # _meta.connection_class = connection_class
+        # _meta.use_connection = use_connection
+        # _meta.interfaces = interfaces
+
         _meta.registry = registry
 
         super(DjangoGrapheneCRUD, cls).__init_subclass_with_meta__(
-            _meta=_meta, description=description, **options
+            _meta=_meta, interfaces=interfaces, description=description, **options
         )
 
         if not skip_registry:
@@ -157,7 +191,6 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
 
     @classmethod
     def _queryset_factory(cls, info, field_ast=None, node=True, **kwargs):
-
         queryset = cls.get_queryset(None, info)
         arguments = parse_arguments_ast(
             field_ast.arguments, variable_values=info.variable_values
@@ -219,9 +252,6 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
 
         for field in selection_set.selections:
 
-            if field.name.value.startswith("__"):
-                continue
-
             if isinstance(field, FragmentSpread):
                 new_ret = cls._queryset_factory_analyze(
                     info,
@@ -233,22 +263,35 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 continue
 
             if isinstance(field, InlineFragment):
-                new_ret = cls._queryset_factory_analyze(
-                    info,
-                    field.selection_set,
-                    suffix=suffix,
-                    node=node,
-                )
-                ret = fusion_ret(ret, new_ret)
+                if field.type_condition.name.value == cls.__name__:
+                    new_ret = cls._queryset_factory_analyze(
+                        info,
+                        field.selection_set,
+                        suffix=suffix,
+                        node=node,
+                    )
+                    ret = fusion_ret(ret, new_ret)
+                continue
+
+            if field.name.value.startswith("__"):
                 continue
 
             if node:
-                if field.name.value == "data":
+                if field.name.value in ["data", "node"]:
                     new_ret = cls._queryset_factory_analyze(
                         info,
                         field.selection_set,
                         suffix=new_suffix,
                         node=False,
+                    )
+                    ret = fusion_ret(ret, new_ret)
+
+                elif field.name.value in ["edges"]:
+                    new_ret = cls._queryset_factory_analyze(
+                        info,
+                        field.selection_set,
+                        suffix=new_suffix,
+                        node=True,
                     )
                     ret = fusion_ret(ret, new_ret)
             else:
@@ -308,6 +351,34 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
     @classmethod
     def get_queryset(cls, parent, info, **kwargs):
         return cls._meta.model.objects.all()
+
+    @classmethod
+    def get_node(cls, info, id):
+        queryset = cls.get_queryset(None, info)
+        try:
+            return cls._queryset_factory(info, field_ast=info.field_asts[0], node=False).get(pk=id)
+        except cls._meta.model.DoesNotExist:
+            return None
+
+    def resolve_id(self, info):
+        return self.pk
+
+    @classmethod
+    def is_type_of(cls, root, info):
+        if isinstance(root, SimpleLazyObject):
+            root._setup()
+            root = root._wrapped
+        if isinstance(root, cls):
+            return True
+        if not is_valid_django_model(type(root)):
+            raise Exception(('Received incompatible instance "{}".').format(root))
+
+        if cls._meta.model._meta.proxy:
+            model = root._meta.model
+        else:
+            model = root._meta.model._meta.concrete_model
+
+        return model == cls._meta.model
 
     @classmethod
     def before_mutate(cls, parent, info, instance, data):
@@ -415,18 +486,14 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
 
     @classmethod
     def BatchReadField(cls, *args, **kwargs):
-
-        arguments = OrderedDict()
-        arguments.update(
+        kwargs.update(
             {
                 "where": graphene.Argument(
                     convert_model_to_input_type(
                         cls._meta.model, input_flag="where", registry=cls._meta.registry
                     )
                 ),
-                "limit": graphene.Int(),
-                "offset": graphene.Int(),
-                "orderBy": graphene.List(
+                "order_by": graphene.List(
                     convert_model_to_input_type(
                         cls._meta.model,
                         input_flag="order_by",
@@ -435,18 +502,13 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 ),
             }
         )
-        return graphene.Field(
-            node_factory_type(cls, registry=cls._meta.registry),
-            args=arguments,
-            resolver=cls.batchread,
-            *args,
-            **kwargs,
-        )
+        if cls._meta.connection:
+            return DjangoConnectionField(cls, *args, **kwargs)
+        return DjangoListField(cls, *args, **kwargs)
 
     @classmethod
     def batchread(cls, parent, info, related_field=None, **kwargs):
-
-        if related_field is not None:
+        if parent is not None:
             try:
                 queryset = parent.__getattr__(related_field).all()
             except:
@@ -456,16 +518,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 info, field_ast=info.field_asts[0], fragments=info.fragments, node=True
             )
 
-        start = kwargs.get("offset", 0)
-        limit = kwargs.get("limit", cls._meta.max_limit)
-        if limit is not None and cls._meta.max_limit is not None:
-            if limit > cls._meta.max_limit:
-                limit = cls._meta.max_limit
-        if limit is not None:
-            end = start + limit
-        else:
-            end = None
-        return {"count": queryset.count(), "data": queryset[start:end]}
+        return queryset
 
     @classmethod
     def mutateItem(cls, parent, info, instance, data):
