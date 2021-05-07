@@ -11,7 +11,9 @@ class TestFkA(models.Model):
 
 class TestFkB(models.Model):
     text = models.CharField(max_length=100, null=True, blank=True)
-    testFkC = models.ForeignKey("TestFkC", on_delete=models.CASCADE)
+    testFkC = models.ForeignKey(
+        "TestFkC", on_delete=models.CASCADE, null=True, blank=True
+    )
 
 
 class TestFkC(models.Model):
@@ -27,7 +29,9 @@ class TestO2oA(models.Model):
 
 class TestO2oB(models.Model):
     text = models.CharField(max_length=100, null=True, blank=True)
-    TestO2oC = models.OneToOneField("TestO2oC", on_delete=models.CASCADE)
+    TestO2oC = models.OneToOneField(
+        "TestO2oC", on_delete=models.CASCADE, null=True, blank=True
+    )
 
 
 class TestO2oC(models.Model):

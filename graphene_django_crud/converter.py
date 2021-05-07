@@ -187,11 +187,11 @@ def convert_model_to_input_type(
         items["create"] = graphene.Field(
             convert_model_to_input_type(model, input_flag="create", registry=registry)
         )
-        # items["remove"] = graphene.Field(convert_model_to_input_type(model, input_flag="where", registry=registry))
+        items["delete"] = Boolean()
         items["connect"] = graphene.Field(
             convert_model_to_input_type(model, input_flag="where", registry=registry)
         )
-        # items["disconnect"] = graphene.Field(convert_model_to_input_type(model, input_flag="where", registry=registry))
+        items["disconnect"] = Boolean()
 
     else:
         for name, field in model_fields:
@@ -221,7 +221,7 @@ def convert_model_to_input_type(
 
 
 def assert_valid_name(name):
-    """ Helper to assert that provided names are valid. """
+    """Helper to assert that provided names are valid."""
     assert COMPILED_NAME_PATTERN.match(
         name
     ), 'Names must match /{}/ but "{}" does not.'.format(NAME_PATTERN, name)
