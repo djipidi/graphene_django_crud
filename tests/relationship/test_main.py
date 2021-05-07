@@ -521,20 +521,14 @@ def test_onetoone():
         "where": {"id": {"equals": b3_id}},
         "input": {
             "text": "b3-bis",
-            "TestO2oC": {
-                "disconnect": True
-            },
-        }
+            "TestO2oC": {"disconnect": True},
+        },
     }
     expected_response = {
         "data": {
             "testO2oBUpdate": {
                 "ok": True,
-                "result": {
-                    "id": b3_id,
-                    "text": "b3-bis",
-                    "TestO2oC": None
-                }
+                "result": {"id": b3_id, "text": "b3-bis", "TestO2oC": None},
             }
         }
     }
@@ -546,20 +540,14 @@ def test_onetoone():
         "where": {"id": {"equals": b2_id}},
         "input": {
             "text": "b2-bis",
-            "TestO2oC": {
-                "delete": True
-            },
-        }
+            "TestO2oC": {"delete": True},
+        },
     }
     expected_response = {
         "data": {
             "testO2oBUpdate": {
                 "ok": True,
-                "result": {
-                    "id": b2_id,
-                    "text": "b2-bis",
-                    "TestO2oC": None
-                }
+                "result": {"id": b2_id, "text": "b2-bis", "TestO2oC": None},
             }
         }
     }
@@ -571,20 +559,14 @@ def test_onetoone():
         "where": {"id": {"equals": c1_id}},
         "input": {
             "text": "c1-bis",
-            "testo2ob": {
-                "disconnect": True
-            },
-        }
+            "testo2ob": {"disconnect": True},
+        },
     }
     expected_response = {
         "data": {
             "testO2oCUpdate": {
                 "ok": True,
-                "result": {
-                    "id": c1_id,
-                    "text": "c1-bis",
-                    "testo2ob": None
-                }
+                "result": {"id": c1_id, "text": "c1-bis", "testo2ob": None},
             }
         }
     }
