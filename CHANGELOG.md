@@ -8,6 +8,12 @@ All notable changes to this project will be documented in this file.
 
 - relay integration
 
+## \[1.2.1\] - 2021-05-07
+
+### Fixed
+
+- FIX delete field and disconnect field do not exist in updateNestedInput
+
 ## \[1.2.0\] - 2021-04-02
 
 ### Breaking change:
@@ -30,7 +36,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- FIX WhereInput don't use related_query_name
+- FIX WhereInput does not use related_query_name
 
 ## \[1.1.1\] - 2021-03-15
 

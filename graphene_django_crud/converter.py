@@ -191,11 +191,11 @@ def convert_model_to_input_type(
         items["create"] = graphene.Field(
             convert_model_to_input_type(model, input_flag="create", registry=registry)
         )
-        # items["remove"] = graphene.Field(convert_model_to_input_type(model, input_flag="where", registry=registry))
+        items["delete"] = Boolean()
         items["connect"] = graphene.Field(
             convert_model_to_input_type(model, input_flag="where", registry=registry)
         )
-        # items["disconnect"] = graphene.Field(convert_model_to_input_type(model, input_flag="where", registry=registry))
+        items["disconnect"] = Boolean()
 
     else:
         if input_flag == "where":

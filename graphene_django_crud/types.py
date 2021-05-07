@@ -553,6 +553,17 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                         .get()
                     )
                     instance.__setattr__(key, related_instance)
+                elif "disconnect" in value.keys():
+                    instance.__setattr__(key, None)
+                elif "delete" in value.keys():
+                    try:
+                        related_instance = getattr(instance, key)
+                        related_type.delete(
+                            parent, info, {"id": {"equals": related_instance.pk}}
+                        )
+                        instance.__setattr__(key, None)
+                    except ValidationError as e:
+                        raise validation_error_with_suffix(e, key + ".delete")
             else:
                 instance.__setattr__(key, value)
         instance.full_clean()
@@ -589,6 +600,31 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                         )
                     except ValidationError as e:
                         raise validation_error_with_suffix(e, key + ".connect")
+                elif "disconnect" in value.keys():
+                    try:
+                        related_instance = getattr(instance, key)
+
+                        related_type.update(
+                            parent,
+                            info,
+                            None,
+                            {},
+                            instance_pk=related_instance.pk,
+                            field=model_field.remote_field,
+                            parent_instance=None,
+                        )
+                    except ValidationError as e:
+                        raise validation_error_with_suffix(e, key + ".connect")
+                elif "delete" in value.keys():
+                    try:
+                        related_instance = getattr(instance, key)
+                        related_type.delete(
+                            parent, info, None, instance_pk=related_instance.pk
+                        )
+                        instance.__setattr__(key, None)
+                    except ValidationError as e:
+                        raise validation_error_with_suffix(e, key + ".delete")
+
             elif isinstance(model_field, ManyToOneRel):
                 related_type = get_global_registry().get_type_for_model(
                     model_field.remote_field.model
@@ -783,13 +819,22 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
             }
 
     @classmethod
-    def update(cls, parent, info, where, data, field=None, parent_instance=None):
-        instance = (
-            cls.get_queryset(parent, info)
-            .filter(where_input_to_Q(where))
-            .distinct()
-            .get()
-        )
+    def update(
+        cls,
+        parent,
+        info,
+        where,
+        data,
+        field=None,
+        parent_instance=None,
+        instance_pk=None,
+    ):
+        queryset = cls.get_queryset(parent, info)
+        if instance_pk is not None:
+            queryset = queryset.filter(pk=instance_pk)
+        else:
+            queryset = queryset.filter(where_input_to_Q(where)).distinct()
+        instance = queryset.get()
         if field is not None:
             instance.__setattr__(field.name, parent_instance)
         cls.before_mutate(parent, info, instance, data)
@@ -834,13 +879,13 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
             }
 
     @classmethod
-    def delete(cls, parent, info, where):
-        instance = (
-            cls.get_queryset(parent, info)
-            .filter(where_input_to_Q(where))
-            .distinct()
-            .get()
-        )
+    def delete(cls, parent, info, where, instance_pk=None):
+        queryset = cls.get_queryset(parent, info)
+        if instance_pk is not None:
+            queryset = queryset.filter(pk=instance_pk)
+        else:
+            queryset = queryset.filter(where_input_to_Q(where)).distinct()
+        instance = queryset.get()
         cls.before_mutate(parent, info, instance, {})
         cls.before_delete(parent, info, instance, {})
         instance.delete()

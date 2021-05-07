@@ -375,6 +375,20 @@ mutation testO2oBCreate($input: TestO2oBCreateInput!) {
 """
 )
 
+testO2oBUpdate_gql = (
+    testO2oB_Fragment
+    + """
+mutation testO2oBUpdate($input: TestO2oBUpdateInput!, $where: TestO2oBWhereInput!) {
+    testO2oBUpdate(input: $input, where: $where) {
+        ok
+        result {
+            ...testO2oB
+        }
+    }
+}
+"""
+)
+
 testO2oC_Fragment = """
 fragment testO2oC on TestO2oCType {
   id
@@ -394,6 +408,20 @@ testO2oCCreate_gql = (
     + """
 mutation testO2oCCreate($input: TestO2oCCreateInput!) {
     testO2oCCreate(input: $input) {
+        ok
+        result {
+            ...testO2oC
+        }
+    }
+}
+"""
+)
+
+testO2oCUpdate_gql = (
+    testO2oC_Fragment
+    + """
+mutation testO2oCUpdate($input: TestO2oCUpdateInput!, $where: TestO2oCWhereInput!) {
+    testO2oCUpdate(input: $input, where: $where) {
         ok
         result {
             ...testO2oC
@@ -488,6 +516,78 @@ def test_onetoone():
 
     c3_id = response["data"]["testO2oCCreate"]["result"]["id"]
     b3_id = response["data"]["testO2oCCreate"]["result"]["testo2ob"]["id"]
+
+    variables = {
+        "where": {"id": {"equals": b3_id}},
+        "input": {
+            "text": "b3-bis",
+            "TestO2oC": {
+                "disconnect": True
+            },
+        }
+    }
+    expected_response = {
+        "data": {
+            "testO2oBUpdate": {
+                "ok": True,
+                "result": {
+                    "id": b3_id,
+                    "text": "b3-bis",
+                    "TestO2oC": None
+                }
+            }
+        }
+    }
+
+    response = client.query(testO2oBUpdate_gql, variables=variables).json()
+    verify_response(expected_response, response)
+
+    variables = {
+        "where": {"id": {"equals": b2_id}},
+        "input": {
+            "text": "b2-bis",
+            "TestO2oC": {
+                "delete": True
+            },
+        }
+    }
+    expected_response = {
+        "data": {
+            "testO2oBUpdate": {
+                "ok": True,
+                "result": {
+                    "id": b2_id,
+                    "text": "b2-bis",
+                    "TestO2oC": None
+                }
+            }
+        }
+    }
+
+    response = client.query(testO2oBUpdate_gql, variables=variables).json()
+    verify_response(expected_response, response)
+
+    variables = {
+        "where": {"id": {"equals": c1_id}},
+        "input": {
+            "text": "c1-bis",
+            "testo2ob": {
+                "disconnect": True
+            },
+        }
+    }
+    expected_response = {
+        "data": {
+            "testO2oCUpdate": {
+                "ok": True,
+                "result": {
+                    "id": c1_id,
+                    "text": "c1-bis",
+                    "testo2ob": None
+                }
+            }
+        }
+    }
 
 
 testM2mA_Fragment = """
