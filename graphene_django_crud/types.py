@@ -7,7 +7,7 @@ from graphene.types.objecttype import ObjectTypeOptions
 from graphene.types.base import BaseOptions
 from graphene_django.utils.utils import is_valid_django_model
 from graphql.language.ast import FragmentSpread, InlineFragment
-from graphene.relay import Connection, Node
+from graphene.relay import Connection as RelayConnection, Node
 
 from .fields import DjangoConnectionField, DjangoListField
 
@@ -22,7 +22,7 @@ from .utils import (
     error_data_from_validation_error,
     validation_error_with_suffix,
 )
-from .base_types import mutation_factory_type, node_factory_type
+from .base_types import mutation_factory_type, DefaultConnection
 
 from django.db import transaction
 from django.db.models import Prefetch
@@ -114,7 +114,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         description="",
         connection=None,
         connection_class=None,
-        use_connection=None,
+        use_connection=True,
         interfaces=(),
         registry=None,
         skip_registry=False,
@@ -139,24 +139,23 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
             _as=graphene.Field,
         )
 
-        if use_connection is None and interfaces:
-            use_connection = any(
-                (issubclass(interface, Node) for interface in interfaces)
-            )
+        use_relay = False
+        if interfaces:
+            use_relay = any((issubclass(interface, Node) for interface in interfaces))
+            if use_relay and not use_connection:
+                use_connection = True
 
         if use_connection and not connection:
             # We create the connection automatically
             if not connection_class:
-                connection_class = Connection
+                if use_relay:
+                    connection_class = RelayConnection
+                else:
+                    connection_class = DefaultConnection
 
             connection = connection_class.create_type(
                 "{}Connection".format(options.get("name") or cls.__name__), node=cls
             )
-
-        if connection is not None:
-            assert issubclass(connection, Connection), (
-                "The connection must be a Connection. Received {}"
-            ).format(connection.__name__)
 
         _meta = DjangoGrapheneCRUDOptions(cls)
         _meta.model = model
