@@ -12,6 +12,10 @@ django orm into a graphql API with optimized queryset and nested mutation.
     - [User permissions](#user-permissions)
     - [Filtering by user](#filtering-by-user)
     - [Use with relay](#use-with-relay)
+    - [Extend ConnectionType](#extend-connectiontype)
+      - [Use list field](#use-list-field)
+      - [Extend ConnectionType without Relay](#extend-connectiontype-without-relay)
+      - [Extend ConnectionType with Relay](#extend-connectiontype-with-relay)
   - [GrapheneDjangoCrud Class](#graphenedjangocrud-class)
     - [Meta parameters](#meta-parameters)
       - [model (required parameter)](#model-required-parameter)
@@ -566,6 +570,72 @@ class Query(graphene.ObjectType):
 
 Relay.global_id as well as model id are supported to write the query using the
 "id" field of whereInputType.
+
+### Extend ConnectionType
+
+By default, graphene_django_crud creates a connection type for the bachread
+request and the many_to_many/many_to_one relationships.
+
+the default connection has a "count" field returning the count() value of the
+queryset and a data field returning the results of the queryset.
+
+#### Use list field
+
+```python
+from .models import Product
+import graphene
+from graphne_django_crud import DjangoGrapheneCRUD
+
+class ProductType(DjangoGrapheneCRUD):
+    class Meta:
+        model = Product
+        use_connection = False
+```
+
+#### Extend ConnectionType without Relay
+
+```python
+from .models import Product
+from django.db.models import Avg
+import graphene
+from graphne_django_crud import DefaultConnection, DjangoGrapheneCRUD
+
+class ConnectionWithPriceAVG(DefaultConnection):
+    class Meta:
+        abstract = True
+
+    price_avg = graphene.Float()
+
+    def resolve_price_avg(self, info):
+        return self.iterable.aggregate(Avg('price'))["price__avg"]
+
+class ProductType(DjangoGrapheneCRUD):
+    class Meta:
+        model = Product
+        connection_class = ConnectionWithPriceAVG
+```
+
+#### Extend ConnectionType with Relay
+
+```python
+from .models import Product
+import graphene
+from graphne_django_crud import DjangoGrapheneCRUD
+
+class ConnectionWithTotalCount(graphene.Connection):
+    class Meta:
+        abstract = True
+    total_count = graphene.Int()
+
+    def resolve_total_count(self, info):
+        return self.iterable.count()
+
+class ProductType(DjangoGrapheneCRUD):
+    class Meta:
+        model = Product
+        interfaces = (relay.Node, )
+        connection_class = ConnectionWithTotalCount
+```
 
 ## GrapheneDjangoCrud Class
 
