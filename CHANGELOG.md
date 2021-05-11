@@ -6,7 +6,13 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- relay integration
+- Relay integration
+- Possibility to extend connectionType
+- Possibility of having a list field instead of a connection field
+
+### changed
+
+- Graphql type <typeName>NodeType is renamed to <typeName>Connection
 
 ## \[1.2.1\] - 2021-05-07
 
