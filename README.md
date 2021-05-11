@@ -1,11 +1,22 @@
 # Graphene-Django-Crud
 
-Inspired by prisma-nexus and graphene-django-extras, This package turns the
-django orm into a graphql API.
-django orm into a graphql API with optimized queryset and nested mutation.
+Inspired by prisma-nexus and graphene-django-extras, this package transforms the
+django orm into a graphql API with the following features:
+
+- Expose CRUD opérations
+- Optimized queryset
+- Filtering with logical operators
+- Possibility to include authentication and permissions
+- Nested mutations
+- Subscription fields
+
+## Table of contents
 
 - [Graphene-Django-Crud](#graphene-django-crud)
+  - [Table of contents](#table-of-contents)
   - [Installation](#installation)
+    - [With pip](#with-pip)
+    - [With source code](#with-source-code)
   - [Usage](#usage)
     - [Example](#example)
     - [Computed Field](#computed-field)
@@ -38,6 +49,7 @@ django orm into a graphql API with optimized queryset and nested mutation.
     - [overload methods](#overload-methods)
       - [get_queryset(cls, parent, info, \*\*kwargs)](#get_querysetcls-parent-info-kwargs)
       - [Middleware methods before_XXX(cls, parent, info, instance, data) / after_XXX(cls, parent, info, instance, data)](#middleware-methods-before_xxxcls-parent-info-instance-data--after_xxxcls-parent-info-instance-data)
+    - [generate_signals()](#generate_signals)
   - [Utils](#utils)
       - [@resolver_hints(only: list\[str\], select_related:list\[str\])](#resolver_hintsonly-liststr-select_relatedliststr)
       - [where_input_to_Q(where_input: dict) -> Q](#where_input_to_qwhere_input-dict---q)
@@ -46,10 +58,36 @@ django orm into a graphql API with optimized queryset and nested mutation.
 
 ## Installation
 
-For installing graphene-django-crud, just run this command in your shell:
+> For the use of the subscription fields you must have correctly installed
+> graphene-subscription in your project.
+> [For that follow their installation part](https://github.com/jaydenwindle/graphene-subscriptions)\
+> [The generate signals](#generate_signals)
+> method allows to connect model signals to graphene-subcription signals
+
+### With pip
+
+To install graphene-django-crud, simply run this simple command in your terminal
+of choice:
 
 ```
-pip install graphene-django-crud
+$ pip install graphene-django-crud
+```
+
+### With source code
+
+graphene-django-crud is developed on GitHub, You can either clone the public
+repository:
+
+```
+$ git clone https://github.com/djipidi/graphene_django_crud.git
+```
+
+Once you have a copy of the source, you can embed it in your own Python package,
+or install it into your site-packages easily:
+
+```
+$ cd graphene_django_crud
+$ python setup.py install
 ```
 
 ## Usage
@@ -90,7 +128,7 @@ class UserType(DjangoGrapheneCRUD):
         if info.context.user.is_authenticated:
             return User.objects.all()
         else:
-            return User.objects.none()
+            return User.objects.none() 
 
     @classmethod
     def before_mutate(cls, parent, info, instance, data):
@@ -758,6 +796,30 @@ instance of the model that goes or has been modified retrieved from the "where"
 argument of the mutation, or it's been created by the model constructor. The
 "data" argument is a dict of the "input" argument of the mutation. The method is
 also called in nested mutation.
+
+### generate_signals()
+
+Graphene-subscription needs to connect the model signals to its own signals. the
+"generate_signals()" method does this for the model.
+
+```python
+# signals.py
+
+from .schema import UserType, GroupTyp
+
+UserType.generate_signals()
+GroupType.generate_signals()
+
+# apps.py
+
+from django.apps import AppConfig
+
+class CoreConfig(AppConfig):
+    name = 'core'
+
+    def ready(self):
+        import core.signals
+```
 
 ## Utils
 
