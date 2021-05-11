@@ -448,7 +448,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         if operation_flag == "create":
             instance = cls.create(parent, info, instance, data, *args, **kwargs)
         if operation_flag == "update":
-            instance = cls.update(parent, info, instance,  data, *args, **kwargs)
+            instance = cls.update(parent, info, instance, data, *args, **kwargs)
         if operation_flag == "delete":
             instance = cls.delete(parent, info, instance, data, *args, **kwargs)
         if getattr(cls, "after_mutate", None):
@@ -795,7 +795,9 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 disconnectItems = []
                 for i, create_input in enumerate(value.get("create", [])):
                     try:
-                        addItems.append(related_type._create(parent, info, create_input))
+                        addItems.append(
+                            related_type._create(parent, info, create_input)
+                        )
                     except ValidationError as e:
                         raise validation_error_with_suffix(e, key + ".create." + str(i))
                 for i, connect_input in enumerate(value.get("connect", [])):
