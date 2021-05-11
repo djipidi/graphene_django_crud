@@ -387,6 +387,39 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         return model == cls._meta.model
 
     @classmethod
+    def mutate(cls, parent, info, instance, data, operation_flag=None, *args, **kwargs):
+        cls.before_mutate(parent, info, instance, data)
+        if operation_flag == "create":
+            instance = cls.create(parent, info, instance, data, *args, **kwargs)
+        if operation_flag == "update":
+            instance = cls.update(parent, info, instance,  data, *args, **kwargs)
+        if operation_flag == "delete":
+            instance = cls.delete(parent, info, instance, data, *args, **kwargs)
+        cls.after_mutate(parent, info, instance, data)
+        return instance
+
+    @classmethod
+    def create(cls, parent, info, instance, data, *args, **kwargs):
+        cls.before_create(parent, info, instance, data)
+        instance = cls._update_or_create(parent, info, instance, data)
+        cls.after_create(parent, info, instance, data)
+        return instance
+
+    @classmethod
+    def update(cls, parent, info, instance, data, *args, **kwargs):
+        cls.before_update(parent, info, instance, data)
+        instance = cls._update_or_create(parent, info, instance, data)
+        cls.after_update(parent, info, instance, data)
+        return instance
+
+    @classmethod
+    def delete(cls, parent, info, instance, data, *args, **kwargs):
+        cls.before_delete(parent, info, instance, data)
+        instance.delete()
+        cls.after_delete(parent, info, instance, data)
+        return instance
+
+    @classmethod
     def before_mutate(cls, parent, info, instance, data):
         pass
 
@@ -532,7 +565,45 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         return queryset
 
     @classmethod
-    def mutateItem(cls, parent, info, instance, data):
+    def _create(cls, parent, info, data, field=None, parent_instance=None):
+        instance = cls._meta.model()
+        if field is not None:
+            instance.__setattr__(field.name, parent_instance)
+        return cls.mutate(parent, info, instance, data, operation_flag="create")
+
+    @classmethod
+    def _update(
+        cls,
+        parent,
+        info,
+        where,
+        data,
+        field=None,
+        parent_instance=None,
+        instance_pk=None,
+    ):
+        queryset = cls.get_queryset(parent, info)
+        if instance_pk is not None:
+            queryset = queryset.filter(pk=instance_pk)
+        else:
+            queryset = queryset.filter(where_input_to_Q(where)).distinct()
+        instance = queryset.get()
+        if field is not None:
+            instance.__setattr__(field.name, parent_instance)
+        return cls.mutate(parent, info, instance, data, operation_flag="update")
+
+    @classmethod
+    def _delete(cls, parent, info, where, instance_pk=None):
+        queryset = cls.get_queryset(parent, info)
+        if instance_pk is not None:
+            queryset = queryset.filter(pk=instance_pk)
+        else:
+            queryset = queryset.filter(where_input_to_Q(where)).distinct()
+        instance = queryset.get()
+        return cls.mutate(parent, info, instance, {}, operation_flag="delete")
+
+    @classmethod
+    def _update_or_create(cls, parent, info, instance, data):
         model_fields = get_model_fields(cls._meta.model, to_dict=True)
         for key, value in data.items():
             try:
@@ -549,7 +620,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 )
                 if "create" in value.keys():
                     try:
-                        related_instance = related_type.create(
+                        related_instance = related_type._create(
                             parent, info, value["create"]
                         )
                     except ValidationError as e:
@@ -568,7 +639,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 elif "delete" in value.keys():
                     try:
                         related_instance = getattr(instance, key)
-                        related_type.delete(
+                        related_type._delete(
                             parent, info, {"id": {"equals": related_instance.pk}}
                         )
                         instance.__setattr__(key, None)
@@ -589,7 +660,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 )
                 if "create" in value.keys():
                     try:
-                        related_type.create(
+                        related_type._create(
                             parent,
                             info,
                             value["create"],
@@ -600,7 +671,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                         raise validation_error_with_suffix(e, key + ".create")
                 elif "connect" in value.keys():
                     try:
-                        related_type.update(
+                        related_type._update(
                             parent,
                             info,
                             value["connect"],
@@ -614,7 +685,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                     try:
                         related_instance = getattr(instance, key)
 
-                        related_type.update(
+                        related_type._update(
                             parent,
                             info,
                             None,
@@ -628,7 +699,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 elif "delete" in value.keys():
                     try:
                         related_instance = getattr(instance, key)
-                        related_type.delete(
+                        related_type._delete(
                             parent, info, None, instance_pk=related_instance.pk
                         )
                         instance.__setattr__(key, None)
@@ -641,7 +712,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 )
                 for i, create_input in enumerate(value.get("create", [])):
                     try:
-                        related_type.create(
+                        related_type._create(
                             parent,
                             info,
                             create_input,
@@ -652,7 +723,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                         raise validation_error_with_suffix(e, key + ".create." + str(i))
                 for i, connect_input in enumerate(value.get("connect", [])):
                     try:
-                        related_type.update(
+                        related_type._update(
                             parent,
                             info,
                             connect_input,
@@ -666,7 +737,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                         )
                 for i, disconnect_input in enumerate(value.get("disconnect", [])):
                     try:
-                        related_type.update(
+                        related_type._update(
                             parent,
                             info,
                             disconnect_input,
@@ -680,7 +751,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                         )
                 for i, delete_where_input in enumerate(value.get("delete", [])):
                     try:
-                        related_type.delete(parent, info, delete_where_input)
+                        related_type._delete(parent, info, delete_where_input)
                     except ValidationError as e:
                         raise validation_error_with_suffix(e, key + ".delete." + str(i))
 
@@ -693,7 +764,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 disconnectItems = []
                 for i, create_input in enumerate(value.get("create", [])):
                     try:
-                        addItems.append(related_type.create(parent, info, create_input))
+                        addItems.append(related_type._create(parent, info, create_input))
                     except ValidationError as e:
                         raise validation_error_with_suffix(e, key + ".create." + str(i))
                 for i, connect_input in enumerate(value.get("connect", [])):
@@ -720,7 +791,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                         )
                 for i, delete_where_input in enumerate(value.get("delete", [])):
                     try:
-                        related_type.delete(parent, info, delete_where_input)
+                        related_type._delete(parent, info, delete_where_input)
                     except ValidationError as e:
                         raise validation_error_with_suffix(e, key + ".delete." + str(i))
 
@@ -756,7 +827,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
     def create_resolver(cls, parent, info, **kwargs):
         try:
             with transaction.atomic():
-                instance = cls.create(parent, info, kwargs["input"])
+                instance = cls._create(parent, info, kwargs["input"])
                 result_field_ast = get_field_ast_by_path(info, ["result"])
                 instance = cls._instance_to_queryset(
                     info, instance, result_field_ast
@@ -768,18 +839,6 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 "ok": False,
                 "errors": error_data_from_validation_error(e),
             }
-
-    @classmethod
-    def create(cls, parent, info, data, field=None, parent_instance=None):
-        instance = cls._meta.model()
-        if field is not None:
-            instance.__setattr__(field.name, parent_instance)
-        cls.before_mutate(parent, info, instance, data)
-        cls.before_create(parent, info, instance, data)
-        cls.mutateItem(parent, info, instance, data)
-        cls.after_create(parent, info, instance, data)
-        cls.after_mutate(parent, info, instance, data)
-        return instance
 
     @classmethod
     def UpdateField(cls, *args, **kwargs):
@@ -815,7 +874,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
     def update_resolver(cls, parent, info, **kwargs):
         try:
             with transaction.atomic():
-                instance = cls.update(parent, info, kwargs["where"], kwargs["input"])
+                instance = cls._update(parent, info, kwargs["where"], kwargs["input"])
                 result_field_ast = get_field_ast_by_path(info, ["result"])
                 instance = cls._instance_to_queryset(
                     info, instance, result_field_ast
@@ -827,32 +886,6 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 "ok": False,
                 "errors": error_data_from_validation_error(e),
             }
-
-    @classmethod
-    def update(
-        cls,
-        parent,
-        info,
-        where,
-        data,
-        field=None,
-        parent_instance=None,
-        instance_pk=None,
-    ):
-        queryset = cls.get_queryset(parent, info)
-        if instance_pk is not None:
-            queryset = queryset.filter(pk=instance_pk)
-        else:
-            queryset = queryset.filter(where_input_to_Q(where)).distinct()
-        instance = queryset.get()
-        if field is not None:
-            instance.__setattr__(field.name, parent_instance)
-        cls.before_mutate(parent, info, instance, data)
-        cls.before_update(parent, info, instance, data)
-        cls.mutateItem(parent, info, instance, data)
-        cls.after_update(parent, info, instance, data)
-        cls.after_mutate(parent, info, instance, data)
-        return instance
 
     @classmethod
     def DeleteField(cls, *args, **kwargs):
@@ -879,7 +912,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
     @classmethod
     def delete_resolver(cls, parent, info, **kwargs):
         try:
-            instance = cls.delete(parent, info, kwargs["where"])
+            instance = cls._delete(parent, info, kwargs["where"])
             return {"result": None, "ok": True, "error": []}
         except ValidationError as e:
             return {
@@ -887,21 +920,6 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 "ok": False,
                 "errors": error_data_from_validation_error(e),
             }
-
-    @classmethod
-    def delete(cls, parent, info, where, instance_pk=None):
-        queryset = cls.get_queryset(parent, info)
-        if instance_pk is not None:
-            queryset = queryset.filter(pk=instance_pk)
-        else:
-            queryset = queryset.filter(where_input_to_Q(where)).distinct()
-        instance = queryset.get()
-        cls.before_mutate(parent, info, instance, {})
-        cls.before_delete(parent, info, instance, {})
-        instance.delete()
-        cls.after_delete(parent, info, instance, {})
-        cls.after_mutate(parent, info, instance, {})
-        return instance
 
     @classmethod
     def CreatedField(cls, *args, **kwargs):

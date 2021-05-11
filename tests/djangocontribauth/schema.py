@@ -16,9 +16,10 @@ class UserType(DjangoGrapheneCRUD):
         return parent.get_full_name()
 
     @classmethod
-    def before_mutate(cls, parent, info, instance, data):
+    def mutate(cls, parent, info, instance, data, *args, **kwargs):
         if "password" in data.keys():
             instance.set_password(data.pop("password"))
+        return super().mutate(parent, info, instance, data, *args, **kwargs)
 
 
 class GroupType(DjangoGrapheneCRUD):
