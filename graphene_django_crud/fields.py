@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from functools import partial
+from django.db.models import query
 
 from django.db.models.query import QuerySet
 from graphene import Int, NonNull, String, Argument
-from graphene.relay import ConnectionField
+from graphene.relay import ConnectionField, Connection as relayConnection
 from graphene.types import Field, List
 from graphene_django.settings import graphene_settings
 from graphene_django.utils import maybe_queryset
@@ -15,8 +16,6 @@ from graphql_relay.connection.arrayconnection import (
 )
 from graphene.relay import ConnectionField, PageInfo
 from promise import Promise
-
-from .base_types import node_factory_type
 
 
 def related_batchread(django_type, related_field, parent, info, **kwargs):
@@ -32,7 +31,7 @@ class DjangoListField(Field):
 
         kwargs.setdefault("limit", Int())
         kwargs.setdefault("offset", Int())
-        super(DjangoListField, self).__init__(node_factory_type(_type), *args, **kwargs)
+        super(DjangoListField, self).__init__(List(_type), *args, **kwargs)
 
     @property
     def type(self):
@@ -66,7 +65,7 @@ class DjangoListField(Field):
         else:
             end = None
         queryset = resolver(root, info, **kwargs)
-        return {"iterable": queryset, "start": start, "end": end}
+        return queryset[start:end]
 
     def get_resolver(self, parent_resolver):
         resolver = partial(related_batchread, self.django_type, parent_resolver.args[0])
@@ -79,6 +78,12 @@ class DjangoListField(Field):
 
 class DjangoConnectionField(ConnectionField):
     def __init__(self, type, *args, **kwargs):
+        if issubclass(type._meta.connection, relayConnection):
+            self.relay = True
+        else:
+            self.relay = False
+            kwargs.setdefault("limit", Int())
+
         self.on = kwargs.pop("on", False)
         self.max_limit = kwargs.pop(
             "max_limit", graphene_settings.RELAY_CONNECTION_MAX_LIMIT
@@ -89,7 +94,10 @@ class DjangoConnectionField(ConnectionField):
         )
         self.django_type = type
         kwargs.setdefault("offset", Int())
-        super(DjangoConnectionField, self).__init__(type, *args, **kwargs)
+        if self.relay:
+            super(DjangoConnectionField, self).__init__(type, *args, **kwargs)
+        else:
+            super(ConnectionField, self).__init__(type, *args, **kwargs)
 
     @property
     def type(self):
@@ -167,40 +175,14 @@ class DjangoConnectionField(ConnectionField):
         return connection
 
     @classmethod
-    def connection_resolver(
+    def relay_connection_resolver(
         cls, resolver, connection, max_limit, enforce_first_or_last, root, info, **args
     ):
-        first = args.get("first")
-        last = args.get("last")
-        offset = args.get("offset")
-        before = args.get("before")
-
-        if enforce_first_or_last:
-            assert first or last, (
-                "You must provide a `first` or `last` value to properly paginate the `{}` connection."
-            ).format(info.field_name)
-
-        if max_limit:
-            if first:
-                assert first <= max_limit, (
-                    "Requesting {} records on the `{}` connection exceeds the `first` limit of {} records."
-                ).format(first, info.field_name, max_limit)
-                args["first"] = min(first, max_limit)
-
-            if last:
-                assert last <= max_limit, (
-                    "Requesting {} records on the `{}` connection exceeds the `last` limit of {} records."
-                ).format(last, info.field_name, max_limit)
-                args["last"] = min(last, max_limit)
-
-        if offset is not None:
-            assert before is None, (
-                "You can't provide a `before` value at the same time as an `offset` value to properly paginate the `{}` connection."
-            ).format(info.field_name)
 
         # eventually leads to DjangoObjectType's get_queryset (accepts queryset)
         # or a resolve_foo (does not accept queryset)
         iterable = resolver(root, info, **args)
+
         on_resolve = partial(
             cls.resolve_connection, connection, args, max_limit=max_limit
         )
@@ -210,13 +192,39 @@ class DjangoConnectionField(ConnectionField):
 
         return on_resolve(iterable)
 
+    @classmethod
+    def connection_resolver(cls, resolver, connection, max_limit, root, info, **kwargs):
+        start = kwargs.get("offset", 0)
+        limit = kwargs.get("limit", max_limit)
+        if limit is not None and max_limit is not None:
+            if limit > max_limit:
+                limit = max_limit
+        if limit is not None:
+            end = start + limit
+        else:
+            end = None
+        iterable = resolver(root, info, **kwargs)
+        connection = connection()
+        connection.iterable = iterable
+        connection.data = iterable[start:end]
+        return connection
+
     def get_resolver(self, parent_resolver):
 
         resolver = partial(related_batchread, self.django_type, parent_resolver.args[0])
-        return partial(
-            self.connection_resolver,
-            resolver,
-            self.connection_type,
-            self.max_limit,
-            self.enforce_first_or_last,
-        )
+
+        if self.relay:
+            return partial(
+                self.relay_connection_resolver,
+                resolver,
+                self.connection_type,
+                self.max_limit,
+                self.enforce_first_or_last,
+            )
+        else:
+            return partial(
+                self.connection_resolver,
+                resolver,
+                self.connection_type,
+                self.max_limit,
+            )

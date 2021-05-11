@@ -7,7 +7,7 @@ from graphene.types.objecttype import ObjectTypeOptions
 from graphene.types.base import BaseOptions
 from graphene_django.utils.utils import is_valid_django_model
 from graphql.language.ast import FragmentSpread, InlineFragment
-from graphene.relay import Connection, Node
+from graphene.relay import Connection as RelayConnection, Node
 
 from .fields import DjangoConnectionField, DjangoListField
 
@@ -22,7 +22,7 @@ from .utils import (
     error_data_from_validation_error,
     validation_error_with_suffix,
 )
-from .base_types import mutation_factory_type, node_factory_type
+from .base_types import mutation_factory_type, DefaultConnection
 
 from django.db import transaction
 from django.db.models import Prefetch
@@ -85,6 +85,8 @@ class DjangoGrapheneCRUDOptions(ObjectTypeOptions):
     order_by_exclude_fields = ()
 
     connection = None
+    use_connection = None
+    connection_class = None
 
     registry = (None,)
 
@@ -114,7 +116,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         description="",
         connection=None,
         connection_class=None,
-        use_connection=None,
+        use_connection=True,
         interfaces=(),
         registry=None,
         skip_registry=False,
@@ -139,24 +141,23 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
             _as=graphene.Field,
         )
 
-        if use_connection is None and interfaces:
-            use_connection = any(
-                (issubclass(interface, Node) for interface in interfaces)
-            )
+        use_relay = False
+        if interfaces:
+            use_relay = any((issubclass(interface, Node) for interface in interfaces))
+            if use_relay and not use_connection:
+                use_connection = True
 
         if use_connection and not connection:
             # We create the connection automatically
             if not connection_class:
-                connection_class = Connection
+                if use_relay:
+                    connection_class = RelayConnection
+                else:
+                    connection_class = DefaultConnection
 
             connection = connection_class.create_type(
                 "{}Connection".format(options.get("name") or cls.__name__), node=cls
             )
-
-        if connection is not None:
-            assert issubclass(connection, Connection), (
-                "The connection must be a Connection. Received {}"
-            ).format(connection.__name__)
 
         _meta = DjangoGrapheneCRUDOptions(cls)
         _meta.model = model
@@ -176,9 +177,8 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         _meta.order_by_exclude_fields = order_by_exclude_fields
 
         _meta.connection = connection
-        # _meta.connection_class = connection_class
-        # _meta.use_connection = use_connection
-        # _meta.interfaces = interfaces
+        _meta.connection_class = connection_class
+        _meta.use_connection = use_connection
 
         _meta.registry = registry
 
@@ -190,14 +190,14 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
             registry.register_django_type(cls)
 
     @classmethod
-    def _queryset_factory(cls, info, field_ast=None, node=True, **kwargs):
+    def _queryset_factory(cls, info, field_ast=None, is_connection=True, **kwargs):
         queryset = cls.get_queryset(None, info)
         arguments = parse_arguments_ast(
             field_ast.arguments, variable_values=info.variable_values
         )
 
         queryset_factory = cls._queryset_factory_analyze(
-            info, field_ast.selection_set, node=node
+            info, field_ast.selection_set, is_connection=is_connection
         )
         queryset = queryset.select_related(*queryset_factory["select_related"])
         queryset = queryset.only(*queryset_factory["only"])
@@ -215,7 +215,9 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         return queryset
 
     @classmethod
-    def _queryset_factory_analyze(cls, info, selection_set, node=True, suffix=""):
+    def _queryset_factory_analyze(
+        cls, info, selection_set, is_connection=True, suffix=""
+    ):
         def fusion_ret(a, b):
 
             [
@@ -226,6 +228,9 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
             [a["prefetch_related"].append(x) for x in b["prefetch_related"]]
             [a["only"].append(x) for x in b["only"] if x not in a["only"]]
             return a
+
+        if is_connection and not cls._meta.use_connection:
+            is_connection = False
 
         ret = {"select_related": [], "only": ["pk"], "prefetch_related": []}
 
@@ -257,7 +262,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                     info,
                     info.fragments[field.name.value].selection_set,
                     suffix=suffix,
-                    node=node,
+                    is_connection=is_connection,
                 )
                 ret = fusion_ret(ret, new_ret)
                 continue
@@ -268,7 +273,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                         info,
                         field.selection_set,
                         suffix=suffix,
-                        node=node,
+                        is_connection=is_connection,
                     )
                     ret = fusion_ret(ret, new_ret)
                 continue
@@ -276,13 +281,13 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
             if field.name.value.startswith("__"):
                 continue
 
-            if node:
+            if is_connection:
                 if field.name.value in ["data", "node"]:
                     new_ret = cls._queryset_factory_analyze(
                         info,
                         field.selection_set,
                         suffix=new_suffix,
-                        node=False,
+                        is_connection=False,
                     )
                     ret = fusion_ret(ret, new_ret)
 
@@ -291,7 +296,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                         info,
                         field.selection_set,
                         suffix=new_suffix,
-                        node=True,
+                        is_connection=True,
                     )
                     ret = fusion_ret(ret, new_ret)
             else:
@@ -317,7 +322,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                         new_ret = related_type._queryset_factory_analyze(
                             info,
                             field.selection_set,
-                            node=False,
+                            is_connection=False,
                             suffix=new_suffix + real_name,
                         )
                         ret = fusion_ret(ret, new_ret)
@@ -328,7 +333,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                             Prefetch(
                                 new_suffix + real_name,
                                 queryset=related_type._queryset_factory(
-                                    info, field_ast=field, node=True
+                                    info, field_ast=field, is_connection=True
                                 ),
                             )
                         )
@@ -339,7 +344,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
 
     @classmethod
     def _instance_to_queryset(cls, info, instance, field_ast):
-        queryset = cls._queryset_factory(info, field_ast=field_ast, node=False)
+        queryset = cls._queryset_factory(info, field_ast=field_ast, is_connection=False)
         queryset = queryset.filter(pk=instance.pk)
         return queryset
 
@@ -356,7 +361,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
     def get_node(cls, info, id):
         try:
             return cls._queryset_factory(
-                info, field_ast=info.field_asts[0], node=False
+                info, field_ast=info.field_asts[0], is_connection=False
             ).get(pk=id)
         except cls._meta.model.DoesNotExist:
             return None
@@ -482,7 +487,9 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
 
     @classmethod
     def read(cls, parent, info, **kwargs):
-        queryset = cls._queryset_factory(info, field_ast=info.field_asts[0], node=False)
+        queryset = cls._queryset_factory(
+            info, field_ast=info.field_asts[0], is_connection=False
+        )
         return queryset.get()
 
     @classmethod
@@ -516,7 +523,10 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 queryset = parent.__getattribute__(related_field).all()
         else:
             queryset = cls._queryset_factory(
-                info, field_ast=info.field_asts[0], fragments=info.fragments, node=True
+                info,
+                field_ast=info.field_asts[0],
+                fragments=info.fragments,
+                is_connection=True,
             )
 
         return queryset

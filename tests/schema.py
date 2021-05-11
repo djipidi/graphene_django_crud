@@ -25,6 +25,11 @@ from .relay.schema import (
     Mutation as relayMutation,
     Subscription as relaySubscription,
 )
+from .connection.schema import (
+    Query as connectionQuery,
+    Mutation as connectionMutation,
+    Subscription as connectionSubscription,
+)
 
 
 class Query(
@@ -33,6 +38,7 @@ class Query(
     generateSchemaQuery,
     choicesConverterQuery,
     relayQuery,
+    connectionQuery,
     graphene.ObjectType,
 ):
     pass
@@ -44,6 +50,7 @@ class Mutation(
     generateSchemaMutation,
     choicesConverterMutation,
     relayMutation,
+    connectionMutation,
     graphene.ObjectType,
 ):
     pass
@@ -55,6 +62,7 @@ class Subscription(
     generateSchemaSubscription,
     choicesConverterSubscription,
     relaySubscription,
+    connectionSubscription,
     graphene.ObjectType,
 ):
     pass

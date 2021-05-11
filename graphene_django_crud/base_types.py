@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
 
 import binascii
+from collections import OrderedDict
 
 import graphene
+from graphene.types.field import Field
+from graphene.types.structures import List, NonNull
 from graphql.language import ast
 from graphene_django.types import ErrorType
-
+from graphene.types.objecttype import ObjectType, ObjectTypeOptions
+import re
 from .registry import get_global_registry
 
 
@@ -32,31 +36,51 @@ def mutation_factory_type(_type, registry=None, *args, **kwargs):
     return MutationGenericType
 
 
-def node_factory_type(_type, registry=None, *args, **kwargs):
-    if not registry:
-        registry = get_global_registry()
-    nodeTypeName = _type._meta.name.replace("Type", "") + "NodeType"
-    nodeType = registry.get_type_for_node_type(nodeTypeName)
-    if nodeType:
-        return nodeType
+class ConnectionOptions(ObjectTypeOptions):
+    node = None
 
-    class NodeGenericType(graphene.ObjectType):
-        class Meta:
-            name = nodeTypeName
 
-        count = graphene.Int()
-        data = graphene.List(_type)
+class EmptyDefaultConnection(ObjectType):
+    class Meta:
+        abstract = True
 
-        @classmethod
-        def resolve_data(cls, parent, info, **kwarg):
-            return parent["iterable"][parent["start"] : parent["end"]]
+    @classmethod
+    def __init_subclass_with_meta__(cls, node=None, name=None, **options):
+        _meta = ConnectionOptions(cls)
 
-        @classmethod
-        def resolve_count(cls, parent, info, **kwarg):
-            return parent["iterable"].count()
+        base_name = re.sub("Connection$", "", name or cls.__name__) or node._meta.name
+        if not name:
+            name = "{}Connection".format(base_name)
 
-    registry.register_node_type(nodeTypeName, NodeGenericType)
-    return NodeGenericType
+        _node = node
+
+        options["name"] = name
+        _meta.node = node
+        _meta.fields = OrderedDict(
+            [
+                (
+                    "data",
+                    Field(
+                        NonNull(List(_node)),
+                        description="Contains the nodes in this connection.",
+                        resolver=cls.resolve_data,
+                    ),
+                ),
+            ]
+        )
+        return super(EmptyDefaultConnection, cls).__init_subclass_with_meta__(
+            _meta=_meta, **options
+        )
+
+    def resolve_data(self, info, *args, **kwargs):
+        return self.data
+
+
+class DefaultConnection(EmptyDefaultConnection):
+    count = graphene.Int()
+
+    def resolve_count(self, info, *args, **kwargs):
+        return self.iterable.count()
 
 
 class OrderEnum(graphene.Enum):
