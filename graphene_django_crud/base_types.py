@@ -16,7 +16,7 @@ from .registry import get_global_registry
 def mutation_factory_type(_type, registry=None, *args, **kwargs):
     if not registry:
         registry = get_global_registry()
-    mutationTypeName = _type._meta.name.replace("Type", "") + "MutationType"
+    mutationTypeName = _type._meta.name + "Mutation"
     mutationType = registry.get_type_for_mutation_type(mutationTypeName)
     if mutationType:
         return mutationType

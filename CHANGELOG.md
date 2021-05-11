@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 ### changed
 
 - Graphql type <typeName>NodeType is renamed to <typeName>Connection
+- Graphql type <typeName>MutationType is renamed to <typeName>Mutation
 
 ## \[1.2.1\] - 2021-05-07
 
