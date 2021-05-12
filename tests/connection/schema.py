@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.db import connection
-from graphene_django_crud import DjangoGrapheneCRUD, DefaultConnection
+from graphene_django_crud import DjangoCRUDObjectType, DefaultConnection
 import graphene
 from graphene import relay
 from .models import *
@@ -31,20 +31,20 @@ class RelayConnectionWithNbAVG(graphene.Connection):
         return self.iterable.count()
 
 
-class TestConnAType(DjangoGrapheneCRUD):
+class TestConnAType(DjangoCRUDObjectType):
     class Meta:
         model = TestConnA
         connection_class = ConnectionWithNbAVG
 
 
-class TestConnBType(DjangoGrapheneCRUD):
+class TestConnBType(DjangoCRUDObjectType):
     class Meta:
         model = TestConnB
         interfaces = (relay.Node,)
         connection_class = RelayConnectionWithNbAVG
 
 
-class TestConnCType(DjangoGrapheneCRUD):
+class TestConnCType(DjangoCRUDObjectType):
     class Meta:
         model = TestConnC
         use_connection = False

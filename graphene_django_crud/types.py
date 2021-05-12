@@ -61,7 +61,7 @@ def resolver_hints(select_related=[], only=[], **kwargs):
     return wrapper
 
 
-class DjangoGrapheneCRUDOptions(ObjectTypeOptions):
+class DjangoCRUDObjectTypeOptions(ObjectTypeOptions):
     model = None
 
     max_limit = None
@@ -86,7 +86,7 @@ class DjangoGrapheneCRUDOptions(ObjectTypeOptions):
     registry = (None,)
 
 
-class DjangoGrapheneCRUD(graphene.ObjectType):
+class DjangoCRUDObjectType(graphene.ObjectType):
     class Meta:
         abstract = True
 
@@ -115,7 +115,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
     ):
         cls._display_deprecation_warnings()
         if not model:
-            raise Exception("model is required on all DjangoGrapheneCRUD")
+            raise Exception("model is required on all DjangoCRUDObjectType")
 
         if not registry:
             registry = get_global_registry()
@@ -150,7 +150,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                 "{}Connection".format(options.get("name") or cls.__name__), node=cls
             )
 
-        _meta = DjangoGrapheneCRUDOptions(cls)
+        _meta = DjangoCRUDObjectTypeOptions(cls)
         _meta.model = model
         _meta.max_limit = max_limit
         _meta.fields = fields
@@ -173,7 +173,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
 
         _meta.registry = registry
 
-        super(DjangoGrapheneCRUD, cls).__init_subclass_with_meta__(
+        super(DjangoCRUDObjectType, cls).__init_subclass_with_meta__(
             _meta=_meta, interfaces=interfaces, description=description, **options
         )
 
@@ -1060,3 +1060,17 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
             return ret
 
         return parent.filter(eventFilter).map(lambda event: event.instance)
+
+
+class DjangoGrapheneCRUD(DjangoCRUDObjectType):
+    class Meta:
+        abstract = True
+
+    @classmethod
+    def __init_subclass_with_meta__(cls, **options):
+        warnings.warn(
+            'DjangoGrapheneCRUD class has been renamed to DjangoCRUDObjectType, so the name "DjangoGrapheneCRUD" is deprecated.',
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+        super(DjangoGrapheneCRUD, cls).__init_subclass_with_meta__(**options)

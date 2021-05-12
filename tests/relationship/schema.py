@@ -1,55 +1,55 @@
 # -*- coding: utf-8 -*-
-from graphene_django_crud import DjangoGrapheneCRUD
+from graphene_django_crud import DjangoCRUDObjectType
 import graphene
 from .models import *
 
 
-class TestFkAType(DjangoGrapheneCRUD):
+class TestFkAType(DjangoCRUDObjectType):
     class Meta:
         model = TestFkA
 
 
-class TestFkBType(DjangoGrapheneCRUD):
+class TestFkBType(DjangoCRUDObjectType):
     class Meta:
         model = TestFkB
 
 
-class TestFkCType(DjangoGrapheneCRUD):
+class TestFkCType(DjangoCRUDObjectType):
     class Meta:
         model = TestFkC
 
 
-class TestO2oAType(DjangoGrapheneCRUD):
+class TestO2oAType(DjangoCRUDObjectType):
     class Meta:
         model = TestO2oA
 
 
-class TestO2oBType(DjangoGrapheneCRUD):
+class TestO2oBType(DjangoCRUDObjectType):
     class Meta:
         model = TestO2oB
 
 
-class TestO2oCType(DjangoGrapheneCRUD):
+class TestO2oCType(DjangoCRUDObjectType):
     class Meta:
         model = TestO2oC
 
 
-class TestM2mAType(DjangoGrapheneCRUD):
+class TestM2mAType(DjangoCRUDObjectType):
     class Meta:
         model = TestM2mA
 
 
-class TestM2mBType(DjangoGrapheneCRUD):
+class TestM2mBType(DjangoCRUDObjectType):
     class Meta:
         model = TestM2mB
 
 
-class TestM2mCType(DjangoGrapheneCRUD):
+class TestM2mCType(DjangoCRUDObjectType):
     class Meta:
         model = TestM2mC
 
 
-class PersonType(DjangoGrapheneCRUD):
+class PersonType(DjangoCRUDObjectType):
     class Meta:
         model = Person
 

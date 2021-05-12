@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-from graphene_django_crud import DjangoGrapheneCRUD
+from graphene_django_crud import DjangoCRUDObjectType
 import graphene
 from .models import *
 
 
-class TestEnumAType(DjangoGrapheneCRUD):
+class TestEnumAType(DjangoCRUDObjectType):
     class Meta:
         model = TestEnumA
 

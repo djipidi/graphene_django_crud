@@ -27,7 +27,7 @@ django orm into a graphql API with the following features:
       - [Use list field](#use-list-field)
       - [Extend ConnectionType without Relay](#extend-connectiontype-without-relay)
       - [Extend ConnectionType with Relay](#extend-connectiontype-with-relay)
-  - [GrapheneDjangoCrud Class](#graphenedjangocrud-class)
+  - [DjangoCRUDObjectType Class](#djangocrudobjecttype-class)
     - [Meta parameters](#meta-parameters)
       - [model (required parameter)](#model-required-parameter)
       - [max_limit](#max_limit)
@@ -97,7 +97,7 @@ $ python setup.py install
 
 ## Usage
 
-The GrapheneDjangoCrud class project a django model into a graphene type. The
+The DjangoCRUDObjectType class project a django model into a graphene type. The
 type also has fields to exposes the CRUD operations.
 
 ### Example
@@ -110,9 +110,9 @@ GraphQL API and expose the CRUD operations.
 import graphene
 from graphql import GraphQLError
 from django.contrib.auth.models import User, Group
-from graphene_django_crud.types import DjangoGrapheneCRUD, resolver_hints
+from graphene_django_crud.types import DjangoCRUDObjectType, resolver_hints
 
-class UserType(DjangoGrapheneCRUD):
+class UserType(DjangoCRUDObjectType):
     class Meta:
         model = User
         exclude_fields = ("password",)
@@ -144,7 +144,7 @@ class UserType(DjangoGrapheneCRUD):
             instance.set_password(data.pop("password"))
         return super().mutate(parent, info, instance, data, *args, **kwargs)
 
-class GroupType(DjangoGrapheneCRUD):
+class GroupType(DjangoCRUDObjectType):
     class Meta:
         model = Group
 
@@ -515,7 +515,7 @@ the SQL query you must specify "only", "select_related" necessary for the
 resolver using the resolver_hints decorator
 
 ```python
-class UserType(DjangoGrapheneCRUD):
+class UserType(DjangoCRUDObjectType):
     class Meta:
         model = User
 
@@ -536,7 +536,7 @@ called for each change of model instances during mutations and nested mutations.
 it can be used to check permissions.
 
 ```python
-class UserType(DjangoGrapheneCRUD):
+class UserType(DjangoCRUDObjectType):
     class Meta:
         model = User
 
@@ -574,7 +574,7 @@ arg. The "get_queryset" method which returns by default \<model>.objects.all(),
 but it can be overloaded.
 
 ```python
-class UserType(DjangoGrapheneCRUD):
+class UserType(DjangoCRUDObjectType):
     class Meta:
         model = User
 
@@ -593,13 +593,13 @@ interface.
 
 ```python
 
-class CategoryType(DjangoGrapheneCRUD):
+class CategoryType(DjangoCRUDObjectType):
     class Meta:
         model = Category
         interfaces = (relay.Node, )
 
 
-class IngredientType(DjangoGrapheneCRUD):
+class IngredientType(DjangoCRUDObjectType):
     class Meta:
         model = Ingredient
         interfaces = (relay.Node, )
@@ -633,9 +633,9 @@ queryset and a data field returning the results of the queryset.
 ```python
 from .models import Product
 import graphene
-from graphne_django_crud import DjangoGrapheneCRUD
+from graphene_django_crud import DjangoCRUDObjectType
 
-class ProductType(DjangoGrapheneCRUD):
+class ProductType(DjangoCRUDObjectType):
     class Meta:
         model = Product
         use_connection = False
@@ -647,7 +647,7 @@ class ProductType(DjangoGrapheneCRUD):
 from .models import Product
 from django.db.models import Avg
 import graphene
-from graphne_django_crud import DefaultConnection, DjangoGrapheneCRUD
+from graphene_django_crud import DefaultConnection, DjangoCRUDObjectType
 
 class ConnectionWithPriceAVG(DefaultConnection):
     class Meta:
@@ -658,7 +658,7 @@ class ConnectionWithPriceAVG(DefaultConnection):
     def resolve_price_avg(self, info):
         return self.iterable.aggregate(Avg('price'))["price__avg"]
 
-class ProductType(DjangoGrapheneCRUD):
+class ProductType(DjangoCRUDObjectType):
     class Meta:
         model = Product
         connection_class = ConnectionWithPriceAVG
@@ -669,7 +669,7 @@ class ProductType(DjangoGrapheneCRUD):
 ```python
 from .models import Product
 import graphene
-from graphne_django_crud import DjangoGrapheneCRUD
+from graphene_django_crud import DjangoCRUDObjectType
 
 class ConnectionWithTotalCount(graphene.Connection):
     class Meta:
@@ -679,14 +679,17 @@ class ConnectionWithTotalCount(graphene.Connection):
     def resolve_total_count(self, info):
         return self.iterable.count()
 
-class ProductType(DjangoGrapheneCRUD):
+class ProductType(DjangoCRUDObjectType):
     class Meta:
         model = Product
         interfaces = (relay.Node, )
         connection_class = ConnectionWithTotalCount
 ```
 
-## GrapheneDjangoCrud Class
+## DjangoCRUDObjectType Class
+
+> From the version v1.3.0, DjangoGrapheneCRUD class has been renamed to
+> DjangoCRUDObjectType, so the name "DjangoGrapheneCRUD" is deprecated.
 
 ### Meta parameters
 
@@ -720,7 +723,7 @@ methods [mutate, create, update, delete](#mutate-create-update-delete)
 example:
 
 ```python
-class UserType(DjangoGrapheneCRUD):
+class UserType(DjangoCRUDObjectType):
     class Meta:
         model = User
         input_extend_fields = (
@@ -747,8 +750,8 @@ one of the two parameters can be declared.
 
 ### Fields
 
-The GrapheneDjangoCrud class contains configurable operation publishers that you
-use for exposing create, read, update, and delete mutations against your
+The DjangoCRUDObjectType class contains configurable operation publishers that
+you use for exposing create, read, update, and delete mutations against your
 projected models
 
 for mutating, relation fields may be connected with an existing record or a
@@ -875,7 +878,7 @@ def delete(cls, parent, info, instance, data, *args, **kwargs):
 
 #### (Deprecated) Middleware methods before_XXX(cls, parent, info, instance, data) / after_XXX(cls, parent, info, instance, data)
 
-> These methods are deprecated, use the methods
+> from the version v1.3.0, these methods are deprecated, use the methods
 > [mutate, create, update, delete](#mutate-create-update-delete)
 
 ```python

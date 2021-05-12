@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
-from graphene_django_crud import DjangoGrapheneCRUD, where_input_to_Q
+from graphene_django_crud import DjangoCRUDObjectType, where_input_to_Q
 import graphene
 from .models import *
 
 
-class ModelTestGenerateSchemaAType(DjangoGrapheneCRUD):
+class ModelTestGenerateSchemaAType(DjangoCRUDObjectType):
     class Meta:
         model = ModelTestGenerateSchemaA
 
 
-class ModelTestGenerateSchemaBType(DjangoGrapheneCRUD):
+class ModelTestGenerateSchemaBType(DjangoCRUDObjectType):
     class Meta:
         model = ModelTestGenerateSchemaB
         input_extend_fields = (("extend", graphene.Int()),)

@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
-from graphene_django_crud import DjangoGrapheneCRUD
+from graphene_django_crud import DjangoCRUDObjectType
 import graphene
 from .models import *
 
 from graphene import relay
 
-class TestRelayAType(DjangoGrapheneCRUD):
+class TestRelayAType(DjangoCRUDObjectType):
     class Meta:
         model = TestRelayA
         interfaces = (relay.Node, )
 
 
-class TestRelayBType(DjangoGrapheneCRUD):
+class TestRelayBType(DjangoCRUDObjectType):
     class Meta:
         model = TestRelayB
         interfaces = (relay.Node, )
