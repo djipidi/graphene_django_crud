@@ -4,7 +4,6 @@ from collections import OrderedDict
 from django.utils.functional import SimpleLazyObject
 import graphene
 from graphene.types.objecttype import ObjectTypeOptions
-from graphene.types.base import BaseOptions
 from graphene_django.utils.utils import is_valid_django_model
 from graphql.language.ast import FragmentSpread, InlineFragment
 from graphene.relay import Connection as RelayConnection, Node
@@ -35,7 +34,7 @@ from graphene_subscriptions.events import CREATED, UPDATED, DELETED
 
 from graphene.types.utils import yank_fields_from_attrs
 
-from django.db.models.signals import post_save, post_delete, pre_delete
+from django.db.models.signals import post_save, post_delete
 from graphene_subscriptions.signals import (
     post_save_subscription,
     post_delete_subscription,
@@ -50,11 +49,6 @@ from django.db.models import (
     OneToOneField,
 )
 import warnings
-
-
-class ClassProperty(property):
-    def __get__(self, cls, owner):
-        return self.fget.__get__(None, owner)()
 
 
 def resolver_hints(select_related=[], only=[], **kwargs):
@@ -93,10 +87,6 @@ class DjangoGrapheneCRUDOptions(ObjectTypeOptions):
 
 
 class DjangoGrapheneCRUD(graphene.ObjectType):
-    """
-    Mutation, query Type Definition
-    """
-
     class Meta:
         abstract = True
 
@@ -294,21 +284,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
         else:
             new_suffix = suffix + "__"
 
-        model_fields = get_model_fields(cls._meta.model, to_dict=True)
-        computed_field_hints = {}
-        for field_name, field in cls._meta.fields.items():
-            if field_name in model_fields.keys():
-                continue
-            if field.resolver is None:
-                resolver = cls.__dict__.get("resolve_" + field_name, None)
-            else:
-                resolver = field.resolver
-            if resolver is not None and hasattr(resolver, "have_resolver_hints"):
-                computed_field_hints[field_name] = {
-                    "only": resolver.only,
-                    "select_related": resolver.select_related,
-                    "prefetch_related": [],
-                }
+        model_fields, computed_field_hints = cls._get_fields()
 
         for field in selection_set.selections:
 
@@ -392,16 +368,269 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
                                 ),
                             )
                         )
-
                 else:
                     ret["only"].append(new_suffix + real_name)
         return ret
+
+    @classmethod
+    def _get_fields(cls):
+        model_fields = get_model_fields(cls._meta.model, to_dict=True)
+        computed_field_hints = {}
+        for field_name, field in cls._meta.fields.items():
+            if field_name in model_fields.keys():
+                continue
+            if field.resolver is None:
+                resolver = cls.__dict__.get("resolve_" + field_name, None)
+            else:
+                resolver = field.resolver
+            if resolver is not None and hasattr(resolver, "have_resolver_hints"):
+                computed_field_hints[field_name] = {
+                    "only": resolver.only,
+                    "select_related": resolver.select_related,
+                    "prefetch_related": [],
+                }
+        return model_fields, computed_field_hints
 
     @classmethod
     def _instance_to_queryset(cls, info, instance, field_ast):
         queryset = cls._queryset_factory(info, field_ast=field_ast, is_connection=False)
         queryset = queryset.filter(pk=instance.pk)
         return queryset
+
+    @classmethod
+    def _create(cls, parent, info, data, field=None, parent_instance=None):
+        instance = cls._meta.model()
+        if field is not None:
+            instance.__setattr__(field.name, parent_instance)
+        return cls.mutate(parent, info, instance, data, operation_flag="create")
+
+    @classmethod
+    def _update(
+        cls,
+        parent,
+        info,
+        where,
+        data,
+        field=None,
+        parent_instance=None,
+        instance_pk=None,
+    ):
+        queryset = cls.get_queryset(parent, info)
+        if instance_pk is not None:
+            queryset = queryset.filter(pk=instance_pk)
+        else:
+            queryset = queryset.filter(where_input_to_Q(where)).distinct()
+        instance = queryset.get()
+        if field is not None:
+            instance.__setattr__(field.name, parent_instance)
+        return cls.mutate(parent, info, instance, data, operation_flag="update")
+
+    @classmethod
+    def _delete(cls, parent, info, where, instance_pk=None):
+        queryset = cls.get_queryset(parent, info)
+        if instance_pk is not None:
+            queryset = queryset.filter(pk=instance_pk)
+        else:
+            queryset = queryset.filter(where_input_to_Q(where)).distinct()
+        instance = queryset.get()
+        return cls.mutate(parent, info, instance, {}, operation_flag="delete")
+
+    @classmethod
+    def _update_or_create(cls, parent, info, instance, data):
+        model_fields = get_model_fields(cls._meta.model, to_dict=True)
+        for key, value in data.items():
+            try:
+                model_field = model_fields[key]
+            except KeyError:
+                continue
+            if isinstance(
+                model_field, (OneToOneRel, ManyToOneRel, ManyToManyField, ManyToManyRel)
+            ):
+                pass
+            elif isinstance(model_field, (ForeignKey, OneToOneField)):
+                cls._nested_mutate_Fk_O2OF(
+                    parent, info, instance, key, value, model_field
+                )
+            else:
+                instance.__setattr__(key, value)
+        instance.full_clean()
+        instance.save()
+        for key, value in data.items():
+            try:
+                model_field = model_fields[key]
+            except KeyError:
+                continue
+            if isinstance(model_field, OneToOneRel):
+                cls._nested_mutate_O2OR(parent, info, instance, key, value, model_field)
+
+            elif isinstance(model_field, ManyToOneRel):
+                cls._nested_mutate_M2OR(parent, info, instance, key, value, model_field)
+
+            elif isinstance(model_field, (ManyToManyField, ManyToManyRel)):
+                cls._nested_mutate_M2M(parent, info, instance, key, value, model_field)
+        return instance
+
+    @classmethod
+    def _nested_mutate_M2M(cls, parent, info, instance, key, value, model_field):
+        related_type = get_global_registry().get_type_for_model(
+            model_field.remote_field.model
+        )
+        q = related_type.get_queryset(parent, info)
+        addItems = []
+        disconnectItems = []
+        for i, create_input in enumerate(value.get("create", [])):
+            try:
+                addItems.append(related_type._create(parent, info, create_input))
+            except ValidationError as e:
+                raise validation_error_with_suffix(e, key + ".create." + str(i))
+        for i, connect_input in enumerate(value.get("connect", [])):
+            try:
+                related_instance = (
+                    q.filter(where_input_to_Q(connect_input)).distinct().get()
+                )
+                addItems.append(related_instance)
+            except ValidationError as e:
+                raise validation_error_with_suffix(e, key + ".connect." + str(i))
+        for i, disconnect_input in enumerate(value.get("disconnect", [])):
+            try:
+                related_instance = (
+                    q.filter(where_input_to_Q(disconnect_input)).distinct().get()
+                )
+                disconnectItems.append(related_instance)
+            except ValidationError as e:
+                raise validation_error_with_suffix(e, key + ".disconnect." + str(i))
+        for i, delete_where_input in enumerate(value.get("delete", [])):
+            try:
+                related_type._delete(parent, info, delete_where_input)
+            except ValidationError as e:
+                raise validation_error_with_suffix(e, key + ".delete." + str(i))
+        getattr(instance, key).add(*addItems)
+        getattr(instance, key).remove(*disconnectItems)
+
+    @classmethod
+    def _nested_mutate_M2OR(cls, parent, info, instance, key, value, model_field):
+        related_type = get_global_registry().get_type_for_model(
+            model_field.remote_field.model
+        )
+        for i, create_input in enumerate(value.get("create", [])):
+            try:
+                related_type._create(
+                    parent,
+                    info,
+                    create_input,
+                    field=model_field.remote_field,
+                    parent_instance=instance,
+                )
+            except ValidationError as e:
+                raise validation_error_with_suffix(e, key + ".create." + str(i))
+        for i, connect_input in enumerate(value.get("connect", [])):
+            try:
+                related_type._update(
+                    parent,
+                    info,
+                    connect_input,
+                    {},
+                    field=model_field.remote_field,
+                    parent_instance=instance,
+                )
+            except ValidationError as e:
+                raise validation_error_with_suffix(e, key + ".connect." + str(i))
+        for i, disconnect_input in enumerate(value.get("disconnect", [])):
+            try:
+                related_type._update(
+                    parent,
+                    info,
+                    disconnect_input,
+                    {},
+                    field=model_field.remote_field,
+                    parent_instance=None,
+                )
+            except ValidationError as e:
+                raise validation_error_with_suffix(e, key + ".disconnect." + str(i))
+        for i, delete_where_input in enumerate(value.get("delete", [])):
+            try:
+                related_type._delete(parent, info, delete_where_input)
+            except ValidationError as e:
+                raise validation_error_with_suffix(e, key + ".delete." + str(i))
+
+    @classmethod
+    def _nested_mutate_O2OR(cls, parent, info, instance, key, value, model_field):
+        related_type = get_global_registry().get_type_for_model(
+            model_field.remote_field.model
+        )
+        if "create" in value.keys():
+            try:
+                related_type._create(
+                    parent,
+                    info,
+                    value["create"],
+                    field=model_field.remote_field,
+                    parent_instance=instance,
+                )
+            except ValidationError as e:
+                raise validation_error_with_suffix(e, key + ".create")
+        elif "connect" in value.keys():
+            try:
+                related_type._update(
+                    parent,
+                    info,
+                    value["connect"],
+                    {},
+                    field=model_field.remote_field,
+                    parent_instance=instance,
+                )
+            except ValidationError as e:
+                raise validation_error_with_suffix(e, key + ".connect")
+        elif "disconnect" in value.keys():
+            try:
+                related_instance = getattr(instance, key)
+                related_type._update(
+                    parent,
+                    info,
+                    None,
+                    {},
+                    instance_pk=related_instance.pk,
+                    field=model_field.remote_field,
+                    parent_instance=None,
+                )
+            except ValidationError as e:
+                raise validation_error_with_suffix(e, key + ".connect")
+        elif "delete" in value.keys():
+            try:
+                related_instance = getattr(instance, key)
+                related_type._delete(parent, info, {}, instance_pk=related_instance.pk)
+                instance.__setattr__(key, None)
+            except ValidationError as e:
+                raise validation_error_with_suffix(e, key + ".delete")
+
+    @classmethod
+    def _nested_mutate_Fk_O2OF(cls, parent, info, instance, key, value, model_field):
+        related_type = get_global_registry().get_type_for_model(
+            model_field.remote_field.model
+        )
+        if "create" in value.keys():
+            try:
+                related_instance = related_type._create(parent, info, value["create"])
+            except ValidationError as e:
+                raise validation_error_with_suffix(e, key + ".create")
+            instance.__setattr__(key, related_instance)
+        elif "connect" in value.keys():
+            related_instance = (
+                related_type.get_queryset(parent, info)
+                .filter(where_input_to_Q(value["connect"]))
+                .distinct()
+                .get()
+            )
+            instance.__setattr__(key, related_instance)
+        elif "disconnect" in value.keys():
+            instance.__setattr__(key, None)
+        elif "delete" in value.keys():
+            try:
+                related_instance = getattr(instance, key)
+                related_type._delete(parent, info, {}, instance_pk=related_instance.pk)
+                instance.__setattr__(key, None)
+            except ValidationError as e:
+                raise validation_error_with_suffix(e, key + ".delete")
 
     @classmethod
     def generate_signals(cls):
@@ -411,35 +640,6 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
     @classmethod
     def get_queryset(cls, parent, info, **kwargs):
         return cls._meta.model.objects.all()
-
-    @classmethod
-    def get_node(cls, info, id):
-        try:
-            return cls._queryset_factory(
-                info, field_ast=info.field_asts[0], is_connection=False
-            ).get(pk=id)
-        except cls._meta.model.DoesNotExist:
-            return None
-
-    def resolve_id(self, info):
-        return self.pk
-
-    @classmethod
-    def is_type_of(cls, root, info):
-        if isinstance(root, SimpleLazyObject):
-            root._setup()
-            root = root._wrapped
-        if isinstance(root, cls):
-            return True
-        if not is_valid_django_model(type(root)):
-            raise Exception(('Received incompatible instance "{}".').format(root))
-
-        if cls._meta.model._meta.proxy:
-            model = root._meta.model
-        else:
-            model = root._meta.model._meta.concrete_model
-
-        return model == cls._meta.model
 
     @classmethod
     def mutate(cls, parent, info, instance, data, operation_flag=None, *args, **kwargs):
@@ -482,10 +682,34 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
             cls.after_delete(parent, info, instance, data)
         return instance
 
-    @ClassProperty
     @classmethod
-    def Type(cls):
-        return cls
+    def get_node(cls, info, id):
+        try:
+            return cls._queryset_factory(
+                info, field_ast=info.field_asts[0], is_connection=False
+            ).get(pk=id)
+        except cls._meta.model.DoesNotExist:
+            return None
+
+    def resolve_id(self, info):
+        return self.pk
+
+    @classmethod
+    def is_type_of(cls, root, info):
+        if isinstance(root, SimpleLazyObject):
+            root._setup()
+            root = root._wrapped
+        if isinstance(root, cls):
+            return True
+        if not is_valid_django_model(type(root)):
+            raise Exception(('Received incompatible instance "{}".').format(root))
+
+        if cls._meta.model._meta.proxy:
+            model = root._meta.model
+        else:
+            model = root._meta.model._meta.concrete_model
+
+        return model == cls._meta.model
 
     @classmethod
     def WhereInputType(cls, only=None, exclude=None, *args, **kwargs):
@@ -594,243 +818,6 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
             )
 
         return queryset
-
-    @classmethod
-    def _create(cls, parent, info, data, field=None, parent_instance=None):
-        instance = cls._meta.model()
-        if field is not None:
-            instance.__setattr__(field.name, parent_instance)
-        return cls.mutate(parent, info, instance, data, operation_flag="create")
-
-    @classmethod
-    def _update(
-        cls,
-        parent,
-        info,
-        where,
-        data,
-        field=None,
-        parent_instance=None,
-        instance_pk=None,
-    ):
-        queryset = cls.get_queryset(parent, info)
-        if instance_pk is not None:
-            queryset = queryset.filter(pk=instance_pk)
-        else:
-            queryset = queryset.filter(where_input_to_Q(where)).distinct()
-        instance = queryset.get()
-        if field is not None:
-            instance.__setattr__(field.name, parent_instance)
-        return cls.mutate(parent, info, instance, data, operation_flag="update")
-
-    @classmethod
-    def _delete(cls, parent, info, where, instance_pk=None):
-        queryset = cls.get_queryset(parent, info)
-        if instance_pk is not None:
-            queryset = queryset.filter(pk=instance_pk)
-        else:
-            queryset = queryset.filter(where_input_to_Q(where)).distinct()
-        instance = queryset.get()
-        return cls.mutate(parent, info, instance, {}, operation_flag="delete")
-
-    @classmethod
-    def _update_or_create(cls, parent, info, instance, data):
-        model_fields = get_model_fields(cls._meta.model, to_dict=True)
-        for key, value in data.items():
-            try:
-                model_field = model_fields[key]
-            except KeyError:
-                continue
-            if isinstance(
-                model_field, (OneToOneRel, ManyToOneRel, ManyToManyField, ManyToManyRel)
-            ):
-                pass
-            elif isinstance(model_field, (ForeignKey, OneToOneField)):
-                related_type = get_global_registry().get_type_for_model(
-                    model_field.remote_field.model
-                )
-                if "create" in value.keys():
-                    try:
-                        related_instance = related_type._create(
-                            parent, info, value["create"]
-                        )
-                    except ValidationError as e:
-                        raise validation_error_with_suffix(e, key + ".create")
-                    instance.__setattr__(key, related_instance)
-                elif "connect" in value.keys():
-                    related_instance = (
-                        related_type.get_queryset(parent, info)
-                        .filter(where_input_to_Q(value["connect"]))
-                        .distinct()
-                        .get()
-                    )
-                    instance.__setattr__(key, related_instance)
-                elif "disconnect" in value.keys():
-                    instance.__setattr__(key, None)
-                elif "delete" in value.keys():
-                    try:
-                        related_instance = getattr(instance, key)
-                        related_type._delete(
-                            parent, info, {"id": {"equals": related_instance.pk}}
-                        )
-                        instance.__setattr__(key, None)
-                    except ValidationError as e:
-                        raise validation_error_with_suffix(e, key + ".delete")
-            else:
-                instance.__setattr__(key, value)
-        instance.full_clean()
-        instance.save()
-        for key, value in data.items():
-            try:
-                model_field = model_fields[key]
-            except KeyError:
-                continue
-            if isinstance(model_field, OneToOneRel):
-                related_type = get_global_registry().get_type_for_model(
-                    model_field.remote_field.model
-                )
-                if "create" in value.keys():
-                    try:
-                        related_type._create(
-                            parent,
-                            info,
-                            value["create"],
-                            field=model_field.remote_field,
-                            parent_instance=instance,
-                        )
-                    except ValidationError as e:
-                        raise validation_error_with_suffix(e, key + ".create")
-                elif "connect" in value.keys():
-                    try:
-                        related_type._update(
-                            parent,
-                            info,
-                            value["connect"],
-                            {},
-                            field=model_field.remote_field,
-                            parent_instance=instance,
-                        )
-                    except ValidationError as e:
-                        raise validation_error_with_suffix(e, key + ".connect")
-                elif "disconnect" in value.keys():
-                    try:
-                        related_instance = getattr(instance, key)
-
-                        related_type._update(
-                            parent,
-                            info,
-                            None,
-                            {},
-                            instance_pk=related_instance.pk,
-                            field=model_field.remote_field,
-                            parent_instance=None,
-                        )
-                    except ValidationError as e:
-                        raise validation_error_with_suffix(e, key + ".connect")
-                elif "delete" in value.keys():
-                    try:
-                        related_instance = getattr(instance, key)
-                        related_type._delete(
-                            parent, info, None, instance_pk=related_instance.pk
-                        )
-                        instance.__setattr__(key, None)
-                    except ValidationError as e:
-                        raise validation_error_with_suffix(e, key + ".delete")
-
-            elif isinstance(model_field, ManyToOneRel):
-                related_type = get_global_registry().get_type_for_model(
-                    model_field.remote_field.model
-                )
-                for i, create_input in enumerate(value.get("create", [])):
-                    try:
-                        related_type._create(
-                            parent,
-                            info,
-                            create_input,
-                            field=model_field.remote_field,
-                            parent_instance=instance,
-                        )
-                    except ValidationError as e:
-                        raise validation_error_with_suffix(e, key + ".create." + str(i))
-                for i, connect_input in enumerate(value.get("connect", [])):
-                    try:
-                        related_type._update(
-                            parent,
-                            info,
-                            connect_input,
-                            {},
-                            field=model_field.remote_field,
-                            parent_instance=instance,
-                        )
-                    except ValidationError as e:
-                        raise validation_error_with_suffix(
-                            e, key + ".connect." + str(i)
-                        )
-                for i, disconnect_input in enumerate(value.get("disconnect", [])):
-                    try:
-                        related_type._update(
-                            parent,
-                            info,
-                            disconnect_input,
-                            {},
-                            field=model_field.remote_field,
-                            parent_instance=None,
-                        )
-                    except ValidationError as e:
-                        raise validation_error_with_suffix(
-                            e, key + ".disconnect." + str(i)
-                        )
-                for i, delete_where_input in enumerate(value.get("delete", [])):
-                    try:
-                        related_type._delete(parent, info, delete_where_input)
-                    except ValidationError as e:
-                        raise validation_error_with_suffix(e, key + ".delete." + str(i))
-
-            elif isinstance(model_field, (ManyToManyField, ManyToManyRel)):
-                related_type = get_global_registry().get_type_for_model(
-                    model_field.remote_field.model
-                )
-                q = related_type.get_queryset(parent, info)
-                addItems = []
-                disconnectItems = []
-                for i, create_input in enumerate(value.get("create", [])):
-                    try:
-                        addItems.append(
-                            related_type._create(parent, info, create_input)
-                        )
-                    except ValidationError as e:
-                        raise validation_error_with_suffix(e, key + ".create." + str(i))
-                for i, connect_input in enumerate(value.get("connect", [])):
-                    try:
-                        related_instance = (
-                            q.filter(where_input_to_Q(connect_input)).distinct().get()
-                        )
-                        addItems.append(related_instance)
-                    except ValidationError as e:
-                        raise validation_error_with_suffix(
-                            e, key + ".connect." + str(i)
-                        )
-                for i, disconnect_input in enumerate(value.get("disconnect", [])):
-                    try:
-                        related_instance = (
-                            q.filter(where_input_to_Q(disconnect_input))
-                            .distinct()
-                            .get()
-                        )
-                        disconnectItems.append(related_instance)
-                    except ValidationError as e:
-                        raise validation_error_with_suffix(
-                            e, key + ".disconnect." + str(i)
-                        )
-                for i, delete_where_input in enumerate(value.get("delete", [])):
-                    try:
-                        related_type._delete(parent, info, delete_where_input)
-                    except ValidationError as e:
-                        raise validation_error_with_suffix(e, key + ".delete." + str(i))
-
-                getattr(instance, key).add(*addItems)
-                getattr(instance, key).remove(*disconnectItems)
-        return instance
 
     @classmethod
     def CreateField(cls, *args, **kwargs):
@@ -967,7 +954,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
             }
         )
         return graphene.Field(
-            cls.Type,
+            cls,
             args=arguments,
             resolver=cls.created_resolver,
             *args,
@@ -1003,7 +990,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
             }
         )
         return graphene.Field(
-            cls.Type,
+            cls,
             args=arguments,
             resolver=cls.updated_resolver,
             *args,
@@ -1042,7 +1029,7 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
             }
         )
         return graphene.Field(
-            cls.Type,
+            cls,
             args=arguments,
             resolver=cls.deleted_resolver,
             *args,
