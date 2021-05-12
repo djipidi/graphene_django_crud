@@ -845,28 +845,28 @@ is a dict corresponding to the graphql input argument.
 
 ```python
 @classmethod
-def mutate(cls, parent, info, instance, data, *args, **kwargs)
+def mutate(cls, parent, info, instance, data, *args, **kwargs):
     # code before save instance
     instance = super().mutate(cls, parent, info, instance, data, *args, **kwargs)
     # code after save instance
     return instance
 
 @classmethod
-def create(cls, parent, info, instance, data, *args, **kwargs)
+def create(cls, parent, info, instance, data, *args, **kwargs):
     # code before save instance
     instance = super().create(cls, parent, info, instance, data, *args, **kwargs)
     # code after save instance
     return instance
 
 @classmethod
-def update(cls, parent, info, instance, data, *args, **kwargs)
+def update(cls, parent, info, instance, data, *args, **kwargs):
     # code before save instance
     instance = super().update(cls, parent, info, instance, data, *args, **kwargs)
     # code after save instance
     return instance
 
 @classmethod
-def delete(cls, parent, info, instance, data, *args, **kwargs)
+def delete(cls, parent, info, instance, data, *args, **kwargs):
     # code before save instance
     instance = super().delete(cls, parent, info, instance, data, *args, **kwargs)
     # code after save instance
