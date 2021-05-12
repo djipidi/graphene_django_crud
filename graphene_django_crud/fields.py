@@ -80,20 +80,28 @@ class DjangoConnectionField(ConnectionField):
     def __init__(self, type, *args, **kwargs):
         if issubclass(type._meta.connection, relayConnection):
             self.relay = True
+            self.enforce_first_or_last = kwargs.pop(
+                "enforce_first_or_last",
+                graphene_settings.RELAY_CONNECTION_ENFORCE_FIRST_OR_LAST,
+            )
         else:
             self.relay = False
             kwargs.setdefault("limit", Int())
 
         self.on = kwargs.pop("on", False)
-        self.max_limit = kwargs.pop(
-            "max_limit", graphene_settings.RELAY_CONNECTION_MAX_LIMIT
-        )
-        self.enforce_first_or_last = kwargs.pop(
-            "enforce_first_or_last",
-            graphene_settings.RELAY_CONNECTION_ENFORCE_FIRST_OR_LAST,
-        )
+
+        if type._meta.max_limit is not None:
+            self.max_limit = type._meta.max_limit
+        elif self.relay:
+            self.max_limit = kwargs.pop(
+                "max_limit", graphene_settings.RELAY_CONNECTION_MAX_LIMIT
+            )
+        else:
+            self.max_limit = None
+
         self.django_type = type
         kwargs.setdefault("offset", Int())
+
         if self.relay:
             super(DjangoConnectionField, self).__init__(type, *args, **kwargs)
         else:
