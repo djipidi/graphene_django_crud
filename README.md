@@ -36,6 +36,9 @@ django orm into a graphql API with the following features:
       - [input_extend_fields](#input_extend_fields)
       - [where_only_fields / where_exclude_fields](#where_only_fields--where_exclude_fields)
       - [order_by_only_fields / order_by_exclude_fields](#order_by_only_fields--order_by_exclude_fields)
+      - [validator](#validator)
+      - [validator_exclude](#validator_exclude)
+      - [validator_validate_unique](#validator_validate_unique)
     - [Fields](#fields)
       - [ReadField](#readfield)
       - [BatchReadField](#batchreadfield)
@@ -747,6 +750,22 @@ of the two parameters can be declared.
 
 Tuple of model fields to include/exclude in graphql order_by input type. Only
 one of the two parameters can be declared.
+
+#### validator
+
+default: True\
+Activate/deactivate the validation of the model. if the value is
+True, full_clean() method of model will be called before save().
+
+#### validator_exclude
+
+default: None\
+The exclude argument of full_clean() method.
+
+#### validator_validate_unique
+
+default: True\
+The validate_unique argument of full_clean() method.
 
 ### Fields
 
