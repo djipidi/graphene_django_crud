@@ -52,7 +52,8 @@ django orm into a graphql API with the following features:
       - [UpdateInputType](#updateinputtype)
     - [overload methods](#overload-methods)
       - [get_queryset(cls, parent, info, \*\*kwargs)](#get_querysetcls-parent-info-kwargs)
-      - [Middleware methods before_XXX(cls, parent, info, instance, data) / after_XXX(cls, parent, info, instance, data)](#middleware-methods-before_xxxcls-parent-info-instance-data--after_xxxcls-parent-info-instance-data)
+      - [mutate, create, update, delete](#mutate-create-update-delete)
+      - [(Deprecated) Middleware methods before_XXX(cls, parent, info, instance, data) / after_XXX(cls, parent, info, instance, data)](#deprecated-middleware-methods-before_xxxcls-parent-info-instance-data--after_xxxcls-parent-info-instance-data)
     - [generate_signals()](#generate_signals)
   - [Utils](#utils)
       - [@resolver_hints(only: list\[str\], select_related:list\[str\])](#resolver_hintsonly-liststr-select_relatedliststr)
@@ -135,12 +136,13 @@ class UserType(DjangoGrapheneCRUD):
             return User.objects.none() 
 
     @classmethod
-    def before_mutate(cls, parent, info, instance, data):
+    def mutate(cls, parent, info, instance, data, *args, **kwargs):
         if not info.context.user.is_staff:
             raise GraphQLError('not permited, only staff user')
 
         if "password" in data.keys():
             instance.set_password(data.pop("password"))
+        return super().mutate(parent, info, instance, data, *args, **kwargs)
 
 class GroupType(DjangoGrapheneCRUD):
     class Meta:
@@ -529,9 +531,9 @@ class UserType(DjangoGrapheneCRUD):
 
 ### User permissions
 
-[The Middleware methods](#middleware-methods-before_xxxcls-parent-info-instance-data--after_xxxcls-parent-info-instance-data)
-are called for each modification of model instances during mutations and nested
-mutations. it can be used to check permissions.
+[The methods mutate, create, update, delete](#mutate-create-update-delete) are
+called for each change of model instances during mutations and nested mutations.
+it can be used to check permissions.
 
 ```python
 class UserType(DjangoGrapheneCRUD):
@@ -539,19 +541,28 @@ class UserType(DjangoGrapheneCRUD):
         model = User
 
     @classmethod
-    def before_create(cls, parent, info, instance, data):
+    def mutate(cls, parent, info, instance, data, *args, **kwargs):
+        if not info.context.user.is_authenticated:
+            raise GraphQLError('not authorized, you must be logged in')
+        return super().mutate(parent, info, instance, data, *args, **kwargs)
+
+    @classmethod
+    def create(cls, parent, info, instance, data, *args, **kwargs):
         if not info.context.user.has_perm("add_user"):
             raise GraphQLError('not authorized, you must have add_user permission')
+        return super().create(parent, info, instance, data, *args, **kwargs)
 
     @classmethod
-    def before_update(cls, parent, info, instance, data):
+    def update(cls, parent, info, instance, data, *args, **kwargs):
         if not info.context.user.has_perm("change_user"):
             raise GraphQLError('not authorized, you must have change_user permission')
+        return super().update(parent, info, instance, data, *args, **kwargs)
 
     @classmethod
-    def before_delete(cls, parent, info, instance, data):
+    def delete(cls, parent, info, instance, data, *args, **kwargs):
         if not info.context.user.has_perm("delete_user"):
             raise GraphQLError('not authorized, you must have delete_user permission')
+        return super().delete(parent, info, instance, data, *args, **kwargs)
 
 ```
 
@@ -703,8 +714,8 @@ type. Only one of the two parameters can be declared.
 #### input_extend_fields
 
 Field list to extend the create and update inputs. value must be a list of tuple
-(name: string, type: graphene.ObjectType) The parameter can be processed in the
-middleware functions (before_XXX / after_XXX).
+(name: string, type: graphene.ObjectType). The parameters can be processed with
+methods [mutate, create, update, delete](#mutate-create-update-delete)
 
 example:
 
@@ -717,11 +728,11 @@ class UserType(DjangoGrapheneCRUD):
         )
 
     @classmethod
-    def before_mutate(cls, parent, info, instance, data):
+    def mutate(cls, parent, info, instance, data, *args, **kwargs):
         if "fullName" in data.keys():
             instance.first_name = data["fullName"].split(" ")[0]
             instance.last_name = data["fullName"].split(" ")[1]
-        ...
+        return super().mutate(parent, info, instance, data, *args, **kwargs)
 ```
 
 #### where_only_fields / where_exclude_fields
@@ -825,7 +836,47 @@ Default it returns "model.objects.all()", the overload is useful for applying
 filtering based on user. The method is more than a resolver, it is also called
 in nested request, fetch instances for mutations and subscription filter.
 
-#### Middleware methods before_XXX(cls, parent, info, instance, data) / after_XXX(cls, parent, info, instance, data)
+#### mutate, create, update, delete
+
+Methods called for each mutation and nested mutation impacting the model.
+Overload this method to add preprocessing and / or overprocessing. The mutate
+method is called before the create, update, delete methods. The "data" argument
+is a dict corresponding to the graphql input argument.
+
+```python
+@classmethod
+def mutate(cls, parent, info, instance, data, *args, **kwargs)
+    # code before save instance
+    instance = super().mutate(cls, parent, info, instance, data, *args, **kwargs)
+    # code after save instance
+    return instance
+
+@classmethod
+def create(cls, parent, info, instance, data, *args, **kwargs)
+    # code before save instance
+    instance = super().create(cls, parent, info, instance, data, *args, **kwargs)
+    # code after save instance
+    return instance
+
+@classmethod
+def update(cls, parent, info, instance, data, *args, **kwargs)
+    # code before save instance
+    instance = super().update(cls, parent, info, instance, data, *args, **kwargs)
+    # code after save instance
+    return instance
+
+@classmethod
+def delete(cls, parent, info, instance, data, *args, **kwargs)
+    # code before save instance
+    instance = super().delete(cls, parent, info, instance, data, *args, **kwargs)
+    # code after save instance
+    return instance
+```
+
+#### (Deprecated) Middleware methods before_XXX(cls, parent, info, instance, data) / after_XXX(cls, parent, info, instance, data)
+
+> These methods are deprecated, use the methods
+> [mutate, create, update, delete](#mutate-create-update-delete)
 
 ```python
 @classmethod
