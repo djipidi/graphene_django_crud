@@ -79,6 +79,10 @@ class DjangoCRUDObjectTypeOptions(ObjectTypeOptions):
     order_by_only_fields = "__all__"
     order_by_exclude_fields = ()
 
+    validator = True
+    validator_exclude = None
+    validator_validate_unique = True
+
     connection = None
     use_connection = None
     connection_class = None
@@ -104,6 +108,9 @@ class DjangoCRUDObjectType(graphene.ObjectType):
         where_exclude_fields=(),
         order_by_only_fields="__all__",
         order_by_exclude_fields=(),
+        validator=True,
+        validator_exclude=None,
+        validator_validate_unique=True,
         description="",
         connection=None,
         connection_class=None,
@@ -166,6 +173,10 @@ class DjangoCRUDObjectType(graphene.ObjectType):
 
         _meta.order_by_only_fields = order_by_only_fields
         _meta.order_by_exclude_fields = order_by_exclude_fields
+
+        _meta.validator = validator
+        _meta.validator_exclude = validator_exclude
+        _meta.validator_validate_unique = validator_validate_unique
 
         _meta.connection = connection
         _meta.connection_class = connection_class
@@ -453,7 +464,11 @@ class DjangoCRUDObjectType(graphene.ObjectType):
                 )
             else:
                 instance.__setattr__(key, value)
-        instance.full_clean()
+        if cls._meta.validator:
+            instance.full_clean(
+                exclude=cls._meta.validator_exclude,
+                validate_unique=cls._meta.validator_validate_unique,
+            )
         instance.save()
         for key, value in data.items():
             try:
