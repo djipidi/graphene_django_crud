@@ -9,8 +9,9 @@ All notable changes to this project will be documented in this file.
 - Relay integration
 - Possibility to extend connectionType
 - Possibility of having a list field instead of a connection field
-- Replace the methods before_xxx, after_xxx methods to the methods mutate, create,
-  update, delete
+- Replace the methods before_xxx, after_xxx methods to the methods mutate,
+  create, update, delete
+- Meta parameter for model validation
 
 ### Changed
 
@@ -41,8 +42,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Improve sql performance with use only, select_related, prefetch_related
-- Meta Parameter where_only_fields / where_exclude_fields, order_by_only_fields /
-  order_by_exclude_fields
+- Meta Parameter where_only_fields / where_exclude_fields, order_by_only_fields
+  / order_by_exclude_fields
 - add year, month, day, week_day parameters in the dateFilter
 - add hour, minute, second parameters in the timeFilter
 
