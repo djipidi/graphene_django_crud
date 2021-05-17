@@ -5,7 +5,7 @@ from collections import OrderedDict
 
 import six
 from django import VERSION as DJANGO_VERSION
-from django.apps import apps
+from django.apps import apps, registry
 from django.core.exceptions import ValidationError, ImproperlyConfigured
 from django.db.models import (
     NOT_PROVIDED,
@@ -35,6 +35,8 @@ from graphql.language.ast import (
     EnumValue,
 )
 from django.conf import settings
+from .registry import get_global_registry
+registry = get_global_registry()
 
 
 def get_reverse_fields(model):
@@ -316,17 +318,27 @@ def get_args(where):
             ):
                 if isinstance(arg_value, list):
                     try:
-                        arg_value = [from_global_id(value)[1] for value in arg_value]
+                        arg_value = [get_real_id(value) for value in arg_value]
                     except:
                         pass
                 else:
                     try:
-                        arg_value = from_global_id(arg_value)[1]
+                        arg_value = get_real_id(arg_value)
                     except:
                         pass
 
             args[arg_key] = arg_value
     return args
+
+def get_real_id(value):
+    try:
+        gql_type, relay_id = from_global_id(value)
+        if registry.get(gql_type) is not None:
+            return relay_id
+        else:
+            return value
+    except:
+        return value
 
 
 def where_input_to_Q(where):

@@ -47,6 +47,9 @@ class Registry(object):
             self._registry[cls.__name__] = cls
             self.model_to_type_index[cls._meta.model] = cls
 
+    def get_django_type(self, name):
+        return self._registry.get(name)
+
     def get_type_for_model(self, model, for_input=None):
         return self.model_to_type_index.get(model, None)
 
