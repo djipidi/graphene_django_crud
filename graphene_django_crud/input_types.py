@@ -10,16 +10,13 @@ def gen_inputType_filter(
     with_text_filter=False,
     with_date_filter=False,
     with_time_filter=False,
-    with_isnull_filter=True,
 ):
 
     items = OrderedDict()
 
     items["equals"] = graphene.Field(field)
     items["in"] = graphene.List(field)
-
-    if with_isnull_filter:
-        items["isnull"] = graphene.Boolean()
+    items["isnull"] = graphene.Boolean()
 
     if with_number_filter:
         items["gt"] = graphene.Field(field)
@@ -51,7 +48,7 @@ def gen_inputType_filter(
     )
 
 
-IdFilter = gen_inputType_filter("IdFilter", graphene.ID, with_isnull_filter=False)
+IdFilter = gen_inputType_filter("IdFilter", graphene.ID)
 
 IntFilter = gen_inputType_filter(
     "IntFilter", graphene.Int, with_number_filter=True, with_text_filter=True
