@@ -333,7 +333,7 @@ def get_args(where):
 def get_real_id(value):
     try:
         gql_type, relay_id = from_global_id(value)
-        if registry.get(gql_type) is not None:
+        if registry.get_django_type(gql_type) is not None:
             return relay_id
         else:
             return value
