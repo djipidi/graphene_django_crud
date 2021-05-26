@@ -26,7 +26,7 @@ from graphene import (
 from graphene.utils.str_converters import to_camel_case, to_const
 from graphene_django.utils import import_single_dispatch
 
-from .base_types import Binary, OrderEnum
+from .base_types import Binary, OrderEnum, File
 from .fields import DjangoListField, DjangoConnectionField
 from .utils import is_required, get_model_fields, get_related_model
 
@@ -40,6 +40,8 @@ from .input_types import (
     TimeFilter,
     DateFilter,
 )
+
+from graphene_file_upload.scalars import Upload
 
 singledispatch = import_single_dispatch()
 
@@ -332,7 +334,6 @@ def convert_django_field(field, registry=None, input_flag=None):
 @convert_django_field.register(models.SlugField)
 @convert_django_field.register(models.URLField)
 @convert_django_field.register(models.GenericIPAddressField)
-@convert_django_field.register(models.FileField)
 def convert_field_to_string(field, registry=None, input_flag=None):
     if input_flag == "order_by":
         return OrderEnum()
@@ -342,6 +343,8 @@ def convert_field_to_string(field, registry=None, input_flag=None):
         description=field.help_text or field.verbose_name,
         required=is_required(field) and input_flag == "create",
     )
+
+
 
 
 @convert_django_field.register(models.AutoField)
@@ -464,6 +467,21 @@ def convert_time_to_string(field, registry=None, input_flag=None):
         description=field.help_text or field.verbose_name,
         required=is_required(field) and input_flag == "create",
     )
+
+@convert_django_field.register(models.FileField)
+@convert_django_field.register(models.ImageField)
+def convert_field_to_file(field, registry=None, input_flag=None):
+    if input_flag:
+        if input_flag == "order_by":
+            return OrderEnum()
+        elif input_flag == "where":
+            return StringFilter()
+        else:
+            return Upload()
+    return Field(
+            File,
+            description=field.help_text or field.verbose_name,
+        )
 
 
 @convert_django_field.register(models.OneToOneRel)

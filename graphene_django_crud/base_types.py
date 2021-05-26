@@ -11,6 +11,7 @@ from graphene_django.types import ErrorType
 from graphene.types.objecttype import ObjectType, ObjectTypeOptions
 import re
 from .registry import get_global_registry
+import base64
 
 
 def mutation_factory_type(_type, registry=None, *args, **kwargs):
@@ -95,7 +96,11 @@ class Binary(graphene.Scalar):
 
     @staticmethod
     def binary_to_string(value):
-        return binascii.hexlify(value).decode("utf-8")
+        return base64.b64encode(value).decode("utf-8")
+
+    @staticmethod
+    def string_to_binary(value):
+        return base64.b64decode(value)
 
     serialize = binary_to_string
     parse_value = binary_to_string
@@ -103,4 +108,19 @@ class Binary(graphene.Scalar):
     @classmethod
     def parse_literal(cls, node):
         if isinstance(node, ast.StringValue):
-            return cls.binary_to_string(node.value)
+            return cls.string_to_binary(node.value)
+
+
+class File(graphene.ObjectType):
+    url = graphene.String()
+    size = graphene.Int()
+    filename = graphene.String()
+    content = Binary()
+
+    @staticmethod
+    def resolve_filename(parent, info, **kwargs):
+        return parent.name
+
+    @staticmethod
+    def resolve_content(parent, info, **kwargs):
+        return parent.read()
