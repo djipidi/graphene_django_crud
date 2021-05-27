@@ -18,7 +18,6 @@ from .utils import (
 )
 from .base_types import mutation_factory_type, node_factory_type
 
-from django.db import transaction
 from django.db.models import Prefetch
 from django.core.exceptions import ValidationError
 
@@ -691,12 +690,11 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
     @classmethod
     def create_resolver(cls, parent, info, **kwargs):
         try:
-            with transaction.atomic():
-                instance = cls.create(parent, info, kwargs["input"])
-                result_field_ast = get_field_ast_by_path(info, ["result"])
-                instance = cls._instance_to_queryset(
-                    info, instance, result_field_ast
-                ).get()
+            instance = cls.create(parent, info, kwargs["input"])
+            result_field_ast = get_field_ast_by_path(info, ["result"])
+            instance = cls._instance_to_queryset(
+                info, instance, result_field_ast
+            ).get()
             return {"result": instance, "ok": True, "errors": []}
         except ValidationError as e:
             return {
@@ -750,12 +748,11 @@ class DjangoGrapheneCRUD(graphene.ObjectType):
     @classmethod
     def update_resolver(cls, parent, info, **kwargs):
         try:
-            with transaction.atomic():
-                instance = cls.update(parent, info, kwargs["where"], kwargs["input"])
-                result_field_ast = get_field_ast_by_path(info, ["result"])
-                instance = cls._instance_to_queryset(
-                    info, instance, result_field_ast
-                ).get()
+            instance = cls.update(parent, info, kwargs["where"], kwargs["input"])
+            result_field_ast = get_field_ast_by_path(info, ["result"])
+            instance = cls._instance_to_queryset(
+                info, instance, result_field_ast
+            ).get()
             return {"result": instance, "ok": True, "error": []}
         except ValidationError as e:
             return {
