@@ -21,6 +21,12 @@ All notable changes to this project will be documented in this file.
 - Graphql type <typeName>MutationType is renamed to <typeName>Mutation
 - The methods before_xxx, after_xxx are deprecated
 
+## \[1.2.2\] - 2021-05-27
+
+### Changed
+
+- Support multiple databases by dropping the transaction in mutations resolvers
+
 ## \[1.2.1\] - 2021-05-07
 
 ### Fixed
