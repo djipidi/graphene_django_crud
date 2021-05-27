@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## \[1.2.2\] - 2021-05-27
+
+### Changed
+
+- Support multiple databases by dropping the transaction in mutations resolvers
+
 ## \[1.2.1\] - 2021-05-07
 
 ### Fixed
@@ -23,8 +29,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Improve sql performance with use only, select_related, prefetch_related
-- Meta Parameter where_only_fields / where_exclude_fields, order_by_only_fields /
-  order_by_exclude_fields
+- Meta Parameter where_only_fields / where_exclude_fields, order_by_only_fields
+  / order_by_exclude_fields
 - add year, month, day, week_day parameters in the dateFilter
 - add hour, minute, second parameters in the timeFilter
 
