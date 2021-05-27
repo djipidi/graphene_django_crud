@@ -644,6 +644,11 @@ difference that the sub-create has excluded the field where supplying its
 relation to the type of parent Object being created would normally be. This is
 because a sub-create forces its record to relate to the parent one.
 
+> **Warning**: By default, mutations are not atomic, specify ATOMIC_REQUESTS or
+> ATOMIC_MUTATIONS on True in your setting.py\
+> See:
+> [Transaction with graphene-django](https://docs.graphene-python.org/projects/django/en/latest/mutations/#django-database-transactions)
+
 #### ReadField
 
 Query field to allow clients to find one particular record at time of the
