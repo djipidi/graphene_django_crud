@@ -42,8 +42,6 @@ from .input_types import (
     DateFilter,
 )
 
-from graphene_file_upload.scalars import Upload
-
 singledispatch = import_single_dispatch()
 
 
