@@ -5,27 +5,17 @@ import sys
 import django
 from django.core import management
 
-
-def pytest_addoption(parser):
-    parser.addoption(
-        "--no-pkgroot",
-        action="store_true",
-        default=False,
-        help="Remove package root directory from sys.path, ensuring that "
-        "graphene_django_extras is imported from the installed site-packages. "
-        "Used for testing the distribution.",
-    )
-    parser.addoption(
-        "--staticfiles",
-        action="store_true",
-        default=False,
-        help="Run tests with static files collection, using manifest "
-        "staticfiles storage. Used for testing the distribution.",
-    )
+from pathlib import Path
 
 
 def pytest_configure(config):
     from django.conf import settings
+    BASE_DIR = Path(__file__).resolve().parent
+    if os.path.exists(str(BASE_DIR) + "/media"):
+        for filename in os.listdir(str(BASE_DIR) + "/media"):
+            os.remove(str(BASE_DIR) + "/media/" + filename)
+    else:
+        os.mkdir(str(BASE_DIR) + "/media")
 
     settings.configure(
         ALLOWED_HOSTS=["*"],
@@ -38,6 +28,8 @@ def pytest_configure(config):
         USE_I18N=True,
         USE_L10N=True,
         STATIC_URL="/static/",
+        MEDIA_ROOT =str(BASE_DIR  / 'media'),
+        MEDIA_URL = '/media/',
         ROOT_URLCONF="tests.urls",
         TEMPLATES=[
             {
@@ -72,8 +64,6 @@ def pytest_configure(config):
 
     django.setup()
     management.call_command("migrate", verbosity=0, interactive=False)
-    if config.getoption("--staticfiles"):
-        management.call_command("collectstatic", verbosity=0, interactive=False)
 
     import graphene
     import graphene_django
