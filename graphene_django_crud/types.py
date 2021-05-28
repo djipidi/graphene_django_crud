@@ -470,8 +470,17 @@ class DjangoCRUDObjectType(graphene.ObjectType):
                     parent, info, instance, key, value, model_field
                 )
             elif isinstance(model_field, (FileField, ImageField)):
-                if isinstance(value, UploadedFile):
-                    getattr(instance, key).save(value.name, value.file)
+                if value is None:
+                    continue
+                if "upload" in value.keys():
+                    getattr(instance, key).save(
+                        value.get("filename", value["upload"].name),
+                        value["upload"].file
+                    )
+                else:
+                    getattr(instance, key).name = value["filename"]
+                    with getattr(instance, key).open("wb") as f:
+                        f.write(value["content"])
             else:
                 instance.__setattr__(key, value)
         if cls._meta.validator:

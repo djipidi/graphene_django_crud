@@ -103,7 +103,7 @@ class Binary(graphene.Scalar):
         return base64.b64decode(value)
 
     serialize = binary_to_string
-    parse_value = binary_to_string
+    parse_value = string_to_binary
 
     @classmethod
     def parse_literal(cls, node):

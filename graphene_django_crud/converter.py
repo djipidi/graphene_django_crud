@@ -31,6 +31,7 @@ from .fields import DjangoListField, DjangoConnectionField
 from .utils import is_required, get_model_fields, get_related_model
 
 from .input_types import (
+    FileInput,
     IdFilter,
     IntFilter,
     DecimalFilter,
@@ -477,7 +478,10 @@ def convert_field_to_file(field, registry=None, input_flag=None):
         elif input_flag == "where":
             return StringFilter()
         else:
-            return Upload()
+            return FileInput(
+                description=field.help_text or field.verbose_name,
+                required=is_required(field) and input_flag == "create",
+            )
     return Field(
             File,
             description=field.help_text or field.verbose_name,
