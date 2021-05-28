@@ -470,8 +470,6 @@ class DjangoCRUDObjectType(graphene.ObjectType):
                     parent, info, instance, key, value, model_field
                 )
             elif isinstance(model_field, (FileField, ImageField)):
-                if value is None:
-                    continue
                 if "upload" in value.keys():
                     getattr(instance, key).save(
                         value.get("filename", value["upload"].name),
