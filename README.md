@@ -70,7 +70,12 @@ django orm into a graphql API with the following features:
 > graphene-subscription in your project.
 > [For that follow their installation part](https://github.com/jaydenwindle/graphene-subscriptions)\
 > [The generate signals](#generate_signals)
-> method allows to connect model signals to graphene-subcription signals
+> method allows to connect model signals to graphene-subcription signals.
+
+> For the support of
+> [Multipart Request Spec](https://github.com/jaydenseric/graphql-multipart-request-spec),
+> install [graphene-file-upload](https://pypi.org/project/graphene-file-upload/)
+> according to the documentation.
 
 ### With pip
 
