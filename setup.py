@@ -8,7 +8,7 @@ setuptools.setup(
     version="1.2.2",
     author="djipidi",
     author_email="djipidi.dev@gmail.com",
-    description="deploy orm django to a graphql API easily",
+    description="Turns the django ORM into a graphql API",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/djipidi/graphene_django_crud",
