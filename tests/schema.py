@@ -31,6 +31,12 @@ from .connection.schema import (
     Subscription as connectionSubscription,
 )
 
+from .file_field.schema import (
+    Query as fileFieldQuery,
+    Mutation as fileFieldMutation,
+    Subscription as fileFieldSubscription,
+)
+
 
 class Query(
     relationshipQuery,
@@ -39,6 +45,7 @@ class Query(
     choicesConverterQuery,
     relayQuery,
     connectionQuery,
+    fileFieldQuery,
     graphene.ObjectType,
 ):
     pass
@@ -51,6 +58,7 @@ class Mutation(
     choicesConverterMutation,
     relayMutation,
     connectionMutation,
+    fileFieldMutation,
     graphene.ObjectType,
 ):
     pass
@@ -63,6 +71,7 @@ class Subscription(
     choicesConverterSubscription,
     relaySubscription,
     connectionSubscription,
+    fileFieldSubscription,
     graphene.ObjectType,
 ):
     pass

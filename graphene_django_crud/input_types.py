@@ -1,7 +1,13 @@
 # -*- coding: utf-8 -*-
 import graphene
 from collections import OrderedDict
+from.base_types import Binary
 
+try:
+    from graphene_file_upload.scalars import Upload
+    graphene_file_upload_instaled = True
+except:
+    graphene_file_upload_instaled = False
 
 def gen_inputType_filter(
     name,
@@ -86,3 +92,9 @@ DateFilter = gen_inputType_filter(
     with_text_filter=False,
     with_date_filter=True,
 )
+
+class FileInput(graphene.InputObjectType):
+    if graphene_file_upload_instaled:
+        upload = Upload()
+    filename = graphene.String()
+    content = Binary()

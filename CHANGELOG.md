@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Replace the methods before_xxx, after_xxx methods to the methods mutate,
   create, update, delete
 - Meta parameter for model validation
+- FileField and ImageField support
 
 ### Changed
 

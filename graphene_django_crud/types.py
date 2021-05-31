@@ -2,6 +2,7 @@
 
 from collections import OrderedDict
 from django.utils.functional import SimpleLazyObject
+from django.core.files.uploadedfile import UploadedFile
 import graphene
 from graphene.types.objecttype import ObjectTypeOptions
 from graphene_django.utils.utils import is_valid_django_model
@@ -9,7 +10,6 @@ from graphql.language.ast import FragmentSpread, InlineFragment
 from graphene.relay import Connection as RelayConnection, Node
 
 from .fields import DjangoConnectionField, DjangoListField
-
 from .utils import (
     get_model_fields,
     parse_arguments_ast,
@@ -21,7 +21,7 @@ from .utils import (
     error_data_from_validation_error,
     validation_error_with_suffix,
 )
-from .base_types import mutation_factory_type, DefaultConnection
+from .base_types import File, mutation_factory_type, DefaultConnection
 
 from django.db.models import Prefetch
 from django.core.exceptions import ValidationError
@@ -46,6 +46,8 @@ from django.db.models import (
     ForeignKey,
     ManyToManyField,
     OneToOneField,
+    FileField,
+    ImageField
 )
 import warnings
 
@@ -353,31 +355,36 @@ class DjangoCRUDObjectType(graphene.ObjectType):
                     continue
 
                 if getattr(field, "selection_set", None):
-                    related_type = get_global_registry().get_type_for_model(
-                        model_field.remote_field.model
-                    )
                     if isinstance(
-                        model_field, (OneToOneField, OneToOneRel, ForeignKey)
+                        model_field, (OneToOneField, OneToOneRel, ForeignKey, ManyToManyField, ManyToManyRel, ManyToOneRel)
                     ):
-                        ret["select_related"].append(new_suffix + real_name)
-                        new_ret = related_type._queryset_factory_analyze(
-                            info,
-                            field.selection_set,
-                            is_connection=False,
-                            suffix=new_suffix + real_name,
+                        related_type = get_global_registry().get_type_for_model(
+                            model_field.remote_field.model
                         )
-                        ret = fusion_ret(ret, new_ret)
-                    elif isinstance(
-                        model_field, (ManyToManyField, ManyToManyRel, ManyToOneRel)
-                    ):
-                        ret["prefetch_related"].append(
-                            Prefetch(
-                                new_suffix + real_name,
-                                queryset=related_type._queryset_factory(
-                                    info, field_ast=field, is_connection=True
-                                ),
+                        if isinstance(
+                            model_field, (OneToOneField, OneToOneRel, ForeignKey)
+                        ):
+                            ret["select_related"].append(new_suffix + real_name)
+                            new_ret = related_type._queryset_factory_analyze(
+                                info,
+                                field.selection_set,
+                                is_connection=False,
+                                suffix=new_suffix + real_name,
                             )
-                        )
+                            ret = fusion_ret(ret, new_ret)
+                        elif isinstance(
+                            model_field, (ManyToManyField, ManyToManyRel, ManyToOneRel)
+                        ):
+                            ret["prefetch_related"].append(
+                                Prefetch(
+                                    new_suffix + real_name,
+                                    queryset=related_type._queryset_factory(
+                                        info, field_ast=field, is_connection=True
+                                    ),
+                                )
+                            )
+                    elif isinstance(model_field, FileField):
+                        ret["only"].append(new_suffix + real_name)
                 else:
                     ret["only"].append(new_suffix + real_name)
         return ret
@@ -461,6 +468,16 @@ class DjangoCRUDObjectType(graphene.ObjectType):
                 cls._nested_mutate_Fk_O2OF(
                     parent, info, instance, key, value, model_field
                 )
+            elif isinstance(model_field, (FileField, ImageField)):
+                if "upload" in value.keys():
+                    getattr(instance, key).save(
+                        value.get("filename", value["upload"].name),
+                        value["upload"].file
+                    )
+                else:
+                    getattr(instance, key).name = value["filename"]
+                    with getattr(instance, key).open("wb") as f:
+                        f.write(value["content"])
             else:
                 instance.__setattr__(key, value)
         if cls._meta.validator:
