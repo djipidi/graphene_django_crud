@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
   field in the default connection field
 - FILE_TYPE_CONTENT_FIELD_ACTIVE setting parameter for activate/deactivate the
   content field in file type
+- Add Case insensitive fields in StringFilter
 
 ### Changed
 
@@ -26,6 +27,8 @@ All notable changes to this project will be documented in this file.
 - Graphql type <typeName>NodeType is renamed to <typeName>Connection
 - Graphql type <typeName>MutationType is renamed to <typeName>Mutation
 - The methods before_xxx, after_xxx are deprecated
+- String ordering is Case insensitive
+- OrderEnum for string ordering change to orderStringEnum
 
 ## \[1.2.2\] - 2021-05-27
 
