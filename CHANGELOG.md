@@ -13,6 +13,11 @@ All notable changes to this project will be documented in this file.
   create, update, delete
 - Meta parameter for model validation
 - FileField and ImageField support
+- Customization with django settings parameters
+- DEFAULT_CONNECTION_NODES_FIELD_NAME setting parameter for customizing the node
+  field in the default connection field
+- FILE_TYPE_ACTIVE_CONTENT_FIELD setting parameter for activate/deactivate the
+  content field in file type
 
 ### Changed
 
