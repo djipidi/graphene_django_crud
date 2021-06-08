@@ -34,6 +34,10 @@ def gen_inputType_filter(
         items["contains"] = graphene.Field(field)
         items["startswith"] = graphene.Field(field)
         items["endswith"] = graphene.Field(field)
+        items["iexact"] = graphene.Field(field)
+        items["icontains"] = graphene.Field(field)
+        items["istartswith"] = graphene.Field(field)
+        items["iendswith"] = graphene.Field(field)
         items["regex"] = graphene.String()
 
     if with_date_filter:
