@@ -116,7 +116,7 @@ class File(graphene.ObjectType):
     url = graphene.String()
     size = graphene.Int()
     filename = graphene.String()
-    if gdc_settings.FILE_TYPE_ACTIVE_CONTENT_FIELD:
+    if gdc_settings.FILE_TYPE_CONTENT_FIELD_ACTIVE:
         content = Binary()
 
     @staticmethod

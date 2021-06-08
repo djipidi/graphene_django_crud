@@ -16,7 +16,7 @@ All notable changes to this project will be documented in this file.
 - Customization with django settings parameters
 - DEFAULT_CONNECTION_NODES_FIELD_NAME setting parameter for customizing the node
   field in the default connection field
-- FILE_TYPE_ACTIVE_CONTENT_FIELD setting parameter for activate/deactivate the
+- FILE_TYPE_CONTENT_FIELD_ACTIVE setting parameter for activate/deactivate the
   content field in file type
 
 ### Changed

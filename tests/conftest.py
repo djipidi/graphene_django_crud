@@ -19,7 +19,7 @@ def pytest_configure(config):
 
     settings.configure(
         GRAPHENE_DJANGO_CRUD={
-            "FILE_TYPE_ACTIVE_CONTENT_FIELD": True,
+            "FILE_TYPE_CONTENT_FIELD_ACTIVE": True,
         },
         ALLOWED_HOSTS=["*"],
         DEBUG_PROPAGATE_EXCEPTIONS=True,

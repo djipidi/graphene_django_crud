@@ -59,12 +59,12 @@ django orm into a graphql API with the following features:
       - [(Deprecated) Middleware methods before_XXX(cls, parent, info, instance, data) / after_XXX(cls, parent, info, instance, data)](#deprecated-middleware-methods-before_xxxcls-parent-info-instance-data--after_xxxcls-parent-info-instance-data)
     - [generate_signals()](#generate_signals)
   - [Settings](#settings)
-      - [DEFAULT_CONNECTION_NODES_FIELD_NAME](#default_connection_nodes_field_name)
-      - [FILE_TYPE_ACTIVE_CONTENT_FIELD](#file_type_active_content_field)
+    - [DEFAULT_CONNECTION_NODES_FIELD_NAME](#default_connection_nodes_field_name)
+    - [FILE_TYPE_CONTENT_FIELD_ACTIVE](#file_type_content_field_active)
   - [Utils](#utils)
-      - [@resolver_hints(only: list\[str\], select_related:list\[str\])](#resolver_hintsonly-liststr-select_relatedliststr)
-      - [where_input_to_Q(where_input: dict) -> Q](#where_input_to_qwhere_input-dict---q)
-      - [order_by_input_to_args(order_by_input: list\[dict\]) -> list\[str\]](#order_by_input_to_argsorder_by_input-listdict---liststr)
+    - [@resolver_hints(only: list\[str\], select_related:list\[str\])](#resolver_hintsonly-liststr-select_relatedliststr)
+    - [where_input_to_Q(where_input: dict) -> Q](#where_input_to_qwhere_input-dict---q)
+    - [order_by_input_to_args(order_by_input: list\[dict\]) -> list\[str\]](#order_by_input_to_argsorder_by_input-listdict---liststr)
   - [Scalar Filter](#scalar-filter)
 
 ## Installation
@@ -996,9 +996,9 @@ values:
 Name of node field in connection field.\
 Default: `'data'`
 
-#### FILE_TYPE_ACTIVE_CONTENT_FIELD
+#### FILE_TYPE_CONTENT_FIELD_ACTIVE
 
-Add a content field with the content of the file. The type of the field is
+Add a content field with the content of the file. The type used is
 Binary.\
 Default: `False`
 
