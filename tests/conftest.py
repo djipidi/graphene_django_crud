@@ -18,6 +18,9 @@ def pytest_configure(config):
         os.mkdir(str(BASE_DIR) + "/media")
 
     settings.configure(
+        GRAPHENE_DJANGO_CRUD={
+            "FILE_TYPE_ACTIVE_CONTENT_FIELD": True,
+        },
         ALLOWED_HOSTS=["*"],
         DEBUG_PROPAGATE_EXCEPTIONS=True,
         DATABASES={
