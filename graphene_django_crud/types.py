@@ -47,7 +47,7 @@ from django.db.models import (
     ManyToManyField,
     OneToOneField,
     FileField,
-    ImageField
+    ImageField,
 )
 import warnings
 
@@ -326,7 +326,10 @@ class DjangoCRUDObjectType(graphene.ObjectType):
                 continue
 
             if is_connection:
-                if field.name.value in [gdc_settings.DEFAULT_CONNECTION_NODES_FIELD_NAME, "node"]:
+                if field.name.value in [
+                    gdc_settings.DEFAULT_CONNECTION_NODES_FIELD_NAME,
+                    "node",
+                ]:
                     new_ret = cls._queryset_factory_analyze(
                         info,
                         field.selection_set,
@@ -357,7 +360,15 @@ class DjangoCRUDObjectType(graphene.ObjectType):
 
                 if getattr(field, "selection_set", None):
                     if isinstance(
-                        model_field, (OneToOneField, OneToOneRel, ForeignKey, ManyToManyField, ManyToManyRel, ManyToOneRel)
+                        model_field,
+                        (
+                            OneToOneField,
+                            OneToOneRel,
+                            ForeignKey,
+                            ManyToManyField,
+                            ManyToManyRel,
+                            ManyToOneRel,
+                        ),
                     ):
                         related_type = get_global_registry().get_type_for_model(
                             model_field.remote_field.model
@@ -473,7 +484,7 @@ class DjangoCRUDObjectType(graphene.ObjectType):
                 if "upload" in value.keys():
                     getattr(instance, key).save(
                         value.get("filename", value["upload"].name),
-                        value["upload"].file
+                        value["upload"].file,
                     )
                 else:
                     getattr(instance, key).name = value["filename"]
@@ -880,9 +891,7 @@ class DjangoCRUDObjectType(graphene.ObjectType):
         try:
             instance = cls._create(parent, info, kwargs["input"])
             result_field_ast = get_field_ast_by_path(info, ["result"])
-            instance = cls._instance_to_queryset(
-                info, instance, result_field_ast
-            ).get()
+            instance = cls._instance_to_queryset(info, instance, result_field_ast).get()
             return {"result": instance, "ok": True, "errors": []}
         except ValidationError as e:
             return {
@@ -926,9 +935,7 @@ class DjangoCRUDObjectType(graphene.ObjectType):
         try:
             instance = cls._update(parent, info, kwargs["where"], kwargs["input"])
             result_field_ast = get_field_ast_by_path(info, ["result"])
-            instance = cls._instance_to_queryset(
-                info, instance, result_field_ast
-            ).get()
+            instance = cls._instance_to_queryset(info, instance, result_field_ast).get()
             return {"result": instance, "ok": True, "error": []}
         except ValidationError as e:
             return {
