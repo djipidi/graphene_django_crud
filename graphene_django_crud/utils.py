@@ -369,14 +369,14 @@ def order_by_input_to_args(order_by):
         for path in get_paths(rule):
             v = nested_get(rule, path)
             if not isinstance(v, dict):
-                if v.startswith("STRING"):
-                    if v.endswith("ASC"):
-                        args.append(Lower("__".join(path)).asc())
-                    else:
-                        args.append(Lower("__".join(path)).desc())
-                else:
-                    prefix = "-" if v == "DESC" else ""
-                    args.append(prefix + "__".join(path))
+                if v == "ASC":
+                    args.append("__".join(path))
+                elif v == "DESC":
+                    args.append("-" + "__".join(path))
+                elif v == "STRING-ASC":
+                    args.append(Lower("__".join(path)).asc())
+                elif v == "STRING-DESC":
+                    args.append(Lower("__".join(path)).desc())
     return args
 
 

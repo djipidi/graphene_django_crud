@@ -344,8 +344,6 @@ def convert_field_to_string(field, registry=None, input_flag=None):
     )
 
 
-
-
 @convert_django_field.register(models.AutoField)
 def convert_field_to_id(field, registry=None, input_flag=None):
     if input_flag == "order_by":
@@ -467,6 +465,7 @@ def convert_time_to_string(field, registry=None, input_flag=None):
         required=is_required(field) and input_flag == "create",
     )
 
+
 @convert_django_field.register(models.FileField)
 @convert_django_field.register(models.ImageField)
 def convert_field_to_file(field, registry=None, input_flag=None):
@@ -481,9 +480,9 @@ def convert_field_to_file(field, registry=None, input_flag=None):
                 required=is_required(field) and input_flag == "create",
             )
     return Field(
-            File,
-            description=field.help_text or field.verbose_name,
-        )
+        File,
+        description=field.help_text or field.verbose_name,
+    )
 
 
 @convert_django_field.register(models.OneToOneRel)

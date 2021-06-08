@@ -89,10 +89,10 @@ class OrderEnum(graphene.Enum):
     ASC = "ASC"
     DESC = "DESC"
 
+
 class OrderStringEnum(graphene.Enum):
     ASC = "STRING-ASC"
     DESC = "STRING-DESC"
-    
 
 
 class Binary(graphene.Scalar):
