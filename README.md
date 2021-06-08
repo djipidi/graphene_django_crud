@@ -58,6 +58,7 @@ django orm into a graphql API with the following features:
       - [mutate, create, update, delete](#mutate-create-update-delete)
       - [(Deprecated) Middleware methods before_XXX(cls, parent, info, instance, data) / after_XXX(cls, parent, info, instance, data)](#deprecated-middleware-methods-before_xxxcls-parent-info-instance-data--after_xxxcls-parent-info-instance-data)
     - [generate_signals()](#generate_signals)
+  - [Settings](#settings)
   - [Utils](#utils)
       - [@resolver_hints(only: list\[str\], select_related:list\[str\])](#resolver_hintsonly-liststr-select_relatedliststr)
       - [where_input_to_Q(where_input: dict) -> Q](#where_input_to_qwhere_input-dict---q)
@@ -973,6 +974,20 @@ class CoreConfig(AppConfig):
     def ready(self):
         import core.signals
 ```
+
+## Settings
+
+Graphene-django-crud reads your configuration from a single Django setting named
+GRAPHENE_DJANGO_CRUD:
+
+```python
+GRAPHENE_DJANGO_CRUD = {
+    "DEFAULT_CONNECTION_NODES_FIELD_NAME": "nodes"
+}
+```
+
+Here’s a list of settings available in graphene-django-crud and their default
+values:
 
 ## Utils
 
