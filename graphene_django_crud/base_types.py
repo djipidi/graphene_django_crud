@@ -12,6 +12,7 @@ from graphene.types.objecttype import ObjectType, ObjectTypeOptions
 import re
 from .registry import get_global_registry
 import base64
+from .settings import gdc_settings
 
 
 def mutation_factory_type(_type, registry=None, *args, **kwargs):
@@ -60,7 +61,7 @@ class EmptyDefaultConnection(ObjectType):
         _meta.fields = OrderedDict(
             [
                 (
-                    "data",
+                    gdc_settings.DEFAULT_CONNECTION_NODES_FIELD_NAME,
                     Field(
                         NonNull(List(_node)),
                         description="Contains the nodes in this connection.",

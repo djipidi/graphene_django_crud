@@ -51,6 +51,8 @@ from django.db.models import (
 )
 import warnings
 
+from .settings import gdc_settings
+
 
 def resolver_hints(select_related=[], only=[], **kwargs):
     def wrapper(f):
@@ -121,7 +123,6 @@ class DjangoCRUDObjectType(graphene.ObjectType):
         skip_registry=False,
         **options,
     ):
-        cls._display_deprecation_warnings()
         if not model:
             raise Exception("model is required on all DjangoCRUDObjectType")
 
@@ -325,7 +326,7 @@ class DjangoCRUDObjectType(graphene.ObjectType):
                 continue
 
             if is_connection:
-                if field.name.value in ["data", "node"]:
+                if field.name.value in [gdc_settings.DEFAULT_CONNECTION_NODES_FIELD_NAME, "node"]:
                     new_ret = cls._queryset_factory_analyze(
                         info,
                         field.selection_set,
