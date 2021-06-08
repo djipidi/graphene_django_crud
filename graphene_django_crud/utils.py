@@ -35,7 +35,9 @@ from graphql.language.ast import (
     EnumValue,
 )
 from django.conf import settings
+from django.db.models.functions import Lower
 from .registry import get_global_registry
+
 registry = get_global_registry()
 
 
@@ -330,6 +332,7 @@ def get_args(where):
             args[arg_key] = arg_value
     return args
 
+
 def get_real_id(value):
     try:
         gql_type, relay_id = from_global_id(value)
@@ -366,8 +369,14 @@ def order_by_input_to_args(order_by):
         for path in get_paths(rule):
             v = nested_get(rule, path)
             if not isinstance(v, dict):
-                prefix = "-" if v == "DESC" else ""
-                args.append(prefix + "__".join(path))
+                if v.startswith("STRING"):
+                    if v.endswith("ASC"):
+                        args.append(Lower("__".join(path)).asc())
+                    else:
+                        args.append(Lower("__".join(path)).desc())
+                else:
+                    prefix = "-" if v == "DESC" else ""
+                    args.append(prefix + "__".join(path))
     return args
 
 

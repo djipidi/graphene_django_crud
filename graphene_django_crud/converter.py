@@ -26,7 +26,7 @@ from graphene import (
 from graphene.utils.str_converters import to_camel_case, to_const
 from graphene_django.utils import import_single_dispatch
 
-from .base_types import Binary, OrderEnum, File
+from .base_types import Binary, OrderEnum, OrderStringEnum, File
 from .fields import DjangoListField, DjangoConnectionField
 from .utils import is_required, get_model_fields, get_related_model
 
@@ -335,7 +335,7 @@ def convert_django_field(field, registry=None, input_flag=None):
 @convert_django_field.register(models.GenericIPAddressField)
 def convert_field_to_string(field, registry=None, input_flag=None):
     if input_flag == "order_by":
-        return OrderEnum()
+        return OrderStringEnum()
     if input_flag == "where":
         return StringFilter()
     return String(
