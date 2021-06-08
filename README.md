@@ -59,6 +59,8 @@ django orm into a graphql API with the following features:
       - [(Deprecated) Middleware methods before_XXX(cls, parent, info, instance, data) / after_XXX(cls, parent, info, instance, data)](#deprecated-middleware-methods-before_xxxcls-parent-info-instance-data--after_xxxcls-parent-info-instance-data)
     - [generate_signals()](#generate_signals)
   - [Settings](#settings)
+      - [DEFAULT_CONNECTION_NODES_FIELD_NAME](#default_connection_nodes_field_name)
+      - [FILE_TYPE_ACTIVE_CONTENT_FIELD](#file_type_active_content_field)
   - [Utils](#utils)
       - [@resolver_hints(only: list\[str\], select_related:list\[str\])](#resolver_hintsonly-liststr-select_relatedliststr)
       - [where_input_to_Q(where_input: dict) -> Q](#where_input_to_qwhere_input-dict---q)
@@ -988,6 +990,17 @@ GRAPHENE_DJANGO_CRUD = {
 
 Here’s a list of settings available in graphene-django-crud and their default
 values:
+
+#### DEFAULT_CONNECTION_NODES_FIELD_NAME
+
+Name of node field in connection field.\
+Default: `'data'`
+
+#### FILE_TYPE_ACTIVE_CONTENT_FIELD
+
+Add a content field with the content of the file. The type of the field is
+Binary.\
+Default: `False`
 
 ## Utils
 
