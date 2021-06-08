@@ -116,7 +116,8 @@ class File(graphene.ObjectType):
     url = graphene.String()
     size = graphene.Int()
     filename = graphene.String()
-    content = Binary()
+    if gdc_settings.FILE_TYPE_ACTIVE_CONTENT_FIELD:
+        content = Binary()
 
     @staticmethod
     def resolve_filename(parent, info, **kwargs):

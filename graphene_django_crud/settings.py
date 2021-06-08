@@ -2,7 +2,10 @@ from django.conf import settings
 from django.test.signals import setting_changed
 from django.utils.module_loading import import_string
 
-DEFAULTS = {"DEFAULT_CONNECTION_NODES_FIELD_NAME": "data"}
+DEFAULTS = {
+    "DEFAULT_CONNECTION_NODES_FIELD_NAME": "data",
+    "FILE_TYPE_ACTIVE_CONTENT_FIELD": False,
+}
 
 IMPORT_STRINGS = ()
 
