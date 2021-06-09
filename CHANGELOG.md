@@ -29,6 +29,7 @@ All notable changes to this project will be documented in this file.
 - The methods before_xxx, after_xxx are deprecated
 - String ordering is Case insensitive
 - OrderEnum for string ordering change to orderStringEnum
+- Remove ordering with many Relation
 
 ## \[1.2.2\] - 2021-05-27
 

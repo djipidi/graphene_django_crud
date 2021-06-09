@@ -536,6 +536,8 @@ def convert_onetoone_field_to_djangomodel(field, registry=None, input_flag=None)
 @convert_django_field.register(models.ManyToManyField)
 def convert_many_rel_djangomodel(field, registry=None, input_flag=None):
     model = field.related_model
+    if input_flag == "order_by":
+        return
 
     def dynamic_type():
         _type = registry.get_type_for_model(model)
@@ -543,14 +545,7 @@ def convert_many_rel_djangomodel(field, registry=None, input_flag=None):
             return
 
         if input_flag:
-            # return DjangoListField(ID)
-            if input_flag == "order_by":
-                return graphene.Field(
-                    convert_model_to_input_type(
-                        model, input_flag="order_by", registry=registry
-                    )
-                )
-            elif input_flag == "where":
+            if input_flag == "where":
                 return graphene.Field(
                     convert_model_to_input_type(
                         model, input_flag="where", registry=registry
