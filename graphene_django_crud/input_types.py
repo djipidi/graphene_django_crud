@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 import graphene
 from collections import OrderedDict
-from.base_types import Binary
+from .base_types import Binary
 
 try:
     from graphene_file_upload.scalars import Upload
+
     graphene_file_upload_instaled = True
 except:
     graphene_file_upload_instaled = False
+
 
 def gen_inputType_filter(
     name,
@@ -16,6 +18,7 @@ def gen_inputType_filter(
     with_text_filter=False,
     with_date_filter=False,
     with_time_filter=False,
+    with_case_insensitive_filter=False,
 ):
 
     items = OrderedDict()
@@ -34,11 +37,13 @@ def gen_inputType_filter(
         items["contains"] = graphene.Field(field)
         items["startswith"] = graphene.Field(field)
         items["endswith"] = graphene.Field(field)
+        items["regex"] = graphene.String()
+
+    if with_case_insensitive_filter:
         items["iexact"] = graphene.Field(field)
         items["icontains"] = graphene.Field(field)
         items["istartswith"] = graphene.Field(field)
         items["iendswith"] = graphene.Field(field)
-        items["regex"] = graphene.String()
 
     if with_date_filter:
         items["year"] = graphene.Field(IntFilter)
@@ -71,7 +76,11 @@ FloatFilter = gen_inputType_filter(
 )
 
 StringFilter = gen_inputType_filter(
-    "StringFilter", graphene.String, with_number_filter=False, with_text_filter=True
+    "StringFilter",
+    graphene.String,
+    with_number_filter=False,
+    with_text_filter=True,
+    with_case_insensitive_filter=True,
 )
 
 DateTimeFilter = gen_inputType_filter(
@@ -96,6 +105,7 @@ DateFilter = gen_inputType_filter(
     with_text_filter=False,
     with_date_filter=True,
 )
+
 
 class FileInput(graphene.InputObjectType):
     if graphene_file_upload_instaled:
