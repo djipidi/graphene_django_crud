@@ -221,6 +221,7 @@ scalar DateTime
 
 input DatetimeFilter {
   equals: DateTime
+  exact: DateTime
   in: [DateTime]
   isnull: Boolean
   gt: DateTime
@@ -296,12 +297,14 @@ input GroupWhereInput {
 
 input IdFilter {
   equals: ID
+  exact: ID
   in: [ID]
   isnull: Boolean
 }
 
 input IntFilter {
   equals: Int
+  exact: Int
   in: [Int]
   isnull: Boolean
   gt: Int
@@ -343,6 +346,7 @@ type Query {
 
 input StringFilter {
   equals: String
+  exact: String
   in: [String]
   isnull: Boolean
   contains: String
@@ -1096,6 +1100,7 @@ Represents `Bytes` that are base64 encoded and decoded.
 ```gql
 input StringFilter {
   equals: String
+  exact: String
   in: [String]
   isnull: Boolean
   contains: String
@@ -1110,6 +1115,7 @@ input StringFilter {
 
 input IntFilter {
   equals: Int
+  exact: Int
   in: [Int]
   isnull: Boolean
   gt: Int
@@ -1124,6 +1130,7 @@ input IntFilter {
 
 input FloatFilter {
   equals: Float
+  exact: Float
   in: [Float]
   isnull: Boolean
   gt: Float
@@ -1138,6 +1145,7 @@ input FloatFilter {
 
 input timeFilter {
   equals: Time
+  exact: Time
   in: [Time]
   isnull: Boolean
   gt: Time
@@ -1151,6 +1159,7 @@ input timeFilter {
 
 input DateFilter {
   equals: Date
+  exact: Date
   in: [Date]
   isnull: Boolean
   gt: Date
@@ -1165,6 +1174,7 @@ input DateFilter {
 
 input DatetimeFilter {
   equals: DateTime
+  exact: DateTime
   in: [DateTime]
   isnull: Boolean
   gt: DateTime

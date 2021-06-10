@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - FILE_TYPE_CONTENT_FIELD_ACTIVE setting parameter for activate/deactivate the
   content field in file type
 - Add Case insensitive fields in StringFilter
+- Add exact field in scalar filters for replace equal field
 
 ### Changed
 
@@ -30,6 +31,7 @@ All notable changes to this project will be documented in this file.
 - String ordering is Case insensitive
 - OrderEnum for string ordering change to orderStringEnum
 - Remove ordering with many Relation
+- equals field in scalar filters is deprecated
 
 ## \[1.2.2\] - 2021-05-27
 

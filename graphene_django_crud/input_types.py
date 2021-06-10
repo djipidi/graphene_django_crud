@@ -24,6 +24,7 @@ def gen_inputType_filter(
     items = OrderedDict()
 
     items["equals"] = graphene.Field(field)
+    items["exact"] = graphene.Field(field)
     items["in"] = graphene.List(field)
     items["isnull"] = graphene.Boolean()
 
