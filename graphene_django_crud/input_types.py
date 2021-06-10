@@ -23,39 +23,62 @@ def gen_inputType_filter(
 
     items = OrderedDict()
 
-    items["equals"] = graphene.Field(field)
-    items["exact"] = graphene.Field(field)
-    items["in"] = graphene.List(field)
-    items["isnull"] = graphene.Boolean()
+    items["equals"] = graphene.Field(field, description="(Deprecated) Exact match.")
+    items["exact"] = graphene.Field(field, description="Exact match.")
+    items["in"] = graphene.List(field, description="In a given list.")
+    items["isnull"] = graphene.Boolean(description="Is null.")
 
     if with_number_filter:
-        items["gt"] = graphene.Field(field)
-        items["gte"] = graphene.Field(field)
-        items["lt"] = graphene.Field(field)
-        items["lte"] = graphene.Field(field)
+        items["gt"] = graphene.Field(field, description="Greater than.")
+        items["gte"] = graphene.Field(field, description="Greater than or equal to.")
+        items["lt"] = graphene.Field(field, description="Less than.")
+        items["lte"] = graphene.Field(field, description="Less than or equal to.")
 
     if with_text_filter:
-        items["contains"] = graphene.Field(field)
-        items["startswith"] = graphene.Field(field)
-        items["endswith"] = graphene.Field(field)
-        items["regex"] = graphene.String()
+        items["contains"] = graphene.Field(field, description="Containment test.")
+        items["startswith"] = graphene.Field(field, description="Starts-with.")
+        items["endswith"] = graphene.Field(field, description="Ends-with.")
+        items["regex"] = graphene.String(description="regular expression match.")
 
     if with_case_insensitive_filter:
-        items["iexact"] = graphene.Field(field)
-        items["icontains"] = graphene.Field(field)
-        items["istartswith"] = graphene.Field(field)
-        items["iendswith"] = graphene.Field(field)
+        items["iexact"] = graphene.Field(
+            field, description="Case-insensitive exact match."
+        )
+        items["icontains"] = graphene.Field(
+            field, description="Case-insensitive containment test."
+        )
+        items["istartswith"] = graphene.Field(
+            field, description="Case-insensitive starts-with."
+        )
+        items["iendswith"] = graphene.Field(
+            field, description="Case-insensitive ends-with."
+        )
 
     if with_date_filter:
-        items["year"] = graphene.Field(IntFilter)
-        items["month"] = graphene.Field(IntFilter)
-        items["day"] = graphene.Field(IntFilter)
-        items["week_day"] = graphene.Field(IntFilter)
+        items["year"] = graphene.Field(IntFilter, description="An exact year match.")
+        items["month"] = graphene.Field(
+            IntFilter,
+            description="An exact month match. Takes an integer 1 (January) through 12 (December).",
+        )
+        items["day"] = graphene.Field(IntFilter, description="An exact day match.")
+        items["week_day"] = graphene.Field(
+            IntFilter,
+            description="A ‘day of the week’ match. Takes an integer value representing the day of week from 1 (Sunday) to 7 (Saturday).",
+        )
 
     if with_time_filter:
-        items["hour"] = graphene.Field(IntFilter)
-        items["minute"] = graphene.Field(IntFilter)
-        items["second"] = graphene.Field(IntFilter)
+        items["hour"] = graphene.Field(
+            IntFilter,
+            description="An exact hour match. Takes an integer between 0 and 23.",
+        )
+        items["minute"] = graphene.Field(
+            IntFilter,
+            description="An exact minute match. Takes an integer between 0 and 59.",
+        )
+        items["second"] = graphene.Field(
+            IntFilter,
+            description="an exact second match. Takes an integer between 0 and 59.",
+        )
 
     return type(
         name,
