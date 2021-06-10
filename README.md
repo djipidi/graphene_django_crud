@@ -65,7 +65,10 @@ django orm into a graphql API with the following features:
     - [@resolver_hints(only: list\[str\], select_related:list\[str\])](#resolver_hintsonly-liststr-select_relatedliststr)
     - [where_input_to_Q(where_input: dict) -> Q](#where_input_to_qwhere_input-dict---q)
     - [order_by_input_to_args(order_by_input: list\[dict\]) -> list\[str\]](#order_by_input_to_argsorder_by_input-listdict---liststr)
-  - [Scalar Filter](#scalar-filter)
+  - [Graphql types](#graphql-types)
+    - [File](#file)
+    - [Binary](#binary)
+    - [Scalar Filter](#scalar-filter)
 
 ## Installation
 
@@ -248,27 +251,26 @@ input GroupCreateNestedManyInput {
   connect: [GroupWhereInput]
 }
 
-type GroupMutationType {
-  ok: Boolean
-  errors: [ErrorType]
-  result: GroupType
-}
-
-type GroupNodeType {
-  count: Int
-  data: [GroupType]
-}
-
 input GroupOrderByInput {
   id: OrderEnum
-  name: OrderEnum
-  user: UserOrderByInput
+  name: OrderStringEnum
 }
 
 type GroupType {
-  id: ID!
+  id: ID
   name: String
-  userSet(where: UserWhereInput, limit: Int, offset: Int, orderBy: [UserOrderByInput]): UserNodeType!
+  userSet(where: UserWhereInput, orderBy: [UserOrderByInput], limit: Int, offset: Int): UserTypeConnection
+}
+
+type GroupTypeConnection {
+  data: [GroupType]!
+  count: Int
+}
+
+type GroupTypeMutation {
+  ok: Boolean
+  errors: [ErrorType]
+  result: GroupType
 }
 
 input GroupUpdateInput {
@@ -284,12 +286,18 @@ input GroupUpdateNestedManyInput {
 }
 
 input GroupWhereInput {
-  id: IntFilter
+  id: IdFilter
   name: StringFilter
   user: UserWhereInput
   OR: [GroupWhereInput]
   AND: [GroupWhereInput]
   NOT: GroupWhereInput
+}
+
+input IdFilter {
+  equals: ID
+  in: [ID]
+  isnull: Boolean
 }
 
 input IntFilter {
@@ -307,12 +315,12 @@ input IntFilter {
 }
 
 type Mutation {
-  userCreate(input: UserCreateInput!): UserMutationType
-  userUpdate(input: UserUpdateInput!, where: UserWhereInput!): UserMutationType
-  userDelete(where: UserWhereInput!): UserMutationType
-  groupCreate(input: GroupCreateInput!): GroupMutationType
-  groupUpdate(input: GroupUpdateInput!, where: GroupWhereInput!): GroupMutationType
-  groupDelete(where: GroupWhereInput!): GroupMutationType
+  userCreate(input: UserCreateInput!): UserTypeMutation
+  userUpdate(input: UserUpdateInput!, where: UserWhereInput!): UserTypeMutation
+  userDelete(where: UserWhereInput!): UserTypeMutation
+  groupCreate(input: GroupCreateInput!): GroupTypeMutation
+  groupUpdate(input: GroupUpdateInput!, where: GroupWhereInput!): GroupTypeMutation
+  groupDelete(where: GroupWhereInput!): GroupTypeMutation
 }
 
 enum OrderEnum {
@@ -320,12 +328,17 @@ enum OrderEnum {
   DESC
 }
 
+enum OrderStringEnum {
+  ASC
+  DESC
+}
+
 type Query {
   me: UserType
   user(where: UserWhereInput!): UserType
-  users(where: UserWhereInput, limit: Int, offset: Int, orderBy: [UserOrderByInput]): UserNodeType
+  users(where: UserWhereInput, orderBy: [UserOrderByInput], limit: Int, offset: Int): UserTypeConnection
   group(where: GroupWhereInput!): GroupType
-  groups(where: GroupWhereInput, limit: Int, offset: Int, orderBy: [GroupOrderByInput]): GroupNodeType
+  groups(where: GroupWhereInput, orderBy: [GroupOrderByInput], limit: Int, offset: Int): GroupTypeConnection
 }
 
 input StringFilter {
@@ -336,6 +349,10 @@ input StringFilter {
   startswith: String
   endswith: String
   regex: String
+  iexact: String
+  icontains: String
+  istartswith: String
+  iendswith: String
 }
 
 type Subscription {
@@ -364,37 +381,25 @@ input UserCreateNestedManyInput {
   connect: [UserWhereInput]
 }
 
-type UserMutationType {
-  ok: Boolean
-  errors: [ErrorType]
-  result: UserType
-}
-
-type UserNodeType {
-  count: Int
-  data: [UserType]
-}
-
 input UserOrderByInput {
   dateJoined: OrderEnum
-  email: OrderEnum
-  firstName: OrderEnum
-  groups: GroupOrderByInput
+  email: OrderStringEnum
+  firstName: OrderStringEnum
   id: OrderEnum
   isActive: OrderEnum
   isStaff: OrderEnum
   isSuperuser: OrderEnum
   lastLogin: OrderEnum
-  lastName: OrderEnum
-  username: OrderEnum
+  lastName: OrderStringEnum
+  username: OrderStringEnum
 }
 
 type UserType {
+  id: ID
   dateJoined: DateTime
   email: String
   firstName: String
-  groups(where: GroupWhereInput, limit: Int, offset: Int, orderBy: [GroupOrderByInput]): GroupNodeType!
-  id: ID!
+  groups(where: GroupWhereInput, orderBy: [GroupOrderByInput], limit: Int, offset: Int): GroupTypeConnection
   isActive: Boolean
   isStaff: Boolean
   isSuperuser: Boolean
@@ -402,6 +407,17 @@ type UserType {
   lastName: String
   username: String
   fullName: String
+}
+
+type UserTypeConnection {
+  data: [UserType]!
+  count: Int
+}
+
+type UserTypeMutation {
+  ok: Boolean
+  errors: [ErrorType]
+  result: UserType
 }
 
 input UserUpdateInput {
@@ -424,11 +440,11 @@ input UserUpdateNestedManyInput {
 }
 
 input UserWhereInput {
+  id: IdFilter
   dateJoined: DatetimeFilter
   email: StringFilter
   firstName: StringFilter
   groups: GroupWhereInput
-  id: IntFilter
   isActive: Boolean
   isStaff: Boolean
   isSuperuser: Boolean
@@ -439,7 +455,6 @@ input UserWhereInput {
   AND: [UserWhereInput]
   NOT: UserWhereInput
 }
-
 ```
 
 </details> 
@@ -1036,7 +1051,47 @@ example :
 <model>.objects.all().order_by(order_by_input_to_args(where))
 ```
 
-## Scalar Filter
+## Graphql types
+
+### File
+
+```gql
+type File {
+  url: String
+  size: Int
+  filename: String
+  content: Binary
+}
+```
+
+Represents File, it's converted for models.FileField and models.ImageField. The
+content field is deactivated by default, set the FILE_TYPE_CONTENT_FIELD_ACTIVE
+setting to `True` for activate.
+
+### FileInput
+
+```gql
+input FileInput {
+  upload: Upload
+  filename: String
+  content: Binary
+}
+```
+
+Input type used to upload the file by giving a name and the content of the file.
+The upload field appears if graphene-file-upload is installed, it is used to
+upload this the
+[Multipart Request Spec](https://github.com/jaydenseric/graphql-multipart-request-spec).
+
+### Binary
+
+```gql
+scalar Binary
+```
+
+Represents `Bytes` that are base64 encoded and decoded.
+
+### Scalar filters
 
 ```gql
 input StringFilter {
@@ -1047,6 +1102,10 @@ input StringFilter {
   startswith: String
   endswith: String
   regex: String
+  iexact: String
+  icontains: String
+  istartswith: String
+  iendswith: String
 }
 
 input IntFilter {
