@@ -335,9 +335,13 @@ def convert_django_field(field, registry=None, input_flag=None):
 @convert_django_field.register(models.GenericIPAddressField)
 def convert_field_to_string(field, registry=None, input_flag=None):
     if input_flag == "order_by":
-        return OrderStringEnum()
+        return OrderStringEnum(
+            description=field.help_text or field.verbose_name,
+        )
     if input_flag == "where":
-        return StringFilter()
+        return StringFilter(
+            description=field.help_text or field.verbose_name,
+        )
     return String(
         description=field.help_text or field.verbose_name,
         required=is_required(field) and input_flag == "create",
@@ -347,10 +351,14 @@ def convert_field_to_string(field, registry=None, input_flag=None):
 @convert_django_field.register(models.AutoField)
 def convert_field_to_id(field, registry=None, input_flag=None):
     if input_flag == "order_by":
-        return OrderEnum()
+        return OrderEnum(
+            description=field.help_text or field.verbose_name,
+        )
     if input_flag:
         if input_flag == "where":
-            return IntFilter()
+            return IntFilter(
+                description=field.help_text or field.verbose_name,
+            )
         return ID(
             description=field.help_text or "Django object unique identification field",
         )
@@ -363,7 +371,9 @@ def convert_field_to_id(field, registry=None, input_flag=None):
 @convert_django_field.register(models.UUIDField)
 def convert_field_to_uuid(field, registry=None, input_flag=None):
     if input_flag == "order_by":
-        return OrderEnum()
+        return OrderEnum(
+            description=field.help_text or field.verbose_name,
+        )
     return UUID(
         description=field.help_text or field.verbose_name,
         required=is_required(field) and input_flag == "create",
@@ -377,9 +387,13 @@ def convert_field_to_uuid(field, registry=None, input_flag=None):
 @convert_django_field.register(models.IntegerField)
 def convert_field_to_int(field, registry=None, input_flag=None):
     if input_flag == "order_by":
-        return OrderEnum()
+        return OrderEnum(
+            description=field.help_text or field.verbose_name,
+        )
     if input_flag == "where":
-        return IntFilter()
+        return IntFilter(
+            description=field.help_text or field.verbose_name,
+        )
     return Int(
         description=field.help_text or field.verbose_name,
         required=is_required(field) and input_flag == "create",
@@ -389,7 +403,9 @@ def convert_field_to_int(field, registry=None, input_flag=None):
 @convert_django_field.register(models.BooleanField)
 def convert_field_to_boolean(field, registry=None, input_flag=None):
     if input_flag == "order_by":
-        return OrderEnum()
+        return OrderEnum(
+            description=field.help_text or field.verbose_name,
+        )
     required = is_required(field) and input_flag == "create"
     if required:
         return NonNull(Boolean, description=field.help_text or field.verbose_name)
@@ -399,7 +415,9 @@ def convert_field_to_boolean(field, registry=None, input_flag=None):
 @convert_django_field.register(models.NullBooleanField)
 def convert_field_to_nullboolean(field, registry=None, input_flag=None):
     if input_flag == "order_by":
-        return OrderEnum()
+        return OrderEnum(
+            description=field.help_text or field.verbose_name,
+        )
     return Boolean(
         description=field.help_text or field.verbose_name,
         required=is_required(field) and input_flag == "create",
@@ -409,7 +427,9 @@ def convert_field_to_nullboolean(field, registry=None, input_flag=None):
 @convert_django_field.register(models.BinaryField)
 def convert_binary_to_string(field, registry=None, input_flag=None):
     if input_flag == "order_by":
-        return OrderEnum()
+        return OrderEnum(
+            description=field.help_text or field.verbose_name,
+        )
     return Binary(
         description=field.help_text or field.verbose_name,
         required=is_required(field) and input_flag == "create",
@@ -421,9 +441,13 @@ def convert_binary_to_string(field, registry=None, input_flag=None):
 @convert_django_field.register(models.DurationField)
 def convert_field_to_float(field, registry=None, input_flag=None):
     if input_flag == "order_by":
-        return OrderEnum()
+        return OrderEnum(
+            description=field.help_text or field.verbose_name,
+        )
     if input_flag == "where":
-        return FloatFilter()
+        return FloatFilter(
+            description=field.help_text or field.verbose_name,
+        )
     return Float(
         description=field.help_text or field.verbose_name,
         required=is_required(field) and input_flag == "create",
@@ -433,9 +457,13 @@ def convert_field_to_float(field, registry=None, input_flag=None):
 @convert_django_field.register(models.DateField)
 def convert_date_to_string(field, registry=None, input_flag=None):
     if input_flag == "order_by":
-        return OrderEnum()
+        return OrderEnum(
+            description=field.help_text or field.verbose_name,
+        )
     if input_flag == "where":
-        return DateFilter()
+        return DateFilter(
+            description=field.help_text or field.verbose_name,
+        )
     return Date(
         description=field.help_text or field.verbose_name,
         required=is_required(field) and input_flag == "create",
@@ -445,9 +473,13 @@ def convert_date_to_string(field, registry=None, input_flag=None):
 @convert_django_field.register(models.DateTimeField)
 def convert_datetime_to_string(field, registry=None, input_flag=None):
     if input_flag == "order_by":
-        return OrderEnum()
+        return OrderEnum(
+            description=field.help_text or field.verbose_name,
+        )
     if input_flag == "where":
-        return DateTimeFilter()
+        return DateTimeFilter(
+            description=field.help_text or field.verbose_name,
+        )
     return DateTime(
         description=field.help_text or field.verbose_name,
         required=is_required(field) and input_flag == "create",
@@ -457,9 +489,13 @@ def convert_datetime_to_string(field, registry=None, input_flag=None):
 @convert_django_field.register(models.TimeField)
 def convert_time_to_string(field, registry=None, input_flag=None):
     if input_flag == "order_by":
-        return OrderEnum()
+        return OrderEnum(
+            description=field.help_text or field.verbose_name,
+        )
     if input_flag == "where":
-        return TimeFilter()
+        return TimeFilter(
+            description=field.help_text or field.verbose_name,
+        )
     return Time(
         description=field.help_text or field.verbose_name,
         required=is_required(field) and input_flag == "create",
@@ -471,9 +507,13 @@ def convert_time_to_string(field, registry=None, input_flag=None):
 def convert_field_to_file(field, registry=None, input_flag=None):
     if input_flag:
         if input_flag == "order_by":
-            return OrderEnum()
+            return OrderEnum(
+                description=field.help_text or field.verbose_name,
+            )
         elif input_flag == "where":
-            return StringFilter()
+            return StringFilter(
+                description=field.help_text or field.verbose_name,
+            )
         else:
             return FileInput(
                 description=field.help_text or field.verbose_name,
@@ -499,13 +539,13 @@ def convert_onetoone_field_to_djangomodel(field, registry=None, input_flag=None)
                 return graphene.Field(
                     convert_model_to_input_type(
                         model, input_flag="order_by", registry=registry
-                    )
+                    ),
                 )
             elif input_flag == "where":
                 return graphene.Field(
                     convert_model_to_input_type(
                         model, input_flag="where", registry=registry
-                    )
+                    ),
                 )
             elif input_flag == "create":
                 return graphene.Field(
@@ -514,7 +554,7 @@ def convert_onetoone_field_to_djangomodel(field, registry=None, input_flag=None)
                         input_flag="create_nested",
                         registry=registry,
                         exclude=[field.remote_field.name],
-                    )
+                    ),
                 )
             elif input_flag == "update":
                 return graphene.Field(
@@ -523,10 +563,12 @@ def convert_onetoone_field_to_djangomodel(field, registry=None, input_flag=None)
                         input_flag="update_nested",
                         registry=registry,
                         exclude=[field.remote_field.name],
-                    )
+                    ),
                 )
 
-        return Field(_type)
+        return Field(
+            _type,
+        )
 
     return Dynamic(dynamic_type)
 
@@ -549,19 +591,19 @@ def convert_many_rel_djangomodel(field, registry=None, input_flag=None):
                 return graphene.Field(
                     convert_model_to_input_type(
                         model, input_flag="where", registry=registry
-                    )
+                    ),
                 )
             elif input_flag == "create":
                 return graphene.Field(
                     convert_model_to_input_type(
                         model, input_flag="create_nested_many", registry=registry
-                    )
+                    ),
                 )
             elif input_flag == "update":
                 return graphene.Field(
                     convert_model_to_input_type(
                         model, input_flag="update_nested_many", registry=registry
-                    )
+                    ),
                 )
         else:
             args = dict()
@@ -581,9 +623,15 @@ def convert_many_rel_djangomodel(field, registry=None, input_flag=None):
             )
 
             if _type._meta.connection:
-                return DjangoConnectionField(_type, **args)
+                return DjangoConnectionField(
+                    _type,
+                    **args,
+                )
 
-            return DjangoListField(_type, **args)
+            return DjangoListField(
+                _type,
+                **args,
+            )
 
     return Dynamic(dynamic_type)
 
@@ -606,14 +654,16 @@ def convert_ForeignKey_field_to_djangomodel(field, registry=None, input_flag=Non
                 return graphene.Field(
                     convert_model_to_input_type(
                         model, input_flag="order_by", registry=registry
-                    )
+                    ),
+                    description=field.help_text or field.verbose_name,
                 )
 
             elif input_flag == "where":
                 return graphene.Field(
                     convert_model_to_input_type(
                         model, input_flag="where", registry=registry
-                    )
+                    ),
+                    description=field.help_text or field.verbose_name,
                 )
             elif input_flag == "create":
                 return graphene.Field(
@@ -622,7 +672,8 @@ def convert_ForeignKey_field_to_djangomodel(field, registry=None, input_flag=Non
                         input_flag="create_nested",
                         registry=registry,
                         exclude=[field.remote_field.name],
-                    )
+                    ),
+                    description=field.help_text or field.verbose_name,
                 )
             elif input_flag == "update":
                 return graphene.Field(
@@ -631,7 +682,8 @@ def convert_ForeignKey_field_to_djangomodel(field, registry=None, input_flag=Non
                         input_flag="update_nested",
                         registry=registry,
                         exclude=[field.remote_field.name],
-                    )
+                    ),
+                    description=field.help_text or field.verbose_name,
                 )
 
         return Field(
@@ -661,25 +713,29 @@ def convert_ForeignKey_field_to_djangomodel(field, registry=None, input_flag=Non
                 return graphene.Field(
                     convert_model_to_input_type(
                         model, input_flag="order_by", registry=registry
-                    )
+                    ),
+                    description=field.help_text or field.verbose_name,
                 )
             elif input_flag == "where":
                 return graphene.Field(
                     convert_model_to_input_type(
                         model, input_flag="where", registry=registry
-                    )
+                    ),
+                    description=field.help_text or field.verbose_name,
                 )
             elif input_flag == "create":
                 return graphene.Field(
                     convert_model_to_input_type(
                         model, input_flag="create_nested", registry=registry
-                    )
+                    ),
+                    description=field.help_text or field.verbose_name,
                 )
             elif input_flag == "update":
                 return graphene.Field(
                     convert_model_to_input_type(
                         model, input_flag="update_nested", registry=registry
-                    )
+                    ),
+                    description=field.help_text or field.verbose_name,
                 )
 
         return Field(
