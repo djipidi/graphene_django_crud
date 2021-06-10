@@ -89,6 +89,10 @@ def gen_inputType_filter(
 
 IdFilter = gen_inputType_filter("IdFilter", graphene.ID)
 
+BooleanFilter = gen_inputType_filter("BooleanFilter", graphene.Boolean)
+
+UUIDFilter = gen_inputType_filter("UUIDFilter", graphene.UUID)
+
 IntFilter = gen_inputType_filter(
     "IntFilter", graphene.Int, with_number_filter=True, with_text_filter=True
 )
@@ -116,7 +120,7 @@ DateTimeFilter = gen_inputType_filter(
     with_time_filter=True,
 )
 TimeFilter = gen_inputType_filter(
-    "timeFilter",
+    "TimeFilter",
     graphene.Time,
     with_number_filter=True,
     with_text_filter=False,

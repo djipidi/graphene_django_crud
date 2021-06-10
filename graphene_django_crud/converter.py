@@ -31,6 +31,7 @@ from .fields import DjangoListField, DjangoConnectionField
 from .utils import is_required, get_model_fields, get_related_model
 
 from .input_types import (
+    BooleanFilter,
     FileInput,
     IdFilter,
     IntFilter,
@@ -40,6 +41,7 @@ from .input_types import (
     DateTimeFilter,
     TimeFilter,
     DateFilter,
+    UUIDFilter,
 )
 
 singledispatch = import_single_dispatch()
@@ -374,6 +376,10 @@ def convert_field_to_uuid(field, registry=None, input_flag=None):
         return OrderEnum(
             description=field.help_text or field.verbose_name,
         )
+    if input_flag == "where":
+        return UUIDFilter(
+            description=field.help_text or field.verbose_name,
+        )
     return UUID(
         description=field.help_text or field.verbose_name,
         required=is_required(field) and input_flag == "create",
@@ -406,6 +412,10 @@ def convert_field_to_boolean(field, registry=None, input_flag=None):
         return OrderEnum(
             description=field.help_text or field.verbose_name,
         )
+    if input_flag == "where":
+        return BooleanFilter(
+            description=field.help_text or field.verbose_name,
+        )
     required = is_required(field) and input_flag == "create"
     if required:
         return NonNull(Boolean, description=field.help_text or field.verbose_name)
@@ -416,6 +426,10 @@ def convert_field_to_boolean(field, registry=None, input_flag=None):
 def convert_field_to_nullboolean(field, registry=None, input_flag=None):
     if input_flag == "order_by":
         return OrderEnum(
+            description=field.help_text or field.verbose_name,
+        )
+    if input_flag == "where":
+        return BooleanFilter(
             description=field.help_text or field.verbose_name,
         )
     return Boolean(

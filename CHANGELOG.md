@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
   content field in file type
 - Add Case insensitive fields in StringFilter
 - Add exact field in scalar filters for replace equal field
+- Add BooleanFilter, UUIDFilter
 
 ### Changed
 
