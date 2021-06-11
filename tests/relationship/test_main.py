@@ -170,7 +170,7 @@ def test_foreignkey():
     c1_id = response["data"]["testFkACreate"]["result"]["testFkB"]["testFkC"]["id"]
 
     variables = {
-        "input": {"text": "a2", "testFkB": {"connect": {"id": {"equals": b1_id}}}}
+        "input": {"text": "a2", "testFkB": {"connect": {"id": {"exact": b1_id}}}}
     }
     expected_response = {
         "data": {
@@ -194,7 +194,7 @@ def test_foreignkey():
             "text": "b2",
             "testFkC": {"create": {"text": "c2"}},
             "testFkAs": {
-                "connect": [{"id": {"equals": a1_id}}],
+                "connect": [{"id": {"exact": a1_id}}],
                 "create": [{"text": "a3"}, {"text": "a4"}],
             },
         }
@@ -230,7 +230,7 @@ def test_foreignkey():
     variables = {
         "input": {
             "text": "b3",
-            "testFkC": {"connect": {"id": {"equals": c1_id}}},
+            "testFkC": {"connect": {"id": {"exact": c1_id}}},
         }
     }
     expected_response = {
@@ -253,14 +253,14 @@ def test_foreignkey():
         "input": {
             "text": "c3",
             "testfkbSet": {
-                "connect": [{"id": {"equals": b1_id}}],
+                "connect": [{"id": {"exact": b1_id}}],
                 "create": [
                     {
                         "text": "b4",
                         "testFkAs": {
                             "connect": [
-                                {"id": {"equals": a1_id}},
-                                {"id": {"equals": a2_id}},
+                                {"id": {"exact": a1_id}},
+                                {"id": {"exact": a2_id}},
                             ],
                             "create": [
                                 {"text": "a5"},
@@ -494,7 +494,7 @@ def test_onetoone():
             "testo2ob": {
                 "create": {
                     "text": "b3",
-                    "testO2oA": {"connect": {"id": {"equals": a1_id}}},
+                    "testO2oA": {"connect": {"id": {"exact": a1_id}}},
                 }
             },
         }
@@ -518,7 +518,7 @@ def test_onetoone():
     b3_id = response["data"]["testO2oCCreate"]["result"]["testo2ob"]["id"]
 
     variables = {
-        "where": {"id": {"equals": b3_id}},
+        "where": {"id": {"exact": b3_id}},
         "input": {
             "text": "b3-bis",
             "TestO2oC": {"disconnect": True},
@@ -537,7 +537,7 @@ def test_onetoone():
     verify_response(expected_response, response)
 
     variables = {
-        "where": {"id": {"equals": b2_id}},
+        "where": {"id": {"exact": b2_id}},
         "input": {
             "text": "b2-bis",
             "TestO2oC": {"delete": True},
@@ -556,7 +556,7 @@ def test_onetoone():
     verify_response(expected_response, response)
 
     variables = {
-        "where": {"id": {"equals": c1_id}},
+        "where": {"id": {"exact": c1_id}},
         "input": {
             "text": "c1-bis",
             "testo2ob": {"disconnect": True},
@@ -715,18 +715,18 @@ def test_manytomany():
             "text": "a2",
             "testM2mBs": {
                 "connect": [
-                    {"id": {"equals": b1_id}},
-                    {"id": {"equals": b2_id}},
+                    {"id": {"exact": b1_id}},
+                    {"id": {"exact": b2_id}},
                 ],
                 "create": [
                     {
                         "text": "b3",
                         "testM2mCs": {
                             "connect": [
-                                {"id": {"equals": c1_id}},
-                                {"id": {"equals": c2_id}},
-                                {"id": {"equals": c3_id}},
-                                {"id": {"equals": c4_id}},
+                                {"id": {"exact": c1_id}},
+                                {"id": {"exact": c2_id}},
+                                {"id": {"exact": c3_id}},
+                                {"id": {"exact": c4_id}},
                             ]
                         },
                     }
@@ -798,11 +798,11 @@ def test_manytomany():
                         "text": "b4",
                         "testM2mAs": {
                             "create": [{"text": "a3"}],
-                            "connect": [{"id": {"equals": a1_id}}],
+                            "connect": [{"id": {"exact": a1_id}}],
                         },
                     }
                 ],
-                "connect": [{"id": {"equals": b1_id}}],
+                "connect": [{"id": {"exact": b1_id}}],
             },
         }
     }

@@ -192,7 +192,7 @@ def test_main():
     """
 
     variables = {
-        "where": {"id": {"equals": a_11_id}},
+        "where": {"id": {"exact": a_11_id}},
         "input": {
             "text": "11-bis",
         },
