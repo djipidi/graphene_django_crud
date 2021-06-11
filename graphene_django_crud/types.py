@@ -8,6 +8,8 @@ from graphene.types.objecttype import ObjectTypeOptions
 from graphene_django.utils.utils import is_valid_django_model
 from graphql.language.ast import FragmentSpread, InlineFragment
 from graphene.relay import Connection as RelayConnection, Node
+import io
+from django.core.files import File
 
 from .fields import DjangoConnectionField, DjangoListField
 from .utils import (
@@ -21,7 +23,7 @@ from .utils import (
     error_data_from_validation_error,
     validation_error_with_suffix,
 )
-from .base_types import File, mutation_factory_type, DefaultConnection
+from .base_types import mutation_factory_type, DefaultConnection
 
 from django.db.models import Prefetch
 from django.core.exceptions import ValidationError
@@ -487,9 +489,9 @@ class DjangoCRUDObjectType(graphene.ObjectType):
                         value["upload"].file,
                     )
                 else:
-                    getattr(instance, key).name = value["filename"]
-                    with getattr(instance, key).open("wb") as f:
-                        f.write(value["content"])
+                    instance.__setattr__(
+                        key, File(io.BytesIO(value["content"]), value["filename"])
+                    )
             else:
                 instance.__setattr__(key, value)
         if cls._meta.validator:
