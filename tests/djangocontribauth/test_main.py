@@ -392,7 +392,7 @@ def test_main():
                 {
                     "OR": [
                         {"groups": {"id": {"equals": g2_id}}},
-                        {"groups": {"user": {"isSuperuser": True}}},
+                        {"groups": {"user": {"isSuperuser": {"exact": True}}}},
                     ]
                 },
             ]
