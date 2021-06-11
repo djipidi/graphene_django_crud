@@ -5,6 +5,7 @@ from django.utils.module_loading import import_string
 DEFAULTS = {
     "DEFAULT_CONNECTION_NODES_FIELD_NAME": "data",
     "FILE_TYPE_CONTENT_FIELD_ACTIVE": False,
+    "SCALAR_FILTERS_REMOVE_EQUALS_FIELD": True,
 }
 
 IMPORT_STRINGS = ()
