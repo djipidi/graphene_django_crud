@@ -311,10 +311,12 @@ def get_args(where):
     for path in get_paths(where):
         arg_value = nested_get(where, path)
         if not isinstance(arg_value, dict):
-            arg_key = "__".join(path).replace("__equals", "")
+            arg_key = "__".join(path)
+            if arg_key.endswith("__equals"):
+                arg_key = arg_key[0:-8] + "__exact"
             if (
-                arg_key == "id"
-                or arg_key.endswith("__id")
+                arg_key == "id__exact"
+                or arg_key.endswith("__id__exact")
                 or arg_key == "id__in"
                 or arg_key.endswith("__id__in")
             ):
