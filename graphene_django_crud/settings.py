@@ -3,9 +3,13 @@ from django.test.signals import setting_changed
 from django.utils.module_loading import import_string
 
 DEFAULTS = {
+    # Customize
     "DEFAULT_CONNECTION_NODES_FIELD_NAME": "data",
     "FILE_TYPE_CONTENT_FIELD_ACTIVE": False,
+    # Compatibility with old version
     "SCALAR_FILTERS_REMOVE_EQUALS_FIELD": True,
+    "BOOLEAN_FILTER_USE_BOOLEAN_FIELD" : False,
+
 }
 
 IMPORT_STRINGS = ()

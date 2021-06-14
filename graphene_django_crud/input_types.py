@@ -91,7 +91,10 @@ def gen_inputType_filter(
 
 IdFilter = gen_inputType_filter("IdFilter", graphene.ID)
 
-BooleanFilter = gen_inputType_filter("BooleanFilter", graphene.Boolean)
+if gdc_settings.BOOLEAN_FILTER_USE_BOOLEAN_FIELD:
+    BooleanFilter = graphene.Boolean()
+else:
+    BooleanFilter = gen_inputType_filter("BooleanFilter", graphene.Boolean)
 
 UUIDFilter = gen_inputType_filter("UUIDFilter", graphene.UUID)
 
