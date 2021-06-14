@@ -24,7 +24,7 @@ def gen_inputType_filter(
 
     items = OrderedDict()
 
-    if gdc_settings.SCALAR_FILTERS_REMOVE_EQUALS_FIELD:
+    if gdc_settings.SCALAR_FILTERS_ADD_EQUALS_FIELD:
         items["equals"] = graphene.Field(field, description="(Deprecated) Exact match.")
     items["exact"] = graphene.Field(field, description="Exact match.")
     items["in"] = graphene.List(field, description="In a given list.")

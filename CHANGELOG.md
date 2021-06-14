@@ -7,8 +7,8 @@ All notable changes to this project will be documented in this file.
 ### Breaking changed
 
 - Rename "equals" field in scalar filters to "exact", the
-  SCALAR_FILTERS_REMOVE_EQUALS_FIELD setting params restores the field.
-- Boolean filter is like scalar filters, the SCALAR_FILTERS_REMOVE_EQUALS_FIELD
+  SCALAR_FILTERS_ADD_EQUALS_FIELD setting params restores the field.
+- Boolean filter is like scalar filters, the BOOLEAN_FILTER_USE_BOOLEAN_FIELD
   setting params restore Boolean field.
 
 ### Deprecation
