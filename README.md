@@ -59,16 +59,21 @@ django orm into a graphql API with the following features:
       - [(Deprecated) Middleware methods before_XXX(cls, parent, info, instance, data) / after_XXX(cls, parent, info, instance, data)](#deprecated-middleware-methods-before_xxxcls-parent-info-instance-data--after_xxxcls-parent-info-instance-data)
     - [generate_signals()](#generate_signals)
   - [Settings](#settings)
-    - [DEFAULT_CONNECTION_NODES_FIELD_NAME](#default_connection_nodes_field_name)
-    - [FILE_TYPE_CONTENT_FIELD_ACTIVE](#file_type_content_field_active)
+    - [Customize](#customize)
+      - [DEFAULT_CONNECTION_NODES_FIELD_NAME](#default_connection_nodes_field_name)
+      - [FILE_TYPE_CONTENT_FIELD_ACTIVE](#file_type_content_field_active)
+    - [Compatibility with old version](#compatibility-with-old-version)
+      - [SCALAR_FILTERS_REMOVE_EQUALS_FIELD](#scalar_filters_remove_equals_field)
+      - [BOOLEAN_FILTER_USE_BOOLEAN_FIELD](#boolean_filter_use_boolean_field)
   - [Utils](#utils)
-    - [@resolver_hints(only: list\[str\], select_related:list\[str\])](#resolver_hintsonly-liststr-select_relatedliststr)
-    - [where_input_to_Q(where_input: dict) -> Q](#where_input_to_qwhere_input-dict---q)
-    - [order_by_input_to_args(order_by_input: list\[dict\]) -> list\[str\]](#order_by_input_to_argsorder_by_input-listdict---liststr)
+      - [@resolver_hints(only: list\[str\], select_related:list\[str\])](#resolver_hintsonly-liststr-select_relatedliststr)
+      - [where_input_to_Q(where_input: dict) -> Q](#where_input_to_qwhere_input-dict---q)
+      - [order_by_input_to_args(order_by_input: list\[dict\]) -> list\[str\]](#order_by_input_to_argsorder_by_input-listdict---liststr)
   - [Graphql types](#graphql-types)
     - [File](#file)
+    - [FileInput](#fileinput)
     - [Binary](#binary)
-    - [Scalar Filter](#scalar-filter)
+    - [Scalar filters](#scalar-filters)
 
 ## Installation
 
@@ -1010,6 +1015,8 @@ GRAPHENE_DJANGO_CRUD = {
 Here’s a list of settings available in graphene-django-crud and their default
 values:
 
+### Customize
+
 #### DEFAULT_CONNECTION_NODES_FIELD_NAME
 
 Name of node field in connection field.\
@@ -1020,6 +1027,22 @@ Default: `'data'`
 Add a content field with the content of the file. The type used is
 Binary.\
 Default: `False`
+
+### Compatibility with old version
+
+#### SCALAR_FILTERS_REMOVE_EQUALS_FIELD
+
+From version 1.3.0 the "equals" field of all scalar filters has been renamed to
+"exact". To keep the client compatible we can add it by set the parameter to
+`False`.\
+Default: `True`
+
+#### BOOLEAN_FILTER_USE_BOOLEAN_FIELD
+
+From version 1.3.0 the filter boolean is like the other scalar filters. To keep
+the client compatible we can add it by set the parameter to `True`.\
+Default:
+`False`
 
 ## Utils
 
