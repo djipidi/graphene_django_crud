@@ -4,35 +4,42 @@ All notable changes to this project will be documented in this file.
 
 ## \[Unreleased\]
 
-### Added
+### Breaking changed
 
-- Relay integration
-- Possibility to extend connectionType
-- Possibility of having a list field instead of a connection field
-- Replace the methods before_xxx, after_xxx methods to the methods mutate,
-  create, update, delete
-- Meta parameter for model validation
-- FileField and ImageField support
-- Customization with django settings parameters
-- DEFAULT_CONNECTION_NODES_FIELD_NAME setting parameter for customizing the node
-  field in the default connection field
-- FILE_TYPE_CONTENT_FIELD_ACTIVE setting parameter for activate/deactivate the
-  content field in file type
-- Add Case insensitive fields in StringFilter
-- Add exact field in scalar filters for replace equal field
-- Add BooleanFilter, UUIDFilter
+- Rename "equals" field in scalar filters to "exact", the
+  SCALAR_FILTERS_REMOVE_EQUALS_FIELD setting params restores the field.
+- Boolean filter is like scalar filters, the SCALAR_FILTERS_REMOVE_EQUALS_FIELD
+  setting params restore Boolean field.
 
-### Changed
+### Deprecation
 
 - DjangoGrapheneCRUD class has been renamed to DjangoCRUDObjectType, so the name
   "DjangoGrapheneCRUD" is deprecated.
+- The methods before_xxx, after_xxx are deprecated. Use the methods mutate,
+  create, update, delete
+
+### Added
+
+- Customization with django settings parameters
+- Relay integration
+- Possibility to extend connectionType
+- Possibility of having a list field instead of a connection field
+- Meta parameters for model validation
+- FileField and ImageField support
+- DEFAULT_CONNECTION_NODES_FIELD_NAME setting parameter for customizing the node
+  field name in the default connection field
+- FILE_TYPE_CONTENT_FIELD_ACTIVE setting parameter for activate/deactivate the
+  content field in file type
+- Add Case insensitive fields in StringFilter
+- Add UUIDFilter
+
+### Changed
+
 - Graphql type <typeName>NodeType is renamed to <typeName>Connection
 - Graphql type <typeName>MutationType is renamed to <typeName>Mutation
-- The methods before_xxx, after_xxx are deprecated
 - String ordering is Case insensitive
-- OrderEnum for string ordering change to orderStringEnum
+- OrderEnum for string ordering rename to orderStringEnum
 - Remove ordering with many Relation
-- equals field in scalar filters is deprecated
 
 ## \[1.2.2\] - 2021-05-27
 
