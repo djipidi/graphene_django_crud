@@ -185,7 +185,6 @@ def get_type_field(gql_type, gql_name):
     for name, field in fields.items():
         if to_camel_case(gql_name) == to_camel_case(name):
             if isinstance(field, Dynamic):
-                a = field.get_type()
                 field = field.get_type()
             else:
                 field = field
@@ -208,10 +207,7 @@ def resolve_argument(input_type, argument):
             if isinstance(value, (dict, list)):
                 ret[name] = resolve_argument(field_type, value)
             else:
-                if isinstance(field_type, type(Enum)):
-                    ret[name] = field_type.__dict__[value].value
-                else:
-                    ret[name] = value
+                ret[name] = value
     else:
         return argument
     return ret
