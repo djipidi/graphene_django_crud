@@ -117,7 +117,7 @@ $ python setup.py install
 ## Usage
 
 The DjangoCRUDObjectType class project a django model into a graphene type. The
-type also has fields to exposes the CRUD operations.
+type has fields to exposes the CRUD operations.
 
 ### Example
 
@@ -606,7 +606,7 @@ class UserType(DjangoCRUDObjectType):
 To respond to several use cases, it is necessary to filter the logged in user.
 the graphene module gives access to the user from the context object in info
 arg. The "get_queryset" method which returns by default \<model>.objects.all(),
-but it can be overloaded.
+you can overload it for custom filtering.
 
 ```python
 class UserType(DjangoCRUDObjectType):
@@ -734,10 +734,10 @@ The model used for the definition type
 
 #### max_limit
 
-default : None\
-To avoid too large transfers, the max_limit parameter imposes a
-maximum number of return items for batchreadField and nodeField. it imposes to
-use pagination. If the value is None there is no limit.
+default : `None`\
+To avoid too large transfers, the max_limit parameter imposes
+a maximum number of return items for batchreadField and nodeField. it imposes to
+use pagination. If the value is `None` there is no limit.
 
 #### only_fields / exclude_fields
 
@@ -1050,8 +1050,8 @@ Default:
 
 Each query uses "only", "select_related" and "prefetch_related" methods of
 queryset to get only the necessary attributes. To extend fields, the decorator
-informs the query set builder with its arguments which model attributes are
-needed to resolve the extended field.
+is necessary for the queryset builder with its arguments which model attributes
+are needed to resolve the field.
 
 show [Computed field](#Computed-field) section for more informations
 
@@ -1092,8 +1092,9 @@ type File {
 ```
 
 Represents File, it's converted for models.FileField and models.ImageField. The
-content field is deactivated by default, set the FILE_TYPE_CONTENT_FIELD_ACTIVE
-setting to `True` for activate.
+content field is deactivated by default, set the
+[FILE_TYPE_CONTENT_FIELD_ACTIVE](#file_type_content_field_active) setting to
+`True` for activate.
 
 ### FileInput
 
