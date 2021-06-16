@@ -484,9 +484,12 @@ class DjangoCRUDObjectType(graphene.ObjectType):
                 )
             elif isinstance(model_field, (FileField, ImageField)):
                 if "upload" in value.keys():
-                    getattr(instance, key).save(
-                        value.get("filename", value["upload"].name),
-                        value["upload"].file,
+                    instance.__setattr__(
+                        key,
+                        File(
+                            value["upload"].file,
+                            value.get("filename", value["upload"].name),
+                        ),
                     )
                 else:
                     instance.__setattr__(

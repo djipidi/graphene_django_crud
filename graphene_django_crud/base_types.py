@@ -125,9 +125,29 @@ class File(graphene.ObjectType):
         content = Binary()
 
     @staticmethod
+    def resolve_url(parent, info, **kwargs):
+        try:
+            return parent.url
+        except ValueError:
+            return None
+
+    @staticmethod
+    def resolve_size(parent, info, **kwargs):
+        try:
+            return parent.size
+        except ValueError:
+            return None
+
+    @staticmethod
     def resolve_filename(parent, info, **kwargs):
-        return parent.name
+        try:
+            return parent.name
+        except ValueError:
+            return None
 
     @staticmethod
     def resolve_content(parent, info, **kwargs):
-        return parent.read()
+        try:
+            return parent.read()
+        except ValueError:
+            return None
