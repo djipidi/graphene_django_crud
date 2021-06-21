@@ -6,7 +6,7 @@ django orm into a graphql API with the following features:
 - Expose CRUD opérations
 - Optimized queryset
 - Filtering with logical operators
-- Possibility to include authentication and permissions
+- Authentication and permissions
 - Nested mutations
 - Subscription fields
 
@@ -15,8 +15,8 @@ django orm into a graphql API with the following features:
 - [Graphene-Django-Crud](#graphene-django-crud)
   - [Table of contents](#table-of-contents)
   - [Installation](#installation)
-    - [With pip](#with-pip)
-    - [With source code](#with-source-code)
+    - [Install with pip](#install-with-pip)
+    - [Install with source code](#install-with-source-code)
   - [Usage](#usage)
     - [Example](#example)
     - [Computed Field](#computed-field)
@@ -29,7 +29,7 @@ django orm into a graphql API with the following features:
       - [Extend ConnectionType with Relay](#extend-connectiontype-with-relay)
   - [DjangoCRUDObjectType Class](#djangocrudobjecttype-class)
     - [Meta parameters](#meta-parameters)
-      - [model (required parameter)](#model-required-parameter)
+      - [model](#model)
       - [max_limit](#max_limit)
       - [only_fields / exclude_fields](#only_fields--exclude_fields)
       - [input_only_fields / input_exclude_fields](#input_only_fields--input_exclude_fields)
@@ -39,7 +39,7 @@ django orm into a graphql API with the following features:
       - [validator](#validator)
       - [validator_exclude](#validator_exclude)
       - [validator_validate_unique](#validator_validate_unique)
-    - [Fields](#fields)
+    - [Graphene Fields](#graphene-fields)
       - [ReadField](#readfield)
       - [BatchReadField](#batchreadfield)
       - [CreateField](#createfield)
@@ -53,7 +53,7 @@ django orm into a graphql API with the following features:
       - [OrderByInputType](#orderbyinputtype)
       - [CreateInputType](#createinputtype)
       - [UpdateInputType](#updateinputtype)
-    - [overload methods](#overload-methods)
+    - [Methods to override](#methods-to-override)
       - [get_queryset(cls, parent, info, \*\*kwargs)](#get_querysetcls-parent-info-kwargs)
       - [mutate, create, update, delete](#mutate-create-update-delete)
       - [(Deprecated) Middleware methods before_XXX(cls, parent, info, instance, data) / after_XXX(cls, parent, info, instance, data)](#deprecated-middleware-methods-before_xxxcls-parent-info-instance-data--after_xxxcls-parent-info-instance-data)
@@ -66,9 +66,9 @@ django orm into a graphql API with the following features:
       - [SCALAR_FILTERS_ADD_EQUALS_FIELD](#scalar_filters_add_equals_field)
       - [BOOLEAN_FILTER_USE_BOOLEAN_FIELD](#boolean_filter_use_boolean_field)
   - [Utils](#utils)
-      - [@resolver_hints(only: list\[str\], select_related:list\[str\])](#resolver_hintsonly-liststr-select_relatedliststr)
-      - [where_input_to_Q(where_input: dict) -> Q](#where_input_to_qwhere_input-dict---q)
-      - [order_by_input_to_args(order_by_input: list\[dict\]) -> list\[str\]](#order_by_input_to_argsorder_by_input-listdict---liststr)
+    - [@resolver_hints(only: list\[str\], select_related:list\[str\])](#resolver_hintsonly-liststr-select_relatedliststr)
+    - [where_input_to_Q(where_input: dict) -> Q](#where_input_to_qwhere_input-dict---q)
+    - [order_by_input_to_args(order_by_input: list\[dict\]) -> list\[str\]](#order_by_input_to_argsorder_by_input-listdict---liststr)
   - [Graphql types](#graphql-types)
     - [File](#file)
     - [FileInput](#fileinput)
@@ -88,7 +88,7 @@ django orm into a graphql API with the following features:
 > install [graphene-file-upload](https://pypi.org/project/graphene-file-upload/)
 > according to the documentation.
 
-### With pip
+### Install with pip
 
 To install graphene-django-crud, simply run this simple command in your terminal
 of choice:
@@ -97,7 +97,7 @@ of choice:
 $ pip install graphene-django-crud
 ```
 
-### With source code
+### Install with source code
 
 graphene-django-crud is developed on GitHub, You can either clone the public
 repository:
@@ -568,7 +568,7 @@ class UserType(DjangoCRUDObjectType):
 
 [The methods mutate, create, update, delete](#mutate-create-update-delete) are
 called for each change of model instances during mutations and nested mutations.
-it can be used to check permissions.
+They can be used to check permissions.
 
 ```python
 class UserType(DjangoCRUDObjectType):
@@ -603,10 +603,8 @@ class UserType(DjangoCRUDObjectType):
 
 ### Filtering by user
 
-To respond to several use cases, it is necessary to filter the logged in user.
-the graphene module gives access to the user from the context object in info
-arg. The "get_queryset" method which returns by default \<model>.objects.all(),
-you can overload it for custom filtering.
+To filter based on the authenticated user, overload the get_queryset method as
+the example
 
 ```python
 class UserType(DjangoCRUDObjectType):
@@ -623,7 +621,7 @@ class UserType(DjangoCRUDObjectType):
 
 ### Use with relay
 
-The configuration is the same as graphene-django, just added the "relay.Node"
+The configuration is the same as graphene-django, just add the "relay.Node"
 interface.
 
 ```python
@@ -723,13 +721,14 @@ class ProductType(DjangoCRUDObjectType):
 
 ## DjangoCRUDObjectType Class
 
-> From the version v1.3.0, DjangoGrapheneCRUD class has been renamed to
-> DjangoCRUDObjectType, so the name "DjangoGrapheneCRUD" is deprecated.
+> From the version v1.3.0, `DjangoGrapheneCRUD` class has been renamed to
+> `DjangoCRUDObjectType`, so the name "DjangoGrapheneCRUD" is deprecated.
 
 ### Meta parameters
 
-#### model (required parameter)
+#### model
 
+Required parameter\
 The model used for the definition type
 
 #### max_limit
@@ -799,7 +798,7 @@ The exclude argument of full_clean() method.
 default: True\
 The validate_unique argument of full_clean() method.
 
-### Fields
+### Graphene Fields
 
 The DjangoCRUDObjectType class contains configurable operation publishers that
 you use for exposing create, read, update, and delete mutations against your
@@ -814,8 +813,8 @@ difference that the sub-create has excluded the field where supplying its
 relation to the type of parent Object being created would normally be. This is
 because a sub-create forces its record to relate to the parent one.
 
-> **Warning**: By default, mutations are not atomic, specify ATOMIC_REQUESTS or
-> ATOMIC_MUTATIONS on True in your setting.py\
+> **Warning**: By default, mutations are not atomic, specify `ATOMIC_REQUESTS`
+> or `ATOMIC_MUTATIONS` on True in your setting.py\
 > See:
 > [Transaction with graphene-django](https://docs.graphene-python.org/projects/django/en/latest/mutations/#django-database-transactions)
 
@@ -863,9 +862,9 @@ of the respective model.
 
 #### WhereInputType
 
-Input type composed of the scalar filter of each readable fields of the model.
-The logical operators "OR", "AND", "NO" are also included. the returned arg can
-be used in queryset with function
+Input type composed of [the scalar filters](#scalar-filters) of each readable
+fields of the model. The logical operators "OR", "AND", "NO" are also included.
+the returned arg can be used in queryset with function
 [where_input_to_Q](#where_input_to_qwhere_input-dict---q)
 
 #### OrderByInputType
@@ -881,7 +880,7 @@ nullable, the graphene field is required.
 
 Input type composed of each fields of the model. No fields are required.
 
-### overload methods
+### Methods to override
 
 #### get_queryset(cls, parent, info, \*\*kwargs)
 
@@ -892,8 +891,8 @@ def get_queryset(cls, parent, info, **kwargs):
 ```
 
 Default it returns "model.objects.all()", the overload is useful for applying
-filtering based on user. The method is more than a resolver, it is also called
-in nested request, fetch instances for mutations and subscription filter.
+filtering based on user. The method is called in nested request, fetch instances
+for mutations and subscription filter.
 
 #### mutate, create, update, delete
 
