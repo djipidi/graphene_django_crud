@@ -123,6 +123,7 @@ class DjangoCRUDObjectType(graphene.ObjectType):
         interfaces=(),
         registry=None,
         skip_registry=False,
+        _meta=None,
         **options,
     ):
         if not model:
@@ -161,7 +162,9 @@ class DjangoCRUDObjectType(graphene.ObjectType):
                 "{}Connection".format(options.get("name") or cls.__name__), node=cls
             )
 
-        _meta = DjangoCRUDObjectTypeOptions(cls)
+        if not _meta:
+            _meta = DjangoCRUDObjectTypeOptions(cls)
+        
         _meta.model = model
         _meta.max_limit = max_limit
         _meta.fields = fields
