@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## \[Unreleased\]
+
+### Fixed
+
+- Allow subclass of DjangoCRUDObjectType [\#3](https://github.com/djipidi/graphene_django_crud/issues/3)
+
 ## \[1.3.0\] - 2021-06-21
 
 ### Breaking changed
