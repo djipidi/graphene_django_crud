@@ -649,7 +649,7 @@ def convert_many_rel_djangomodel(field, registry=None, input_flag=None):
 
     return Dynamic(dynamic_type)
 
-
+@convert_django_field.register(models.ForeignKey)
 @convert_django_field.register(models.OneToOneField)
 def convert_ForeignKey_field_to_djangomodel(field, registry=None, input_flag=None):
     model = get_related_model(field)
@@ -707,54 +707,3 @@ def convert_ForeignKey_field_to_djangomodel(field, registry=None, input_flag=Non
 
     return Dynamic(dynamic_type)
 
-
-@convert_django_field.register(models.ForeignKey)
-def convert_ForeignKey_field_to_djangomodel(field, registry=None, input_flag=None):
-    model = get_related_model(field)
-
-    def dynamic_type():
-
-        _type = registry.get_type_for_model(model, for_input=input_flag)
-        if not _type:
-            return
-        # Avoid create field for auto generate OneToOneField product of an inheritance
-        if isinstance(field, models.OneToOneField) and issubclass(
-            field.model, field.related_model
-        ):
-            return
-        if input_flag:
-            if input_flag == "order_by":
-                return graphene.Field(
-                    convert_model_to_input_type(
-                        model, input_flag="order_by", registry=registry
-                    ),
-                    description=field.help_text or field.verbose_name,
-                )
-            elif input_flag == "where":
-                return graphene.Field(
-                    convert_model_to_input_type(
-                        model, input_flag="where", registry=registry
-                    ),
-                    description=field.help_text or field.verbose_name,
-                )
-            elif input_flag == "create":
-                return graphene.Field(
-                    convert_model_to_input_type(
-                        model, input_flag="create_nested", registry=registry
-                    ),
-                    description=field.help_text or field.verbose_name,
-                )
-            elif input_flag == "update":
-                return graphene.Field(
-                    convert_model_to_input_type(
-                        model, input_flag="update_nested", registry=registry
-                    ),
-                    description=field.help_text or field.verbose_name,
-                )
-
-        return Field(
-            _type,
-            description=field.help_text or field.verbose_name,
-        )
-
-    return Dynamic(dynamic_type)
