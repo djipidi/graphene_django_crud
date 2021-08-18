@@ -5,6 +5,11 @@ from collections import OrderedDict
 from django.conf import settings
 from django.db import models
 from django.utils.encoding import force_text
+from django.contrib.contenttypes.fields import (
+    GenericForeignKey,
+    GenericRelation,
+    GenericRel,
+)
 import graphene
 from graphene import (
     Field,
@@ -707,3 +712,59 @@ def convert_ForeignKey_field_to_djangomodel(field, registry=None, input_flag=Non
 
     return Dynamic(dynamic_type)
 
+
+@convert_django_field.register(GenericForeignKey)
+def convert_generic_foreign_key_to_object(field, registry=None, input_flag=None):
+    return
+
+
+@convert_django_field.register(GenericRel)
+@convert_django_field.register(GenericRelation)
+def convert_generic_relation_to_object_list(field, registry=None, input_flag=None):
+    model = field.related_model
+    if input_flag == "order_by":
+        return
+
+    def dynamic_type():
+        _type = registry.get_type_for_model(model)
+        if not _type:
+            return
+
+        if input_flag:
+            if input_flag == "where":
+                return graphene.Field(
+                    convert_model_to_input_type(
+                        model, input_flag="where", registry=registry
+                    ),
+                )
+            else:
+                return
+        else:
+            args = dict()
+            args.update(
+                {
+                    "where": graphene.Argument(
+                        convert_model_to_input_type(
+                            model, input_flag="where", registry=registry
+                        )
+                    ),
+                    "order_by": graphene.List(
+                        convert_model_to_input_type(
+                            model, input_flag="order_by", registry=registry
+                        )
+                    ),
+                }
+            )
+
+            if _type._meta.connection:
+                return DjangoConnectionField(
+                    _type,
+                    **args,
+                )
+
+            return DjangoListField(
+                _type,
+                **args,
+            )
+
+    return Dynamic(dynamic_type)
