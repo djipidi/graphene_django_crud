@@ -37,6 +37,20 @@ from .file_field.schema import (
     Subscription as fileFieldSubscription,
 )
 
+from .generic_foreignkey.schema import (
+    Query as genericForeignkeyQuery,
+    Mutation as genericForeignkeyMutation,
+    Subscription as genericForeignkeySubscription,
+)
+
+from django.contrib.contenttypes.models import ContentType as modelContentType
+from graphene_django_crud.types import DjangoCRUDObjectType
+
+
+class ContentType(DjangoCRUDObjectType):
+    class Meta:
+        model = modelContentType
+
 
 class Query(
     relationshipQuery,
@@ -46,9 +60,11 @@ class Query(
     relayQuery,
     connectionQuery,
     fileFieldQuery,
+    genericForeignkeyQuery,
     graphene.ObjectType,
 ):
-    pass
+    contentTypes = ContentType.BatchReadField()
+    contentType = ContentType.ReadField()
 
 
 class Mutation(
@@ -59,6 +75,7 @@ class Mutation(
     relayMutation,
     connectionMutation,
     fileFieldMutation,
+    genericForeignkeyMutation,
     graphene.ObjectType,
 ):
     pass
@@ -72,6 +89,7 @@ class Subscription(
     relaySubscription,
     connectionSubscription,
     fileFieldSubscription,
+    genericForeignkeySubscription,
     graphene.ObjectType,
 ):
     pass
