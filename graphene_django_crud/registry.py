@@ -4,6 +4,7 @@
 class Registry(object):
     def __init__(self):
         self._registry = {}
+        self._registry_enum = {}
         self._registry_mutation_type = {}
         self._registry_node_type = {}
         self._registry_models = {}
@@ -13,10 +14,10 @@ class Registry(object):
         self.model_to_type_index = {}
 
     def register_enum(self, key, enum):
-        self._registry[key] = enum
+        self._registry_enum[key] = enum
 
     def get_type_for_enum(self, key):
-        return self._registry.get(key)
+        return self._registry_enum.get(key)
 
     def register_input(self, name, inputType):
         self._register_input[name] = inputType
