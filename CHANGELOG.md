@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## \[Unreleased\]
+
+### Fixed
+
+- Field Model.field cannot be both deferred and traversed using select_related at the same time [\#5](https://github.com/djipidi/graphene_django_crud/issues/5)
+
 ## \[1.3.1\] 2021-08-15
 
 ### Fixed
