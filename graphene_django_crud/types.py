@@ -295,12 +295,12 @@ class DjangoCRUDObjectType(graphene.ObjectType):
         if is_connection and not cls._meta.use_connection:
             is_connection = False
 
-        ret = {"select_related": [], "only": ["pk"], "prefetch_related": []}
-
         if suffix == "":
             new_suffix = ""
         else:
             new_suffix = suffix + "__"
+
+        ret = {"select_related": [], "only": [new_suffix + cls._meta.model._meta.pk.name], "prefetch_related": []}
 
         model_fields, computed_field_hints = cls._get_fields()
 
