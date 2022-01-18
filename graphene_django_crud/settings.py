@@ -9,6 +9,7 @@ DEFAULTS = {
     # Compatibility with old version
     "SCALAR_FILTERS_ADD_EQUALS_FIELD": False,
     "BOOLEAN_FILTER_USE_BOOLEAN_FIELD" : False,
+    'CONVERT_ENUM_FIELDS' : True,
 
 }
 

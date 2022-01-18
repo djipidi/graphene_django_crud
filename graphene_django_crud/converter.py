@@ -28,6 +28,7 @@ from graphene_django.utils import import_single_dispatch
 
 from .base_types import Binary, OrderEnum, OrderStringEnum, File
 from .fields import DjangoListField, DjangoConnectionField
+from .settings import gdc_settings
 from .utils import is_required, get_model_fields, get_related_model
 
 from .input_types import (
@@ -262,7 +263,7 @@ def get_choices(choices):
 
 def convert_django_field_with_choices(field, registry=None, input_flag=None):
     choices = getattr(field, "choices", None)
-    if choices and not input_flag == "order_by":
+    if choices and not input_flag == "order_by" and gdc_settings.CONVERT_ENUM_FIELDS:
         meta = field.model._meta
 
         name = "{}_{}_{}".format(meta.object_name, field.name, "Enum")
