@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="graphene-django-crud",  # Replace with your own username
-    version="1.3.2",
+    version="1.3.3",
     author="djipidi",
     author_email="djipidi.dev@gmail.com",
     description="Turns the django ORM into a graphql API",
