@@ -62,13 +62,14 @@ django orm into a graphql API with the following features:
     - [Customize](#customize)
       - [DEFAULT_CONNECTION_NODES_FIELD_NAME](#default_connection_nodes_field_name)
       - [FILE_TYPE_CONTENT_FIELD_ACTIVE](#file_type_content_field_active)
+      - [CONVERT_ENUM_FIELDS](#convert_enum_fields)
     - [Compatibility with old version](#compatibility-with-old-version)
       - [SCALAR_FILTERS_ADD_EQUALS_FIELD](#scalar_filters_add_equals_field)
       - [BOOLEAN_FILTER_USE_BOOLEAN_FIELD](#boolean_filter_use_boolean_field)
   - [Utils](#utils)
-    - [@resolver_hints(only: list\[str\], select_related:list\[str\])](#resolver_hintsonly-liststr-select_relatedliststr)
-    - [where_input_to_Q(where_input: dict) -> Q](#where_input_to_qwhere_input-dict---q)
-    - [order_by_input_to_args(order_by_input: list\[dict\]) -> list\[str\]](#order_by_input_to_argsorder_by_input-listdict---liststr)
+      - [@resolver_hints(only: list\[str\], select_related:list\[str\])](#resolver_hintsonly-liststr-select_relatedliststr)
+      - [where_input_to_Q(where_input: dict) -> Q](#where_input_to_qwhere_input-dict---q)
+      - [order_by_input_to_args(order_by_input: list\[dict\]) -> list\[str\]](#order_by_input_to_argsorder_by_input-listdict---liststr)
   - [Graphql types](#graphql-types)
     - [File](#file)
     - [FileInput](#fileinput)
@@ -1026,6 +1027,11 @@ Default: `'data'`
 Add a content field with the content of the file. The type used is
 Binary.\
 Default: `False`
+
+#### CONVERT_ENUM_FIELDS
+
+Enables / disables converting fields with choices to enum fields.\
+Default: `True`
 
 ### Compatibility with old version
 

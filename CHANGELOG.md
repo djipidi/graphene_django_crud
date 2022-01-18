@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## \[Unreleased\]
+
+### Added
+
+- add a setting that enables / disables converting fields with choices to enum fields
+
 ## \[1.3.2\] 2021-10-04
 
 ### Fixed

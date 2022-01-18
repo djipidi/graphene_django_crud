@@ -6,11 +6,10 @@ DEFAULTS = {
     # Customize
     "DEFAULT_CONNECTION_NODES_FIELD_NAME": "data",
     "FILE_TYPE_CONTENT_FIELD_ACTIVE": False,
+    "CONVERT_ENUM_FIELDS": True,
     # Compatibility with old version
     "SCALAR_FILTERS_ADD_EQUALS_FIELD": False,
-    "BOOLEAN_FILTER_USE_BOOLEAN_FIELD" : False,
-    'CONVERT_ENUM_FIELDS' : True,
-
+    "BOOLEAN_FILTER_USE_BOOLEAN_FIELD": False,
 }
 
 IMPORT_STRINGS = ()
