@@ -899,7 +899,10 @@ class DjangoCRUDObjectType(graphene.ObjectType):
         try:
             instance = cls._create(parent, info, kwargs["input"])
             result_field_ast = get_field_ast_by_path(info, ["result"])
-            instance = cls._instance_to_queryset(info, instance, result_field_ast).get()
+            if result_field_ast is not None:
+                instance = cls._instance_to_queryset(info, instance, result_field_ast).get()
+            else:
+                instance = None
             return {"result": instance, "ok": True, "errors": []}
         except ValidationError as e:
             return {
@@ -943,7 +946,10 @@ class DjangoCRUDObjectType(graphene.ObjectType):
         try:
             instance = cls._update(parent, info, kwargs["where"], kwargs["input"])
             result_field_ast = get_field_ast_by_path(info, ["result"])
-            instance = cls._instance_to_queryset(info, instance, result_field_ast).get()
+            if result_field_ast is not None:
+                instance = cls._instance_to_queryset(info, instance, result_field_ast).get()
+            else:
+                instance = None
             return {"result": instance, "ok": True, "error": []}
         except ValidationError as e:
             return {

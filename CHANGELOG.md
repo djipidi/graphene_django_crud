@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## \[Unreleased\]
+
+### Fixed
+
+- Cryptic "not found" error if result not present in GraphQL [\#8](https://github.com/djipidi/graphene_django_crud/issues/8)
+
 ## \[1.3.3\] 2022-01-18
 
 ### Added

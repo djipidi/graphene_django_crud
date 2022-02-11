@@ -37,6 +37,11 @@ from .file_field.schema import (
     Subscription as fileFieldSubscription,
 )
 
+from .issues.schema import (
+    Query as issuesQuery,
+    Mutation as issuesMutation,
+    Subscription as issuesSubscription,
+)
 
 class Query(
     relationshipQuery,
@@ -46,6 +51,7 @@ class Query(
     relayQuery,
     connectionQuery,
     fileFieldQuery,
+    issuesQuery,
     graphene.ObjectType,
 ):
     pass
@@ -59,6 +65,7 @@ class Mutation(
     relayMutation,
     connectionMutation,
     fileFieldMutation,
+    issuesMutation,
     graphene.ObjectType,
 ):
     pass
@@ -72,6 +79,7 @@ class Subscription(
     relaySubscription,
     connectionSubscription,
     fileFieldSubscription,
+    issuesSubscription,
     graphene.ObjectType,
 ):
     pass

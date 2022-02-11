@@ -5,3 +5,4 @@ from .choices_converter.models import *
 from .relay.models import *
 from .connection.models import *
 from .file_field.models import *
+from .issues.models import *

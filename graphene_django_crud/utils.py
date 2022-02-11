@@ -237,7 +237,7 @@ def get_field_ast_by_path(info, path):
                 found = True
                 break
         if not found:
-            assert False, "not found"
+            return None
     return field_ast
 
 
