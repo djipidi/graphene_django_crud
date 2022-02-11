@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## \[Unreleased\]
+## \[1.3.4\] - 2022-02-11
 
 ### Fixed
 
