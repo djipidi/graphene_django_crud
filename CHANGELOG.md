@@ -8,19 +8,19 @@ All notable changes to this project will be documented in this file.
 
 - Cryptic "not found" error if result not present in GraphQL [\#8](https://github.com/djipidi/graphene_django_crud/issues/8)
 
-## \[1.3.3\] 2022-01-18
+## \[1.3.3\] - 2022-01-18
 
 ### Added
 
 - add a setting that enables / disables converting fields with choices to enum fields
 
-## \[1.3.2\] 2021-10-04
+## \[1.3.2\] - 2021-10-04
 
 ### Fixed
 
 - Field Model.field cannot be both deferred and traversed using select_related at the same time [\#5](https://github.com/djipidi/graphene_django_crud/issues/5)
 
-## \[1.3.1\] 2021-08-15
+## \[1.3.1\] - 2021-08-15
 
 ### Fixed
 
