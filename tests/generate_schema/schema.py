@@ -66,14 +66,3 @@ class Mutation(graphene.ObjectType):
     test_generate_schema_b_update = ModelTestGenerateSchemaBType.UpdateField()
     test_generate_schema_b_delete = ModelTestGenerateSchemaBType.DeleteField()
     test_generate_schema_b_custom = ModelTestGenerateSchemaBCustomMutation.Field()
-
-
-class Subscription(graphene.ObjectType):
-
-    test_generate_schema_a_created = ModelTestGenerateSchemaAType.CreatedField()
-    test_generate_schema_a_updated = ModelTestGenerateSchemaAType.UpdatedField()
-    test_generate_schema_a_deleted = ModelTestGenerateSchemaAType.DeletedField()
-
-    test_generate_schema_b_created = ModelTestGenerateSchemaBType.CreatedField()
-    test_generate_schema_b_updated = ModelTestGenerateSchemaBType.UpdatedField()
-    test_generate_schema_b_deleted = ModelTestGenerateSchemaBType.DeletedField()

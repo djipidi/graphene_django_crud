@@ -4,7 +4,7 @@ from collections import OrderedDict
 
 from django.conf import settings
 from django.db import models
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str as force_text
 import graphene
 from graphene import (
     Field,

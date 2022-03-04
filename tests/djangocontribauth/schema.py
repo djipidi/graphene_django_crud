@@ -43,13 +43,3 @@ class Mutation(graphene.ObjectType):
     group_create = GroupType.CreateField()
     group_update = GroupType.UpdateField()
     group_delete = GroupType.DeleteField()
-
-
-class Subscription(graphene.ObjectType):
-    user_created = UserType.CreatedField()
-    user_updated = UserType.UpdatedField()
-    user_deleted = UserType.DeletedField()
-
-    group_created = GroupType.CreatedField()
-    group_updated = GroupType.UpdatedField()
-    group_deleted = GroupType.DeletedField()

@@ -31,15 +31,9 @@ from django.core.exceptions import ValidationError
 from .converter import convert_model_to_input_type, construct_fields
 from .registry import get_global_registry, Registry
 
-from graphene_subscriptions.events import CREATED, UPDATED, DELETED
-
 from graphene.types.utils import yank_fields_from_attrs
 
 from django.db.models.signals import post_save, post_delete
-from graphene_subscriptions.signals import (
-    post_save_subscription,
-    post_delete_subscription,
-)
 
 from django.db.models import (
     ManyToOneRel,
@@ -164,7 +158,7 @@ class DjangoCRUDObjectType(graphene.ObjectType):
 
         if not _meta:
             _meta = DjangoCRUDObjectTypeOptions(cls)
-        
+
         _meta.model = model
         _meta.max_limit = max_limit
         _meta.fields = fields
@@ -684,11 +678,6 @@ class DjangoCRUDObjectType(graphene.ObjectType):
                 raise validation_error_with_suffix(e, key + ".delete")
 
     @classmethod
-    def generate_signals(cls):
-        post_save.connect(post_save_subscription, sender=cls._meta.model)
-        post_delete.connect(post_delete_subscription, sender=cls._meta.model)
-
-    @classmethod
     def get_queryset(cls, parent, info, **kwargs):
         return cls._meta.model.objects.all()
 
@@ -992,125 +981,6 @@ class DjangoCRUDObjectType(graphene.ObjectType):
                 "errors": error_data_from_validation_error(e),
             }
 
-    @classmethod
-    def CreatedField(cls, *args, **kwargs):
-        arguments = OrderedDict()
-        arguments.update(
-            {
-                "where": graphene.Argument(
-                    convert_model_to_input_type(
-                        cls._meta.model, input_flag="where", registry=cls._meta.registry
-                    )
-                ),
-            }
-        )
-        return graphene.Field(
-            cls,
-            args=arguments,
-            resolver=cls.created_resolver,
-            *args,
-            **kwargs,
-        )
-
-    @classmethod
-    def created_resolver(cls, parent, info, **kwargs):
-        def eventFilter(event):
-            if event.operation == CREATED and isinstance(
-                event.instance, cls._meta.model
-            ):
-                return (
-                    cls.get_queryset(parent, info).filter(pk=event.instance.pk).exists()
-                )
-
-        return parent.filter(eventFilter).map(
-            lambda event: cls._instance_to_queryset(
-                info, event.instance, info.field_asts[0]
-            ).get()
-        )
-
-    @classmethod
-    def UpdatedField(cls, *args, **kwargs):
-        arguments = OrderedDict()
-        arguments.update(
-            {
-                "where": graphene.Argument(
-                    convert_model_to_input_type(
-                        cls._meta.model, input_flag="where", registry=cls._meta.registry
-                    )
-                ),
-            }
-        )
-        return graphene.Field(
-            cls,
-            args=arguments,
-            resolver=cls.updated_resolver,
-            *args,
-            **kwargs,
-        )
-
-    @classmethod
-    def updated_resolver(cls, parent, info, **kwargs):
-        def eventFilter(event):
-            if event.operation == UPDATED and isinstance(
-                event.instance, cls._meta.model
-            ):
-                return (
-                    cls.get_queryset(parent, info)
-                    .filter(where_input_to_Q(kwargs.get("where", {})))
-                    .filter(pk=event.instance.pk)
-                    .exists()
-                )
-
-        return parent.filter(eventFilter).map(
-            lambda event: cls._instance_to_queryset(
-                info, event.instance, info.field_asts[0]
-            ).get()
-        )
-
-    @classmethod
-    def DeletedField(cls, *args, **kwargs):
-        arguments = OrderedDict()
-        arguments.update(
-            {
-                "where": graphene.Argument(
-                    convert_model_to_input_type(
-                        cls._meta.model, input_flag="where", registry=cls._meta.registry
-                    )
-                ),
-            }
-        )
-        return graphene.Field(
-            cls,
-            args=arguments,
-            resolver=cls.deleted_resolver,
-            *args,
-            **kwargs,
-        )
-
-    @classmethod
-    def deleted_resolver(cls, parent, info, **kwargs):
-        pk_list = [
-            pk
-            for pk in cls.get_queryset(parent, info)
-            .filter(where_input_to_Q(kwargs.get("where", {})))
-            .values_list("pk", flat=True)
-        ]
-
-        def eventFilter(event):
-            nonlocal pk_list
-            ret = False
-            if isinstance(event.instance, cls._meta.model):
-                if event.operation == DELETED:
-                    ret = event.instance.pk in pk_list
-                pk_list = [
-                    pk
-                    for pk in cls.get_queryset(parent, info)
-                    .filter(where_input_to_Q(kwargs.get("where", {})))
-                    .values_list("pk", flat=True)
-                ]
-            return ret
-
-        return parent.filter(eventFilter).map(lambda event: event.instance)
 
 
 class DjangoGrapheneCRUD(DjangoCRUDObjectType):
