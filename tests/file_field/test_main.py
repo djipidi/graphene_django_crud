@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
-import pytest
 from tests.client import Client
-from tests.utils import verify_response
+from graphene_django.utils.testing import GraphQLTestCase
+from tests.utils import VerifyResponseAssertionMixins
 import json
-from .models import TestFile
 import base64
+import os
+from django.conf import settings
+from shutil import rmtree
 
 from pathlib import Path
 
@@ -38,43 +40,61 @@ with open(FILES_DIR + "/fork.jpg", "rb") as f:
     b64_img = base64.b64encode(f.read()).decode("utf-8")
 
 
-def test_main():
+class FileFieldTest(GraphQLTestCase, VerifyResponseAssertionMixins):
 
-    client = Client()
-    variables = {
-        "file": {"filename": "lorem1.txt", "content": b64_lorem},
-        "image": {"filename": "fork1.jpg", "content": b64_img},
-    }
-    expected_response = json.loads(
-        """
-        {
-        "data": {
-            "testFileCreate": {
-                "ok": true,
-                "result": {
-                    "id": "1",
-                    "file": {
-                        "filename": "lorem1.txt",
-                        "size": 2941,
-                        "url": "/media/lorem1.txt"
-                    },
-                    "image": {
-                        "url": "/media/fork1.jpg",
-                        "size": 39116,
-                        "filename": "fork1.jpg"
+    def setUp(self):
+        try:
+            rmtree(settings.MEDIA_ROOT)
+        except FileNotFoundError:
+            pass
+
+    def tearDown(self):
+        try:
+            rmtree(settings.MEDIA_ROOT)
+        except FileNotFoundError:
+            pass
+        
+    def test_main(self):
+
+        client = Client()
+        variables = {
+            "file": {"filename": "lorem1.txt", "content": b64_lorem},
+            "image": {"filename": "fork1.jpg", "content": b64_img},
+        }
+        expected_response = json.loads(
+            """
+            {
+            "data": {
+                "testFileCreate": {
+                    "ok": true,
+                    "result": {
+                        "id": "1",
+                        "file": {
+                            "filename": "lorem1.txt",
+                            "size": 2941,
+                            "url": "/media/lorem1.txt"
+                        },
+                        "image": {
+                            "url": "/media/fork1.jpg",
+                            "size": 39116,
+                            "filename": "fork1.jpg"
+                        }
                     }
                 }
             }
         }
-    }
-    """
-    )
+        """
+        )
 
-    response = client.query(QUERY, variables=variables).json()
-    verify_response(expected_response, response)
-    assert response["data"]["testFileCreate"]["result"]["file"]["content"].startswith(
-        "TG9yZW0gaXBzdW0gZG9sb3Igc2l0IGFtZXQsIG"
-    )
-    assert response["data"]["testFileCreate"]["result"]["image"]["content"].startswith(
-        "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAMCAg"
-    )
+        response = client.query(QUERY, variables=variables).json()
+        self.verify_response(response, expected_response)
+        self.assertTrue(
+            response["data"]["testFileCreate"]["result"]["file"]["content"].startswith(
+                "TG9yZW0gaXBzdW0gZG9sb3Igc2l0IGFtZXQsIG"
+            )
+        )
+        self.assertTrue(
+            response["data"]["testFileCreate"]["result"]["image"]["content"].startswith(
+                "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAMCAg"
+            )
+        )

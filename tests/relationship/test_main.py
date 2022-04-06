@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-import pytest
 from tests.client import Client
-from tests.utils import verify_response
-import json
-
+from graphene_django.utils.testing import GraphQLTestCase
+from tests.utils import VerifyResponseAssertionMixins
 
 testFkA_Fragment = """
 fragment testFkA on TestFkAType {
@@ -138,198 +136,198 @@ mutation testFkCUpdate($input: TestFkCUpdateInput!, $where: TestFkCWhereInput!) 
 }
 """
 )
+class RelationShipForeignKeyTest(GraphQLTestCase, VerifyResponseAssertionMixins):
 
+    def test_foreignkey(self):
+        client = Client()
 
-def test_foreignkey():
-    client = Client()
-
-    variables = {
-        "input": {
-            "text": "a1",
-            "testFkB": {
-                "create": {"text": "b1", "testFkC": {"create": {"text": "c1"}}}
-            },
-        }
-    }
-    expected_response = {
-        "data": {
-            "testFkACreate": {
-                "ok": True,
-                "result": {
-                    "text": "a1",
-                    "testFkB": {"text": "b1", "testFkC": {"text": "c1"}},
+        variables = {
+            "input": {
+                "text": "a1",
+                "testFkB": {
+                    "create": {"text": "b1", "testFkC": {"create": {"text": "c1"}}}
                 },
             }
         }
-    }
-    response = client.query(testFkACreate_gql, variables=variables).json()
-    verify_response(expected_response, response)
-
-    a1_id = response["data"]["testFkACreate"]["result"]["id"]
-    b1_id = response["data"]["testFkACreate"]["result"]["testFkB"]["id"]
-    c1_id = response["data"]["testFkACreate"]["result"]["testFkB"]["testFkC"]["id"]
-
-    variables = {
-        "input": {"text": "a2", "testFkB": {"connect": {"id": {"exact": b1_id}}}}
-    }
-    expected_response = {
-        "data": {
-            "testFkACreate": {
-                "ok": True,
-                "result": {
-                    "id": "2",
-                    "text": "a2",
-                    "testFkB": {"id": b1_id, "text": "b1", "testFkC": {"text": "c1"}},
-                },
-            }
-        }
-    }
-
-    response = client.query(testFkACreate_gql, variables=variables).json()
-    verify_response(expected_response, response)
-    a2_id = response["data"]["testFkACreate"]["result"]["id"]
-
-    variables = {
-        "input": {
-            "text": "b2",
-            "testFkC": {"create": {"text": "c2"}},
-            "testFkAs": {
-                "connect": [{"id": {"exact": a1_id}}],
-                "create": [{"text": "a3"}, {"text": "a4"}],
-            },
-        }
-    }
-    expected_response = {
-        "data": {
-            "testFkBCreate": {
-                "ok": True,
-                "result": {
-                    "id": "2",
-                    "text": "b2",
-                    "testFkAs": {
-                        "count": 3,
-                        "data": [
-                            {"id": a1_id, "text": "a1"},
-                            {"text": "a3"},
-                            {"text": "a4"},
-                        ],
+        expected_response = {
+            "data": {
+                "testFkACreate": {
+                    "ok": True,
+                    "result": {
+                        "text": "a1",
+                        "testFkB": {"text": "b1", "testFkC": {"text": "c1"}},
                     },
-                    "testFkC": {"text": "c2"},
+                }
+            }
+        }
+        response = client.query(testFkACreate_gql, variables=variables).json()
+        self.verify_response(response, expected_response)
+
+        a1_id = response["data"]["testFkACreate"]["result"]["id"]
+        b1_id = response["data"]["testFkACreate"]["result"]["testFkB"]["id"]
+        c1_id = response["data"]["testFkACreate"]["result"]["testFkB"]["testFkC"]["id"]
+
+        variables = {
+            "input": {"text": "a2", "testFkB": {"connect": {"id": {"exact": b1_id}}}}
+        }
+        expected_response = {
+            "data": {
+                "testFkACreate": {
+                    "ok": True,
+                    "result": {
+                        "id": "2",
+                        "text": "a2",
+                        "testFkB": {"id": b1_id, "text": "b1", "testFkC": {"text": "c1"}},
+                    },
+                }
+            }
+        }
+
+        response = client.query(testFkACreate_gql, variables=variables).json()
+        self.verify_response(response, expected_response)
+        a2_id = response["data"]["testFkACreate"]["result"]["id"]
+
+        variables = {
+            "input": {
+                "text": "b2",
+                "testFkC": {"create": {"text": "c2"}},
+                "testFkAs": {
+                    "connect": [{"id": {"exact": a1_id}}],
+                    "create": [{"text": "a3"}, {"text": "a4"}],
                 },
             }
         }
-    }
-
-    response = client.query(testFkBCreate_gql, variables=variables).json()
-    verify_response(expected_response, response)
-    b2_id = response["data"]["testFkBCreate"]["result"]["id"]
-    c2_id = response["data"]["testFkBCreate"]["result"]["testFkC"]["id"]
-    a3_id = response["data"]["testFkBCreate"]["result"]["testFkAs"]["data"][1]["id"]
-    a4_id = response["data"]["testFkBCreate"]["result"]["testFkAs"]["data"][2]["id"]
-
-    variables = {
-        "input": {
-            "text": "b3",
-            "testFkC": {"connect": {"id": {"exact": c1_id}}},
-        }
-    }
-    expected_response = {
-        "data": {
-            "testFkBCreate": {
-                "ok": True,
-                "result": {
-                    "text": "b3",
-                    "testFkAs": {"count": 0, "data": []},
-                    "testFkC": {"id": c1_id, "text": "c1"},
-                },
-            }
-        }
-    }
-    response = client.query(testFkBCreate_gql, variables=variables).json()
-    verify_response(expected_response, response)
-    b3_id = response["data"]["testFkBCreate"]["result"]["id"]
-
-    variables = {
-        "input": {
-            "text": "c3",
-            "testfkbSet": {
-                "connect": [{"id": {"exact": b1_id}}],
-                "create": [
-                    {
-                        "text": "b4",
+        expected_response = {
+            "data": {
+                "testFkBCreate": {
+                    "ok": True,
+                    "result": {
+                        "id": "2",
+                        "text": "b2",
                         "testFkAs": {
-                            "connect": [
-                                {"id": {"exact": a1_id}},
-                                {"id": {"exact": a2_id}},
-                            ],
-                            "create": [
-                                {"text": "a5"},
-                                {"text": "a6"},
+                            "count": 3,
+                            "data": [
+                                {"id": a1_id, "text": "a1"},
+                                {"text": "a3"},
+                                {"text": "a4"},
                             ],
                         },
-                    }
-                ],
-            },
-        }
-    }
-    expected_response = {
-        "data": {
-            "testFkCCreate": {
-                "ok": True,
-                "result": {
-                    "text": "c3",
-                    "testfkbSet": {
-                        "count": 2,
-                        "data": [
-                            {
-                                "id": b1_id,
-                                "text": "b1",
-                                "testFkAs": {"count": 0, "data": []},
-                            },
-                            {
-                                "text": "b4",
-                                "testFkAs": {
-                                    "count": 4,
-                                    "data": [
-                                        {"id": a1_id, "text": "a1"},
-                                        {"id": a2_id, "text": "a2"},
-                                        {"text": "a5"},
-                                        {"text": "a6"},
-                                    ],
-                                },
-                            },
-                        ],
+                        "testFkC": {"text": "c2"},
                     },
+                }
+            }
+        }
+
+        response = client.query(testFkBCreate_gql, variables=variables).json()
+        self.verify_response(response, expected_response)
+        b2_id = response["data"]["testFkBCreate"]["result"]["id"]
+        c2_id = response["data"]["testFkBCreate"]["result"]["testFkC"]["id"]
+        a3_id = response["data"]["testFkBCreate"]["result"]["testFkAs"]["data"][1]["id"]
+        a4_id = response["data"]["testFkBCreate"]["result"]["testFkAs"]["data"][2]["id"]
+
+        variables = {
+            "input": {
+                "text": "b3",
+                "testFkC": {"connect": {"id": {"exact": c1_id}}},
+            }
+        }
+        expected_response = {
+            "data": {
+                "testFkBCreate": {
+                    "ok": True,
+                    "result": {
+                        "text": "b3",
+                        "testFkAs": {"count": 0, "data": []},
+                        "testFkC": {"id": c1_id, "text": "c1"},
+                    },
+                }
+            }
+        }
+        response = client.query(testFkBCreate_gql, variables=variables).json()
+        self.verify_response(response, expected_response)
+        b3_id = response["data"]["testFkBCreate"]["result"]["id"]
+
+        variables = {
+            "input": {
+                "text": "c3",
+                "testfkbSet": {
+                    "connect": [{"id": {"exact": b1_id}}],
+                    "create": [
+                        {
+                            "text": "b4",
+                            "testFkAs": {
+                                "connect": [
+                                    {"id": {"exact": a1_id}},
+                                    {"id": {"exact": a2_id}},
+                                ],
+                                "create": [
+                                    {"text": "a5"},
+                                    {"text": "a6"},
+                                ],
+                            },
+                        }
+                    ],
                 },
             }
         }
-    }
+        expected_response = {
+            "data": {
+                "testFkCCreate": {
+                    "ok": True,
+                    "result": {
+                        "text": "c3",
+                        "testfkbSet": {
+                            "count": 2,
+                            "data": [
+                                {
+                                    "id": b1_id,
+                                    "text": "b1",
+                                    "testFkAs": {"count": 0, "data": []},
+                                },
+                                {
+                                    "text": "b4",
+                                    "testFkAs": {
+                                        "count": 4,
+                                        "data": [
+                                            {"id": a1_id, "text": "a1"},
+                                            {"id": a2_id, "text": "a2"},
+                                            {"text": "a5"},
+                                            {"text": "a6"},
+                                        ],
+                                    },
+                                },
+                            ],
+                        },
+                    },
+                }
+            }
+        }
 
-    response = client.query(testFkCCreate_gql, variables=variables).json()
-    verify_response(expected_response, response)
+        response = client.query(testFkCCreate_gql, variables=variables).json()
+        self.verify_response(response, expected_response)
 
-    c3_id = response["data"]["testFkCCreate"]["result"]["id"]
-    b4_id = response["data"]["testFkCCreate"]["result"]["testfkbSet"]["data"][1]["id"]
-    a5_id = response["data"]["testFkCCreate"]["result"]["testfkbSet"]["data"][1][
-        "testFkAs"
-    ]["data"][2]["id"]
-    a6_id = response["data"]["testFkCCreate"]["result"]["testfkbSet"]["data"][1][
-        "testFkAs"
-    ]["data"][3]["id"]
+        c3_id = response["data"]["testFkCCreate"]["result"]["id"]
+        b4_id = response["data"]["testFkCCreate"]["result"]["testfkbSet"]["data"][1]["id"]
+        a5_id = response["data"]["testFkCCreate"]["result"]["testfkbSet"]["data"][1][
+            "testFkAs"
+        ]["data"][2]["id"]
+        a6_id = response["data"]["testFkCCreate"]["result"]["testfkbSet"]["data"][1][
+            "testFkAs"
+        ]["data"][3]["id"]
 
 
 testO2oA_Fragment = """
 fragment testO2oA on TestO2oAType {
-  id
-  text
-  TestO2oB {
+id
+text
+TestO2oB {
     id
     text
     TestO2oC {
-      id
-      text
+    id
+    text
     }
-  }
+}
 }
 """
 testO2oACreate_gql = (
@@ -349,16 +347,16 @@ mutation testO2oACreate($input: TestO2oACreateInput!) {
 
 testO2oB_Fragment = """
 fragment testO2oB on TestO2oBType {
-  id
-  text
-  testO2oA {
+id
+text
+testO2oA {
     id
     text
-  }
-  TestO2oC {
+}
+TestO2oC {
     id
     text
-  }
+}
 }
 """
 testO2oBCreate_gql = (
@@ -391,16 +389,16 @@ mutation testO2oBUpdate($input: TestO2oBUpdateInput!, $where: TestO2oBWhereInput
 
 testO2oC_Fragment = """
 fragment testO2oC on TestO2oCType {
-  id
-  text
-  testo2ob {
+id
+text
+testo2ob {
     id
     text
     testO2oA {
-      id
-      text
+    id
+    text
     }
-  }
+}
 }
 """
 testO2oCCreate_gql = (
@@ -431,145 +429,145 @@ mutation testO2oCUpdate($input: TestO2oCUpdateInput!, $where: TestO2oCWhereInput
 """
 )
 
+class RelationShipOneToOneTest(GraphQLTestCase, VerifyResponseAssertionMixins):
+    def test_onetoone(self):
+        client = Client()
 
-def test_onetoone():
-    client = Client()
-
-    variables = {
-        "input": {
-            "text": "a1",
-            "TestO2oB": {
-                "create": {"text": "b1", "TestO2oC": {"create": {"text": "c1"}}}
-            },
-        }
-    }
-    expected_response = {
-        "data": {
-            "testO2oACreate": {
-                "ok": True,
-                "result": {
-                    "text": "a1",
-                    "TestO2oB": {"text": "b1", "TestO2oC": {"text": "c1"}},
+        variables = {
+            "input": {
+                "text": "a1",
+                "TestO2oB": {
+                    "create": {"text": "b1", "TestO2oC": {"create": {"text": "c1"}}}
                 },
             }
         }
-    }
-
-    response = client.query(testO2oACreate_gql, variables=variables).json()
-    verify_response(expected_response, response)
-    a1_id = response["data"]["testO2oACreate"]["result"]["id"]
-    b1_id = response["data"]["testO2oACreate"]["result"]["TestO2oB"]["id"]
-    c1_id = response["data"]["testO2oACreate"]["result"]["TestO2oB"]["TestO2oC"]["id"]
-
-    variables = {
-        "input": {
-            "text": "b2",
-            "testO2oA": {"create": {"text": "a2"}},
-            "TestO2oC": {"create": {"text": "c2"}},
-        }
-    }
-    expected_response = {
-        "data": {
-            "testO2oBCreate": {
-                "ok": True,
-                "result": {
-                    "text": "b2",
-                    "testO2oA": {"text": "a2"},
-                    "TestO2oC": {"text": "c2"},
-                },
-            }
-        }
-    }
-
-    response = client.query(testO2oBCreate_gql, variables=variables).json()
-    verify_response(expected_response, response)
-
-    b2_id = response["data"]["testO2oBCreate"]["result"]["id"]
-    a2_id = response["data"]["testO2oBCreate"]["result"]["testO2oA"]["id"]
-    c2_id = response["data"]["testO2oBCreate"]["result"]["TestO2oC"]["id"]
-
-    variables = {
-        "input": {
-            "text": "c3",
-            "testo2ob": {
-                "create": {
-                    "text": "b3",
-                    "testO2oA": {"connect": {"id": {"exact": a1_id}}},
+        expected_response = {
+            "data": {
+                "testO2oACreate": {
+                    "ok": True,
+                    "result": {
+                        "text": "a1",
+                        "TestO2oB": {"text": "b1", "TestO2oC": {"text": "c1"}},
+                    },
                 }
-            },
+            }
         }
-    }
-    expected_response = {
-        "data": {
-            "testO2oCCreate": {
-                "ok": True,
-                "result": {
-                    "text": "c3",
-                    "testo2ob": {"text": "b3", "testO2oA": {"id": a1_id, "text": "a1"}},
+
+        response = client.query(testO2oACreate_gql, variables=variables).json()
+        self.verify_response(response, expected_response)
+        a1_id = response["data"]["testO2oACreate"]["result"]["id"]
+        b1_id = response["data"]["testO2oACreate"]["result"]["TestO2oB"]["id"]
+        c1_id = response["data"]["testO2oACreate"]["result"]["TestO2oB"]["TestO2oC"]["id"]
+
+        variables = {
+            "input": {
+                "text": "b2",
+                "testO2oA": {"create": {"text": "a2"}},
+                "TestO2oC": {"create": {"text": "c2"}},
+            }
+        }
+        expected_response = {
+            "data": {
+                "testO2oBCreate": {
+                    "ok": True,
+                    "result": {
+                        "text": "b2",
+                        "testO2oA": {"text": "a2"},
+                        "TestO2oC": {"text": "c2"},
+                    },
+                }
+            }
+        }
+
+        response = client.query(testO2oBCreate_gql, variables=variables).json()
+        self.verify_response(response, expected_response)
+
+        b2_id = response["data"]["testO2oBCreate"]["result"]["id"]
+        a2_id = response["data"]["testO2oBCreate"]["result"]["testO2oA"]["id"]
+        c2_id = response["data"]["testO2oBCreate"]["result"]["TestO2oC"]["id"]
+
+        variables = {
+            "input": {
+                "text": "c3",
+                "testo2ob": {
+                    "create": {
+                        "text": "b3",
+                        "testO2oA": {"connect": {"id": {"exact": a1_id}}},
+                    }
                 },
             }
         }
-    }
-
-    response = client.query(testO2oCCreate_gql, variables=variables).json()
-    verify_response(expected_response, response)
-
-    c3_id = response["data"]["testO2oCCreate"]["result"]["id"]
-    b3_id = response["data"]["testO2oCCreate"]["result"]["testo2ob"]["id"]
-
-    variables = {
-        "where": {"id": {"exact": b3_id}},
-        "input": {
-            "text": "b3-bis",
-            "TestO2oC": {"disconnect": True},
-        },
-    }
-    expected_response = {
-        "data": {
-            "testO2oBUpdate": {
-                "ok": True,
-                "result": {"id": b3_id, "text": "b3-bis", "TestO2oC": None},
+        expected_response = {
+            "data": {
+                "testO2oCCreate": {
+                    "ok": True,
+                    "result": {
+                        "text": "c3",
+                        "testo2ob": {"text": "b3", "testO2oA": {"id": a1_id, "text": "a1"}},
+                    },
+                }
             }
         }
-    }
 
-    response = client.query(testO2oBUpdate_gql, variables=variables).json()
-    verify_response(expected_response, response)
+        response = client.query(testO2oCCreate_gql, variables=variables).json()
+        self.verify_response(response, expected_response)
 
-    variables = {
-        "where": {"id": {"exact": b2_id}},
-        "input": {
-            "text": "b2-bis",
-            "TestO2oC": {"delete": True},
-        },
-    }
-    expected_response = {
-        "data": {
-            "testO2oBUpdate": {
-                "ok": True,
-                "result": {"id": b2_id, "text": "b2-bis", "TestO2oC": None},
+        c3_id = response["data"]["testO2oCCreate"]["result"]["id"]
+        b3_id = response["data"]["testO2oCCreate"]["result"]["testo2ob"]["id"]
+
+        variables = {
+            "where": {"id": {"exact": b3_id}},
+            "input": {
+                "text": "b3-bis",
+                "TestO2oC": {"disconnect": True},
+            },
+        }
+        expected_response = {
+            "data": {
+                "testO2oBUpdate": {
+                    "ok": True,
+                    "result": {"id": b3_id, "text": "b3-bis", "TestO2oC": None},
+                }
             }
         }
-    }
 
-    response = client.query(testO2oBUpdate_gql, variables=variables).json()
-    verify_response(expected_response, response)
+        response = client.query(testO2oBUpdate_gql, variables=variables).json()
+        self.verify_response(response, expected_response)
 
-    variables = {
-        "where": {"id": {"exact": c1_id}},
-        "input": {
-            "text": "c1-bis",
-            "testo2ob": {"disconnect": True},
-        },
-    }
-    expected_response = {
-        "data": {
-            "testO2oCUpdate": {
-                "ok": True,
-                "result": {"id": c1_id, "text": "c1-bis", "testo2ob": None},
+        variables = {
+            "where": {"id": {"exact": b2_id}},
+            "input": {
+                "text": "b2-bis",
+                "TestO2oC": {"delete": True},
+            },
+        }
+        expected_response = {
+            "data": {
+                "testO2oBUpdate": {
+                    "ok": True,
+                    "result": {"id": b2_id, "text": "b2-bis", "TestO2oC": None},
+                }
             }
         }
-    }
+
+        response = client.query(testO2oBUpdate_gql, variables=variables).json()
+        self.verify_response(response, expected_response)
+
+        variables = {
+            "where": {"id": {"exact": c1_id}},
+            "input": {
+                "text": "c1-bis",
+                "testo2ob": {"disconnect": True},
+            },
+        }
+        expected_response = {
+            "data": {
+                "testO2oCUpdate": {
+                    "ok": True,
+                    "result": {"id": c1_id, "text": "c1-bis", "testo2ob": None},
+                }
+            }
+        }
 
 
 testM2mA_Fragment = """
@@ -640,214 +638,214 @@ mutation testM2mCCreate($input: TestM2mCCreateInput!) {
 """
 )
 
+class RelationShipManyToManyTest(GraphQLTestCase, VerifyResponseAssertionMixins):
+    def test_manytomany(self):
+        client = Client()
 
-def test_manytomany():
-    client = Client()
-
-    variables = {
-        "input": {
-            "text": "a1",
-            "testM2mBs": {
-                "create": [
-                    {
-                        "text": "b1",
-                        "testM2mCs": {"create": [{"text": "c1"}, {"text": "c2"}]},
-                    },
-                    {
-                        "text": "b2",
-                        "testM2mCs": {"create": [{"text": "c3"}, {"text": "c4"}]},
-                    },
-                ]
-            },
-        }
-    }
-    expected_response = {
-        "data": {
-            "testM2mACreate": {
-                "ok": True,
-                "result": {
-                    "text": "a1",
-                    "testM2mBs": {
-                        "count": 2,
-                        "data": [
-                            {
-                                "text": "b1",
-                                "testM2mCs": {
-                                    "count": 2,
-                                    "data": [{"text": "c1"}, {"text": "c2"}],
-                                },
-                            },
-                            {
-                                "text": "b2",
-                                "testM2mCs": {
-                                    "count": 2,
-                                    "data": [{"text": "c3"}, {"text": "c4"}],
-                                },
-                            },
-                        ],
-                    },
-                },
-            }
-        }
-    }
-
-    response = client.query(testM2mACreate_gql, variables=variables).json()
-    verify_response(expected_response, response)
-
-    a1_id = response["data"]["testM2mACreate"]["result"]["id"]
-    b1_id = response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][0]["id"]
-    b2_id = response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][1]["id"]
-    c1_id = response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][0][
-        "testM2mCs"
-    ]["data"][0]["id"]
-    c2_id = response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][0][
-        "testM2mCs"
-    ]["data"][1]["id"]
-    c3_id = response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][1][
-        "testM2mCs"
-    ]["data"][0]["id"]
-    c4_id = response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][1][
-        "testM2mCs"
-    ]["data"][1]["id"]
-
-    variables = {
-        "input": {
-            "text": "a2",
-            "testM2mBs": {
-                "connect": [
-                    {"id": {"exact": b1_id}},
-                    {"id": {"exact": b2_id}},
-                ],
-                "create": [
-                    {
-                        "text": "b3",
-                        "testM2mCs": {
-                            "connect": [
-                                {"id": {"exact": c1_id}},
-                                {"id": {"exact": c2_id}},
-                                {"id": {"exact": c3_id}},
-                                {"id": {"exact": c4_id}},
-                            ]
+        variables = {
+            "input": {
+                "text": "a1",
+                "testM2mBs": {
+                    "create": [
+                        {
+                            "text": "b1",
+                            "testM2mCs": {"create": [{"text": "c1"}, {"text": "c2"}]},
                         },
-                    }
-                ],
-            },
-        }
-    }
-    expected_response = {
-        "data": {
-            "testM2mACreate": {
-                "ok": True,
-                "result": {
-                    "text": "a2",
-                    "testM2mBs": {
-                        "count": 3,
-                        "data": [
-                            {
-                                "id": b1_id,
-                                "text": "b1",
-                                "testM2mCs": {
-                                    "count": 2,
-                                    "data": [
-                                        {"id": c1_id, "text": "c1"},
-                                        {"id": c2_id, "text": "c2"},
-                                    ],
-                                },
-                            },
-                            {
-                                "id": b2_id,
-                                "text": "b2",
-                                "testM2mCs": {
-                                    "count": 2,
-                                    "data": [
-                                        {"id": c3_id, "text": "c3"},
-                                        {"id": c4_id, "text": "c4"},
-                                    ],
-                                },
-                            },
-                            {
-                                "text": "b3",
-                                "testM2mCs": {
-                                    "count": 4,
-                                    "data": [
-                                        {"id": c1_id, "text": "c1"},
-                                        {"id": c2_id, "text": "c2"},
-                                        {"id": c3_id, "text": "c3"},
-                                        {"id": c4_id, "text": "c4"},
-                                    ],
-                                },
-                            },
-                        ],
-                    },
-                },
-            }
-        }
-    }
-    response = client.query(testM2mACreate_gql, variables=variables).json()
-    verify_response(expected_response, response)
-
-    a2_id = response["data"]["testM2mACreate"]["result"]["id"]
-    b3_id = response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][2]["id"]
-
-    variables = {
-        "input": {
-            "text": "c5",
-            "testm2mbSet": {
-                "create": [
-                    {
-                        "text": "b4",
-                        "testM2mAs": {
-                            "create": [{"text": "a3"}],
-                            "connect": [{"id": {"exact": a1_id}}],
+                        {
+                            "text": "b2",
+                            "testM2mCs": {"create": [{"text": "c3"}, {"text": "c4"}]},
                         },
-                    }
-                ],
-                "connect": [{"id": {"exact": b1_id}}],
-            },
-        }
-    }
-    expected_response = {
-        "data": {
-            "testM2mCCreate": {
-                "ok": True,
-                "result": {
-                    "text": "c5",
-                    "testm2mbSet": {
-                        "count": 2,
-                        "data": [
-                            {
-                                "id": b1_id,
-                                "text": "b1",
-                                "testM2mAs": {
-                                    "count": 2,
-                                    "data": [
-                                        {"id": a1_id, "text": "a1"},
-                                        {"id": a2_id, "text": "a2"},
-                                    ],
-                                },
-                            },
-                            {
-                                "text": "b4",
-                                "testM2mAs": {
-                                    "count": 2,
-                                    "data": [
-                                        {"id": a1_id, "text": "a1"},
-                                        {"text": "a3"},
-                                    ],
-                                },
-                            },
-                        ],
-                    },
+                    ]
                 },
             }
         }
-    }
+        expected_response = {
+            "data": {
+                "testM2mACreate": {
+                    "ok": True,
+                    "result": {
+                        "text": "a1",
+                        "testM2mBs": {
+                            "count": 2,
+                            "data": [
+                                {
+                                    "text": "b1",
+                                    "testM2mCs": {
+                                        "count": 2,
+                                        "data": [{"text": "c1"}, {"text": "c2"}],
+                                    },
+                                },
+                                {
+                                    "text": "b2",
+                                    "testM2mCs": {
+                                        "count": 2,
+                                        "data": [{"text": "c3"}, {"text": "c4"}],
+                                    },
+                                },
+                            ],
+                        },
+                    },
+                }
+            }
+        }
 
-    response = client.query(testM2mCCreate_gql, variables=variables).json()
-    verify_response(expected_response, response)
+        response = client.query(testM2mACreate_gql, variables=variables).json()
+        self.verify_response(response, expected_response)
 
-    c5_id = response["data"]["testM2mCCreate"]["result"]["id"]
-    b4_id = response["data"]["testM2mCCreate"]["result"]["testm2mbSet"]["data"][1]["id"]
-    a3_id = response["data"]["testM2mCCreate"]["result"]["testm2mbSet"]["data"][1][
-        "testM2mAs"
-    ]["data"][1]["id"]
+        a1_id = response["data"]["testM2mACreate"]["result"]["id"]
+        b1_id = response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][0]["id"]
+        b2_id = response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][1]["id"]
+        c1_id = response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][0][
+            "testM2mCs"
+        ]["data"][0]["id"]
+        c2_id = response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][0][
+            "testM2mCs"
+        ]["data"][1]["id"]
+        c3_id = response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][1][
+            "testM2mCs"
+        ]["data"][0]["id"]
+        c4_id = response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][1][
+            "testM2mCs"
+        ]["data"][1]["id"]
+
+        variables = {
+            "input": {
+                "text": "a2",
+                "testM2mBs": {
+                    "connect": [
+                        {"id": {"exact": b1_id}},
+                        {"id": {"exact": b2_id}},
+                    ],
+                    "create": [
+                        {
+                            "text": "b3",
+                            "testM2mCs": {
+                                "connect": [
+                                    {"id": {"exact": c1_id}},
+                                    {"id": {"exact": c2_id}},
+                                    {"id": {"exact": c3_id}},
+                                    {"id": {"exact": c4_id}},
+                                ]
+                            },
+                        }
+                    ],
+                },
+            }
+        }
+        expected_response = {
+            "data": {
+                "testM2mACreate": {
+                    "ok": True,
+                    "result": {
+                        "text": "a2",
+                        "testM2mBs": {
+                            "count": 3,
+                            "data": [
+                                {
+                                    "id": b1_id,
+                                    "text": "b1",
+                                    "testM2mCs": {
+                                        "count": 2,
+                                        "data": [
+                                            {"id": c1_id, "text": "c1"},
+                                            {"id": c2_id, "text": "c2"},
+                                        ],
+                                    },
+                                },
+                                {
+                                    "id": b2_id,
+                                    "text": "b2",
+                                    "testM2mCs": {
+                                        "count": 2,
+                                        "data": [
+                                            {"id": c3_id, "text": "c3"},
+                                            {"id": c4_id, "text": "c4"},
+                                        ],
+                                    },
+                                },
+                                {
+                                    "text": "b3",
+                                    "testM2mCs": {
+                                        "count": 4,
+                                        "data": [
+                                            {"id": c1_id, "text": "c1"},
+                                            {"id": c2_id, "text": "c2"},
+                                            {"id": c3_id, "text": "c3"},
+                                            {"id": c4_id, "text": "c4"},
+                                        ],
+                                    },
+                                },
+                            ],
+                        },
+                    },
+                }
+            }
+        }
+        response = client.query(testM2mACreate_gql, variables=variables).json()
+        self.verify_response(response, expected_response)
+
+        a2_id = response["data"]["testM2mACreate"]["result"]["id"]
+        b3_id = response["data"]["testM2mACreate"]["result"]["testM2mBs"]["data"][2]["id"]
+
+        variables = {
+            "input": {
+                "text": "c5",
+                "testm2mbSet": {
+                    "create": [
+                        {
+                            "text": "b4",
+                            "testM2mAs": {
+                                "create": [{"text": "a3"}],
+                                "connect": [{"id": {"exact": a1_id}}],
+                            },
+                        }
+                    ],
+                    "connect": [{"id": {"exact": b1_id}}],
+                },
+            }
+        }
+        expected_response = {
+            "data": {
+                "testM2mCCreate": {
+                    "ok": True,
+                    "result": {
+                        "text": "c5",
+                        "testm2mbSet": {
+                            "count": 2,
+                            "data": [
+                                {
+                                    "id": b1_id,
+                                    "text": "b1",
+                                    "testM2mAs": {
+                                        "count": 2,
+                                        "data": [
+                                            {"id": a1_id, "text": "a1"},
+                                            {"id": a2_id, "text": "a2"},
+                                        ],
+                                    },
+                                },
+                                {
+                                    "text": "b4",
+                                    "testM2mAs": {
+                                        "count": 2,
+                                        "data": [
+                                            {"id": a1_id, "text": "a1"},
+                                            {"text": "a3"},
+                                        ],
+                                    },
+                                },
+                            ],
+                        },
+                    },
+                }
+            }
+        }
+
+        response = client.query(testM2mCCreate_gql, variables=variables).json()
+        self.verify_response(response, expected_response)
+
+        c5_id = response["data"]["testM2mCCreate"]["result"]["id"]
+        b4_id = response["data"]["testM2mCCreate"]["result"]["testm2mbSet"]["data"][1]["id"]
+        a3_id = response["data"]["testM2mCCreate"]["result"]["testm2mbSet"]["data"][1][
+            "testM2mAs"
+        ]["data"][1]["id"]

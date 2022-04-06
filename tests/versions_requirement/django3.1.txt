@@ -1,4 +1,0 @@
-django==3.1.6
-graphene==2.1.8
-graphene-django==2.15.0
-graphene-subscriptions==1.0.2
