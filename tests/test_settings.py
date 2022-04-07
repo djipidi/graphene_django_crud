@@ -1,8 +1,12 @@
 from pathlib import Path
 
+DEBUG=True
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = "fake-key"
+
+ALLOWED_HOSTS=["*"]
 
 INSTALLED_APPS = (
     "django.contrib.auth",
@@ -13,6 +17,13 @@ INSTALLED_APPS = (
     "graphene_django",
     "tests",
 )
+TEMPLATES=[
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "APP_DIRS": True,
+        "OPTIONS": {"debug": True},
+    }
+]
 
 DATABASES={
     "default": {"ENGINE": "django.db.backends.sqlite3", "NAME": ":memory:"}
@@ -28,6 +39,7 @@ GRAPHENE = {
 
 MEDIA_ROOT = str(BASE_DIR / "media")
 MEDIA_URL = "/media/"
+STATIC_URL="/static/"
 
 ROOT_URLCONF = "tests.urls"
 
