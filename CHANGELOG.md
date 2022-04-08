@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## \[Unreleased\]
+
+### Added
+
+- Nested updates [\#7](https://github.com/djipidi/graphene_django_crud/issues/7)
+
 ## \[1.3.4\] - 2022-02-11
 
 ### Fixed
