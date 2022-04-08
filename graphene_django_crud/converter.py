@@ -52,6 +52,17 @@ NAME_PATTERN = r"^[_a-zA-Z][_a-zA-Z0-9]*$"
 COMPILED_NAME_PATTERN = re.compile(NAME_PATTERN)
 
 
+def make_input_type(name, definition, registry=None):
+    ret_type = type(
+        name,
+        (graphene.InputObjectType,),
+        definition,
+    )
+
+    registry.register_input(name, ret_type)
+    return ret_type
+
+
 def convert_model_to_input_type(
     model, input_flag="create", registry=None, exclude=None, only=None
 ):
@@ -170,8 +181,14 @@ def convert_model_to_input_type(
         )
 
     elif input_flag == "update_nested_many":
+
         items["create"] = graphene.List(
             convert_model_to_input_type(model, input_flag="create", registry=registry)
+        )
+        items["update"] = graphene.List(
+            convert_model_to_input_type(
+                model, input_flag="update_nested_update", registry=registry
+            )
         )
         items["delete"] = graphene.List(
             convert_model_to_input_type(model, input_flag="where", registry=registry)
@@ -195,11 +212,22 @@ def convert_model_to_input_type(
         items["create"] = graphene.Field(
             convert_model_to_input_type(model, input_flag="create", registry=registry)
         )
+        items["update"] = graphene.Field(
+            convert_model_to_input_type(model, input_flag="update", registry=registry)
+        )
         items["delete"] = Boolean()
         items["connect"] = graphene.Field(
             convert_model_to_input_type(model, input_flag="where", registry=registry)
         )
         items["disconnect"] = Boolean()
+
+    elif input_flag == "update_nested_update":
+        items["where"] = graphene.Field(
+            convert_model_to_input_type(model, input_flag="where", registry=registry)
+        )
+        items["input"] = graphene.Field(
+            convert_model_to_input_type(model, input_flag="update", registry=registry)
+        )
 
     else:
         if input_flag == "where":
@@ -220,13 +248,8 @@ def convert_model_to_input_type(
             items["AND"] = graphene.Dynamic(embeded_list_fields)
             items["NOT"] = graphene.Dynamic(embeded_field)
 
-    ret_type = type(
-        input_type_name,
-        (graphene.InputObjectType,),
-        items,
-    )
+    ret_type = make_input_type(input_type_name, items, registry=registry)
 
-    registry.register_input(input_type_name, ret_type)
     return ret_type
 
 

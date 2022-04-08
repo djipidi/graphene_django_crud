@@ -542,6 +542,22 @@ class DjangoCRUDObjectType(graphene.ObjectType):
                 addItems.append(related_instance)
             except ValidationError as e:
                 raise validation_error_with_suffix(e, key + ".connect." + str(i))
+        for i, update_nested_update_input in enumerate(value.get("update", [])):
+            try:
+                related_instance = (
+                    q.filter(where_input_to_Q(update_nested_update_input["where"]))
+                    .distinct()
+                    .get()
+                )
+                related_type._update(
+                    parent,
+                    info,
+                    {},
+                    update_nested_update_input["input"],
+                    instance_pk=related_instance.pk,
+                )
+            except ValidationError as e:
+                raise validation_error_with_suffix(e, key + ".update")
         for i, disconnect_input in enumerate(value.get("disconnect", [])):
             try:
                 related_instance = (
@@ -574,6 +590,16 @@ class DjangoCRUDObjectType(graphene.ObjectType):
                 )
             except ValidationError as e:
                 raise validation_error_with_suffix(e, key + ".create." + str(i))
+        for i, update_nested_update_input in enumerate(value.get("update", [])):
+            try:
+                related_type._update(
+                    parent,
+                    info,
+                    update_nested_update_input["where"],
+                    update_nested_update_input["input"],
+                )
+            except ValidationError as e:
+                raise validation_error_with_suffix(e, key + ".update")
         for i, connect_input in enumerate(value.get("connect", [])):
             try:
                 related_type._update(
@@ -620,6 +646,14 @@ class DjangoCRUDObjectType(graphene.ObjectType):
                 )
             except ValidationError as e:
                 raise validation_error_with_suffix(e, key + ".create")
+        elif "update" in value.keys():
+            try:
+                related_instance = getattr(instance, key)
+                related_type._update(
+                    parent, info, {}, value["update"], instance_pk=related_instance.pk
+                )
+            except ValidationError as e:
+                raise validation_error_with_suffix(e, key + ".update")
         elif "connect" in value.keys():
             try:
                 related_type._update(
@@ -665,6 +699,14 @@ class DjangoCRUDObjectType(graphene.ObjectType):
             except ValidationError as e:
                 raise validation_error_with_suffix(e, key + ".create")
             instance.__setattr__(key, related_instance)
+        elif "update" in value.keys():
+            try:
+                related_instance = getattr(instance, key)
+                related_type._update(
+                    parent, info, {}, value["update"], instance_pk=related_instance.pk
+                )
+            except ValidationError as e:
+                raise validation_error_with_suffix(e, key + ".update")
         elif "connect" in value.keys():
             related_instance = (
                 related_type.get_queryset(parent, info)
