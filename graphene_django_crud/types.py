@@ -805,7 +805,7 @@ class DjangoCRUDObjectType(graphene.ObjectType):
         return model == cls._meta.model
 
     @classmethod
-    def WhereInputType(cls, only=None, exclude=None, *args, **kwargs):
+    def WhereInputType(cls, only="__all__", exclude=[], *args, **kwargs):
         return convert_model_to_input_type(
             cls._meta.model,
             input_flag="where",
@@ -815,7 +815,7 @@ class DjangoCRUDObjectType(graphene.ObjectType):
         )
 
     @classmethod
-    def OrderByInputType(cls, only=None, exclude=None, *args, **kwargs):
+    def OrderByInputType(cls, only="__all__", exclude=[], *args, **kwargs):
         return convert_model_to_input_type(
             cls._meta.model,
             input_flag="order_by",
@@ -825,7 +825,7 @@ class DjangoCRUDObjectType(graphene.ObjectType):
         )
 
     @classmethod
-    def CreateInputType(cls, only=None, exclude=None, *args, **kwargs):
+    def CreateInputType(cls, only="__all__", exclude=[], *args, **kwargs):
         return convert_model_to_input_type(
             cls._meta.model,
             input_flag="create",
@@ -835,7 +835,7 @@ class DjangoCRUDObjectType(graphene.ObjectType):
         )
 
     @classmethod
-    def UpdateInputType(cls, only=None, exclude=None, *args, **kwargs):
+    def UpdateInputType(cls, only="__all__", exclude=[], *args, **kwargs):
         return convert_model_to_input_type(
             cls._meta.model,
             input_flag="update",

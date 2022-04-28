@@ -29,7 +29,7 @@ from graphene_django.utils import import_single_dispatch
 from .base_types import Binary, OrderEnum, OrderStringEnum, File
 from .fields import DjangoListField, DjangoConnectionField
 from .settings import gdc_settings
-from .utils import is_required, get_model_fields, get_related_model
+from .utils import is_required, get_model_fields, get_related_model, is_include
 
 from .input_types import (
     BooleanFilter,
@@ -64,111 +64,55 @@ def make_input_type(name, definition, registry=None):
 
 
 def convert_model_to_input_type(
-    model, input_flag="create", registry=None, exclude=None, only=None
+    model, input_flag="create", registry=None, exclude=[], only="__all__"
 ):
 
     djangoType = registry.get_type_for_model(model)
     for_queryset = "order_by" in input_flag or "where" in input_flag
+
+    model_fields = get_model_fields(model, for_queryset=for_queryset)
+
     if "create" in input_flag or "update" in input_flag:
-        model_fields = get_model_fields(
-            model,
-            only_fields=djangoType._meta.input_only_fields,
-            exclude_fields=djangoType._meta.input_exclude_fields,
+        model_fields = filter(
+            lambda field : is_include(field[0], djangoType._meta.input_only_fields, djangoType._meta.input_exclude_fields),
+            model_fields
         )
     else:
-        model_fields = get_model_fields(
-            model,
-            only_fields=djangoType._meta.only_fields,
-            exclude_fields=djangoType._meta.exclude_fields,
-            for_queryset=for_queryset,
+        model_fields = filter(
+            lambda field : is_include(field[0], djangoType._meta.only_fields, djangoType._meta.exclude_fields),
+            model_fields
         )
-
-    if "where" in input_flag:
-        if (
-            djangoType._meta.where_only_fields != "__all__"
-            or len(djangoType._meta.where_exclude_fields) > 0
-        ):
-            assert not (
-                djangoType._meta.where_only_fields != "__all__"
-                and len(djangoType._meta.where_exclude_fields) > 0
-            ), "Only one of where_only_fields or where_exclude_fields parameter can be declared"
-            if djangoType._meta.where_only_fields != "__all__":
-                exclude_fields = [
-                    name
-                    for name, field in model_fields
-                    if name not in djangoType._meta.where_only_fields
-                ]
-            else:
-                exclude_fields = [
-                    name
-                    for name, field in model_fields
-                    if name in djangoType._meta.where_exclude_fields
-                ]
-            assert (
-                not "id" in exclude_fields
-            ), "the id field is required for whereInputType"
-            model_fields = [
-                (name, field)
-                for name, field in model_fields
-                if name not in exclude_fields
-            ]
-    elif "order_by" in input_flag:
-        if (
-            djangoType._meta.order_by_only_fields != "__all__"
-            or len(djangoType._meta.order_by_exclude_fields) > 0
-        ):
-            assert not (
-                djangoType._meta.order_by_only_fields != "__all__"
-                and len(djangoType._meta.order_by_exclude_fields) > 0
-            ), "Only one of order_by_only_fields or order_by_exclude_fields parameter can be declared"
-            if djangoType._meta.order_by_only_fields != "__all__":
-                exclude_fields = [
-                    name
-                    for name, field in model_fields
-                    if name not in djangoType._meta.order_by_only_fields
-                ]
-            else:
-                exclude_fields = [
-                    name
-                    for name, field in model_fields
-                    if name in djangoType._meta.order_by_exclude_fields
-                ]
-            model_fields = [
-                (name, field)
-                for name, field in model_fields
-                if name not in exclude_fields
-            ]
+        if "where" in input_flag:
+            model_fields = filter(
+                lambda field : is_include(field[0], djangoType._meta.where_only_fields, djangoType._meta.where_exclude_fields),
+                model_fields
+            )
+        if "order_by" in input_flag:
+            model_fields = filter(
+                lambda field : is_include(field[0], djangoType._meta.order_by_only_fields, djangoType._meta.order_by_exclude_fields),
+                model_fields
+            )
 
     without = ""
-    if exclude is not None or only is not None:
-        assert not (
-            exclude is not None and only is not None
-        ), "Only one of only or exclude parameter can be declared"
-        if only is not None:
-            exclude_fields = [name for name, field in model_fields if name not in only]
-        elif exclude is not None:
-            exclude_fields = [name for name, field in model_fields if name in exclude]
-        model_fields = [
-            (name, field) for name, field in model_fields if name not in exclude_fields
-        ]
+    if not (exclude == [] and only == "__all__"):
+        it = model_fields
+        model_fields = []
+        exclude_fields = []
+        for name, field in it:
+            if not is_include(name, only, exclude):
+                exclude_fields.append(name)
+            else:
+                model_fields.append((name, field))
         exclude_fields.sort()
         without = "without_" + "_".join(exclude_fields) + "_"
+    else:
+        model_fields = list(model_fields)
 
     input_type_name = "{}_{}_{}input".format(model.__name__, input_flag, without)
     input_type_name = to_camel_case(input_type_name)
     input_type = registry.get_type_for_input(input_type_name)
-    if input_type:
+    if input_type is not None:
         return input_type
-
-    def embeded_list_fields():
-        return graphene.List(
-            convert_model_to_input_type(model, input_flag="where", registry=registry)
-        )
-
-    def embeded_field():
-        return graphene.Field(
-            convert_model_to_input_type(model, input_flag="where", registry=registry)
-        )
 
     items = OrderedDict()
 
@@ -231,7 +175,22 @@ def convert_model_to_input_type(
 
     else:
         if input_flag == "where":
+
+            def embeded_list_fields():
+                return graphene.List(
+                    convert_model_to_input_type(model, input_flag="where", registry=registry)
+                )
+
+            def embeded_field():
+                return graphene.Field(
+                    convert_model_to_input_type(model, input_flag="where", registry=registry)
+                )
+
             items["id"] = IdFilter()
+            items["OR"] = graphene.Dynamic(embeded_list_fields)
+            items["AND"] = graphene.Dynamic(embeded_list_fields)
+            items["NOT"] = graphene.Dynamic(embeded_field)
+
         for name, field in model_fields:
             if name == "id" and input_flag in ["create", "update", "where"]:
                 continue
@@ -240,13 +199,11 @@ def convert_model_to_input_type(
                 field, input_flag=input_flag, registry=registry
             )
             items[name] = converted
+
         if "create" in input_flag or "update" in input_flag:
             for name, field in djangoType._meta.input_extend_fields:
                 items[name] = field
-        if input_flag == "where":
-            items["OR"] = graphene.Dynamic(embeded_list_fields)
-            items["AND"] = graphene.Dynamic(embeded_list_fields)
-            items["NOT"] = graphene.Dynamic(embeded_field)
+
 
     ret_type = make_input_type(input_type_name, items, registry=registry)
 
