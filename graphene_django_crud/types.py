@@ -78,6 +78,14 @@ class DjangoCRUDObjectTypeOptions(ObjectTypeOptions):
     input_exclude_fields = ()
     input_extend_fields = ()
 
+    create_only_fields = "__all__"
+    create_exclude_fields = ()
+    create_extend_fields = ()
+
+    update_only_fields = "__all__"
+    update_exclude_fields = ()
+    update_extend_fields = ()
+
     where_only_fields = "__all__"
     where_exclude_fields = ()
 
@@ -109,6 +117,12 @@ class DjangoCRUDObjectType(graphene.ObjectType):
         input_only_fields="__all__",
         input_exclude_fields=(),
         input_extend_fields=(),
+        create_only_fields="__all__",
+        create_exclude_fields=(),
+        create_extend_fields=(),
+        update_only_fields="__all__",
+        update_exclude_fields=(),
+        update_extend_fields=(),
         where_only_fields="__all__",
         where_exclude_fields=(),
         order_by_only_fields="__all__",
@@ -174,6 +188,14 @@ class DjangoCRUDObjectType(graphene.ObjectType):
         _meta.input_only_fields = input_only_fields
         _meta.input_exclude_fields = input_exclude_fields
         _meta.input_extend_fields = input_extend_fields
+
+        _meta.create_only_fields = create_only_fields
+        _meta.create_exclude_fields = create_exclude_fields
+        _meta.create_extend_fields = create_extend_fields
+
+        _meta.update_only_fields = update_only_fields
+        _meta.update_exclude_fields = update_exclude_fields
+        _meta.update_extend_fields = update_extend_fields
 
         _meta.where_only_fields = where_only_fields
         _meta.where_exclude_fields = where_exclude_fields

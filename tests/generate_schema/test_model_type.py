@@ -3,7 +3,6 @@ from tests.utils import SchemaTestCase
 
 
 class DjangoCRUDObjectTypeSchemaTest(SchemaTestCase):
-
     def test_model_type(self):
 
         fields_to_test = [
@@ -1103,3 +1102,53 @@ class DjangoCRUDObjectTypeSchemaTest(SchemaTestCase):
         self.runtest_fields_of_type(
             "ModelTestGenerateSchemaAUpdateInput", fields_to_test, input_type=True
         )
+
+    def test_only_exclude_extend_fields_options(self):
+        with self.subTest():
+            self.assertTypeIsComposeOfFields(
+                "ModelTestGenerateSchemaCCreateInput",
+                ["createExtend", "createUpdateOnly", "createOnly", "allInput"],
+                input_type=True,
+            )
+        with self.subTest():
+            self.assertTypeIsComposeOfFields(
+                "ModelTestGenerateSchemaCUpdateInput",
+                ["updateExtend", "createUpdateOnly", "updateOnly", "allInput"],
+                input_type=True,
+            )
+        with self.subTest():
+            self.assertTypeIsComposeOfFields(
+                "ModelTestGenerateSchemaCWhereInput",
+                ["id", "OR", "AND", "NOT", "whereOnly", "allInput"],
+                input_type=True,
+            )
+        with self.subTest():
+            self.assertTypeIsComposeOfFields(
+                "ModelTestGenerateSchemaCOrderByInput",
+                ["orderByOnly", "allInput"],
+                input_type=True,
+            )
+        with self.subTest():
+            self.assertTypeIsComposeOfFields(
+                "ModelTestGenerateSchemaDCreateInput",
+                ["createExtend", "createUpdateOnly", "createOnly", "allInput"],
+                input_type=True,
+            )
+        with self.subTest():
+            self.assertTypeIsComposeOfFields(
+                "ModelTestGenerateSchemaDUpdateInput",
+                ["updateExtend", "createUpdateOnly", "updateOnly", "allInput"],
+                input_type=True,
+            )
+        with self.subTest():
+            self.assertTypeIsComposeOfFields(
+                "ModelTestGenerateSchemaDWhereInput",
+                ["id", "OR", "AND", "NOT", "whereOnly", "allInput"],
+                input_type=True,
+            )
+        with self.subTest():
+            self.assertTypeIsComposeOfFields(
+                "ModelTestGenerateSchemaDOrderByInput",
+                ["id", "orderByOnly", "allInput"],
+                input_type=True,
+            )

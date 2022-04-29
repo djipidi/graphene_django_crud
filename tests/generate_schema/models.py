@@ -65,3 +65,23 @@ class ModelTestGenerateSchemaB(models.Model):
     manytomany_field = models.ManyToManyField(
         "ModelTestGenerateSchemaA", related_name="many_to_many_B_related"
     )
+
+
+class ModelTestGenerateSchemaC(models.Model):
+    create_update_only = models.CharField(max_length=5)
+    create_only = models.CharField(max_length=5)
+    update_only = models.CharField(max_length=5)
+    where_only = models.CharField(max_length=5)
+    order_by_only = models.CharField(max_length=5)
+    all_input = models.CharField(max_length=5)
+    all_exclude = models.CharField(max_length=5)
+
+
+class ModelTestGenerateSchemaD(models.Model):
+    create_update_only = models.CharField(max_length=5)
+    create_only = models.CharField(max_length=5)
+    update_only = models.CharField(max_length=5)
+    where_only = models.CharField(max_length=5)
+    order_by_only = models.CharField(max_length=5)
+    all_input = models.CharField(max_length=5)
+    all_exclude = models.CharField(max_length=5)

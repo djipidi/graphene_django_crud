@@ -6,31 +6,40 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Nested updates [\#7](https://github.com/djipidi/graphene_django_crud/issues/7)
+- Nested updates [#7](https://github.com/djipidi/graphene_django_crud/issues/7)
+- create_only_fields, create_exclude_fields, create_extend_fields options in
+  DjangoCRUDObjectType
+- update_only_fields, update_exclude_fields, update_extend_fields options in
+  DjangoCRUDObjectType
 
 ## \[1.3.4\] - 2022-02-11
 
 ### Fixed
 
-- Cryptic "not found" error if result not present in GraphQL [\#8](https://github.com/djipidi/graphene_django_crud/issues/8)
+- Cryptic "not found" error if result not present in GraphQL
+  [#8](https://github.com/djipidi/graphene_django_crud/issues/8)
 
 ## \[1.3.3\] - 2022-01-18
 
 ### Added
 
-- add a setting that enables / disables converting fields with choices to enum fields
+- add a setting that enables / disables converting fields with choices to enum
+  fields
 
 ## \[1.3.2\] - 2021-10-04
 
 ### Fixed
 
-- Field Model.field cannot be both deferred and traversed using select_related at the same time [\#5](https://github.com/djipidi/graphene_django_crud/issues/5)
+- Field Model.field cannot be both deferred and traversed using select_related
+  at the same time
+  [#5](https://github.com/djipidi/graphene_django_crud/issues/5)
 
 ## \[1.3.1\] - 2021-08-15
 
 ### Fixed
 
-- Allow subclass of DjangoCRUDObjectType [\#3](https://github.com/djipidi/graphene_django_crud/issues/3)
+- Allow subclass of DjangoCRUDObjectType
+  [#3](https://github.com/djipidi/graphene_django_crud/issues/3)
 
 ## \[1.3.0\] - 2021-06-21
 

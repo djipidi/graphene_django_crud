@@ -33,6 +33,8 @@ django orm into a graphql API with the following features:
       - [max_limit](#max_limit)
       - [only_fields / exclude_fields](#only_fields--exclude_fields)
       - [input_only_fields / input_exclude_fields](#input_only_fields--input_exclude_fields)
+      - [create_only_fields / create_exclude_fields](#create_only_fields--create_exclude_fields)
+      - [update_only_fields / update_exclude_fields](#update_only_fields--update_exclude_fields)
       - [input_extend_fields](#input_extend_fields)
       - [where_only_fields / where_exclude_fields](#where_only_fields--where_exclude_fields)
       - [order_by_only_fields / order_by_exclude_fields](#order_by_only_fields--order_by_exclude_fields)
@@ -747,6 +749,16 @@ parameters can be declared.
 #### input_only_fields / input_exclude_fields
 
 Tuple of model fields to include/exclude in graphql create and update inputs
+type. Only one of the two parameters can be declared.
+
+#### create_only_fields / create_exclude_fields
+
+Tuple of model fields to include/exclude in graphql create inputs
+type. Only one of the two parameters can be declared.
+
+#### update_only_fields / update_exclude_fields
+
+Tuple of model fields to include/exclude in graphql update inputs
 type. Only one of the two parameters can be declared.
 
 #### input_extend_fields

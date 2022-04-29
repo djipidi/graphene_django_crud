@@ -75,7 +75,6 @@ class SchemaTestCase(GraphQLTestCase):
     def get_field_by_name(self, type, name, input_field=False):
         fields_key = "inputFields" if input_field else "fields"
         return next(filter(lambda field: field["name"] == name, type[fields_key]))
-        self.assertAlmostEqual
 
     def assertFieldEqual(self, type_name, field_name, field_meta, input_type=False):
         gql_type = self.get_type(type_name)
@@ -90,3 +89,13 @@ class SchemaTestCase(GraphQLTestCase):
                     gql_type, ref_field["name"], input_field=input_type
                 )
                 self.assertDictEqual(field, ref_field)
+
+    def assertTypeIsComposeOfFields(self, type_name, field_names, input_type=False):
+        fields_key = "inputFields" if input_type else "fields"
+        gql_type = self.get_type(type_name)
+        self.assertEqual(len(field_names),len(gql_type[fields_key]))
+        for field in gql_type[fields_key]:
+            self.assertIn(field["name"], field_names)
+
+
+

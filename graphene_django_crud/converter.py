@@ -77,6 +77,16 @@ def convert_model_to_input_type(
             lambda field : is_include(field[0], djangoType._meta.input_only_fields, djangoType._meta.input_exclude_fields),
             model_fields
         )
+        if "create" in input_flag:
+            model_fields = filter(
+                lambda field : is_include(field[0], djangoType._meta.create_only_fields, djangoType._meta.create_exclude_fields),
+                model_fields
+            )
+        elif "update" in input_flag:
+            model_fields = filter(
+                lambda field : is_include(field[0], djangoType._meta.update_only_fields, djangoType._meta.update_exclude_fields),
+                model_fields
+            )
     else:
         model_fields = filter(
             lambda field : is_include(field[0], djangoType._meta.only_fields, djangoType._meta.exclude_fields),
@@ -94,7 +104,7 @@ def convert_model_to_input_type(
             )
 
     without = ""
-    if not (exclude == [] and only == "__all__"):
+    if not (len(exclude) == 0 and only == "__all__"):
         it = model_fields
         model_fields = []
         exclude_fields = []
@@ -203,7 +213,12 @@ def convert_model_to_input_type(
         if "create" in input_flag or "update" in input_flag:
             for name, field in djangoType._meta.input_extend_fields:
                 items[name] = field
-
+            if "create" in input_flag:
+                for name, field in djangoType._meta.create_extend_fields:
+                    items[name] = field
+            elif "update" in input_flag:
+                for name, field in djangoType._meta.update_extend_fields:
+                    items[name] = field
 
     ret_type = make_input_type(input_type_name, items, registry=registry)
 
