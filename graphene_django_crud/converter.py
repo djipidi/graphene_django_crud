@@ -156,7 +156,7 @@ def convert_model_to_input_type(
 
     elif input_flag == "create_nested":
         items["create"] = graphene.Field(
-            convert_model_to_input_type(model, input_flag="create", registry=registry)
+            convert_model_to_input_type(model, input_flag="create", exclude=exclude, registry=registry)
         )
         items["connect"] = graphene.Field(
             convert_model_to_input_type(model, input_flag="where", registry=registry)
@@ -164,7 +164,7 @@ def convert_model_to_input_type(
 
     elif input_flag == "update_nested":
         items["create"] = graphene.Field(
-            convert_model_to_input_type(model, input_flag="create", registry=registry)
+            convert_model_to_input_type(model, input_flag="create", exclude=exclude, registry=registry)
         )
         items["update"] = graphene.Field(
             convert_model_to_input_type(model, input_flag="update", registry=registry)

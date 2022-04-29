@@ -1103,6 +1103,38 @@ class DjangoCRUDObjectTypeSchemaTest(SchemaTestCase):
             "ModelTestGenerateSchemaAUpdateInput", fields_to_test, input_type=True
         )
 
+    def test_nested_create(self):
+
+        fields_to_test = [
+            {
+                "name": "create",
+                "type": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "ModelTestGenerateSchemaBCreateWithoutOneToOneFieldInput",
+                    "ofType": None
+                }
+            },
+            {
+                "name": "connect",
+                "type": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "ModelTestGenerateSchemaBWhereInput",
+                    "ofType": None
+                }
+            }
+        ]
+        self.runtest_fields_of_type(
+            "ModelTestGenerateSchemaBCreateNestedWithoutOneToOneFieldInput", fields_to_test, input_type=True
+        )
+
+    def test_without(self):
+
+        self.assertTypeIsComposeOfFields(
+            "ModelTestGenerateSchemaBCreateWithoutOneToOneFieldInput",
+            ["extend", "foreignKeyField", "manytomanyField"],
+            input_type=True,
+        )
+
     def test_only_exclude_extend_fields_options(self):
         with self.subTest():
             self.assertTypeIsComposeOfFields(

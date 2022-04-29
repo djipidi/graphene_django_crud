@@ -12,6 +12,10 @@ All notable changes to this project will be documented in this file.
 - update_only_fields, update_exclude_fields, update_extend_fields options in
   DjangoCRUDObjectType
 
+### Fixed
+
+- Invalid nested_create, nested_update input if parent field is exclude
+
 ## \[1.3.4\] - 2022-02-11
 
 ### Fixed
