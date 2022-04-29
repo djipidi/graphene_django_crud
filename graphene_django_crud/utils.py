@@ -141,21 +141,24 @@ def get_model_fields(
         fields = []
 
     for name, field in all_fields:
-        is_include = False
         if str(name).endswith("+"):
             continue
+        if not is_include(name, only_fields, exclude_fields):
+            continue
 
-        if only_fields == "__all__" and name not in exclude_fields:
-            is_include = True
-        elif name in only_fields:
-            is_include = True
+        if to_dict:
+            fields[name] = field
+        else:
+            fields.append((name, field))
 
-        if is_include:
-            if to_dict:
-                fields[name] = field
-            else:
-                fields.append((name, field))
     return fields
+
+def is_include(name, only_fields, exclude_fields):
+        if only_fields == "__all__" and name not in exclude_fields:
+            return True
+        elif name in only_fields:
+            return True
+        return False
 
 
 def is_required(field):
