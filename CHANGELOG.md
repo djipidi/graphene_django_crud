@@ -11,6 +11,9 @@ All notable changes to this project will be documented in this file.
   DjangoCRUDObjectType
 - update_only_fields, update_exclude_fields, update_extend_fields options in
   DjangoCRUDObjectType
+- create_mutation, update_mutation, delete_mutation options in
+  DjangoCRUDObjectType to enable/disable nested mutation
+  [#10](https://github.com/djipidi/graphene_django_crud/issues/10)
 
 ### Fixed
 

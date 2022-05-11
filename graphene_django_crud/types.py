@@ -92,6 +92,10 @@ class DjangoCRUDObjectTypeOptions(ObjectTypeOptions):
     order_by_only_fields = "__all__"
     order_by_exclude_fields = ()
 
+    create_mutation = True
+    update_mutation = True
+    delete_mutation = True
+
     validator = True
     validator_exclude = None
     validator_validate_unique = True
@@ -127,6 +131,9 @@ class DjangoCRUDObjectType(graphene.ObjectType):
         where_exclude_fields=(),
         order_by_only_fields="__all__",
         order_by_exclude_fields=(),
+        create_mutation=True,
+        update_mutation=True,
+        delete_mutation=True,
         validator=True,
         validator_exclude=None,
         validator_validate_unique=True,
@@ -202,6 +209,10 @@ class DjangoCRUDObjectType(graphene.ObjectType):
 
         _meta.order_by_only_fields = order_by_only_fields
         _meta.order_by_exclude_fields = order_by_exclude_fields
+
+        _meta.create_mutation = create_mutation
+        _meta.update_mutation = update_mutation
+        _meta.delete_mutation = delete_mutation
 
         _meta.validator = validator
         _meta.validator_exclude = validator_exclude

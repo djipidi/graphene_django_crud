@@ -85,3 +85,14 @@ class ModelTestGenerateSchemaD(models.Model):
     order_by_only = models.CharField(max_length=5)
     all_input = models.CharField(max_length=5)
     all_exclude = models.CharField(max_length=5)
+
+class ModelTestGenerateSchemaE(models.Model):
+    fk_f = models.ForeignKey("ModelTestGenerateSchemaF", on_delete=models.CASCADE, related_name="fk_f_related")
+    oto_f = models.OneToOneField("ModelTestGenerateSchemaF", on_delete=models.CASCADE, related_name="oto_f_related")
+    mtm_f = models.ManyToManyField("ModelTestGenerateSchemaF", related_name="mtm_f_related")
+    text = models.CharField(max_length=50)
+
+class ModelTestGenerateSchemaF(models.Model):
+    text = models.CharField(max_length=50)
+
+

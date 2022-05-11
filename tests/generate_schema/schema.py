@@ -82,6 +82,16 @@ class ModelTestGenerateSchemaDType(DjangoCRUDObjectType):
             "update_only",
         ]
 
+class ModelTestGenerateSchemaEType(DjangoCRUDObjectType):
+    class Meta:
+        model = ModelTestGenerateSchemaE
+
+class ModelTestGenerateSchemaFType(DjangoCRUDObjectType):
+    class Meta:
+        model = ModelTestGenerateSchemaF
+        create_mutation = False
+        update_mutation = False
+        delete_mutation = False
 
 class Query(graphene.ObjectType):
 
@@ -96,6 +106,12 @@ class Query(graphene.ObjectType):
 
     test_generate_schema_d = ModelTestGenerateSchemaDType.ReadField()
     test_generate_schema_ds = ModelTestGenerateSchemaDType.BatchReadField()
+
+    test_generate_schema_e = ModelTestGenerateSchemaEType.ReadField()
+    test_generate_schema_es = ModelTestGenerateSchemaEType.BatchReadField()
+
+    test_generate_schema_f = ModelTestGenerateSchemaFType.ReadField()
+    test_generate_schema_fs = ModelTestGenerateSchemaFType.BatchReadField()
 
 
 class Mutation(graphene.ObjectType):
@@ -117,6 +133,14 @@ class Mutation(graphene.ObjectType):
     test_generate_schema_d_update = ModelTestGenerateSchemaDType.UpdateField()
     test_generate_schema_d_delete = ModelTestGenerateSchemaDType.DeleteField()
 
+    test_generate_schema_e_create = ModelTestGenerateSchemaEType.CreateField()
+    test_generate_schema_e_update = ModelTestGenerateSchemaEType.UpdateField()
+    test_generate_schema_e_delete = ModelTestGenerateSchemaEType.DeleteField()
+    
+    test_generate_schema_f_create = ModelTestGenerateSchemaFType.CreateField()
+    test_generate_schema_f_update = ModelTestGenerateSchemaFType.UpdateField()
+    test_generate_schema_f_delete = ModelTestGenerateSchemaFType.DeleteField()
+
 
 class Subscription(graphene.ObjectType):
 
@@ -135,3 +159,12 @@ class Subscription(graphene.ObjectType):
     test_generate_schema_d_created = ModelTestGenerateSchemaDType.CreatedField()
     test_generate_schema_d_updated = ModelTestGenerateSchemaDType.UpdatedField()
     test_generate_schema_d_deleted = ModelTestGenerateSchemaDType.DeletedField()
+    
+    test_generate_schema_e_created = ModelTestGenerateSchemaEType.CreatedField()
+    test_generate_schema_e_updated = ModelTestGenerateSchemaEType.UpdatedField()
+    test_generate_schema_e_deleted = ModelTestGenerateSchemaEType.DeletedField()
+
+    test_generate_schema_F_created = ModelTestGenerateSchemaFType.CreatedField()
+    test_generate_schema_F_updated = ModelTestGenerateSchemaFType.UpdatedField()
+    test_generate_schema_F_deleted = ModelTestGenerateSchemaFType.DeletedField()
+

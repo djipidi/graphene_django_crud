@@ -127,26 +127,29 @@ def convert_model_to_input_type(
     items = OrderedDict()
 
     if input_flag == "create_nested_many":
-        items["create"] = graphene.List(
-            convert_model_to_input_type(model, input_flag="create", registry=registry)
-        )
+        if django_type._meta.create_mutation:
+            items["create"] = graphene.List(
+                convert_model_to_input_type(model, input_flag="create", registry=registry)
+            )
         items["connect"] = graphene.List(
             convert_model_to_input_type(model, input_flag="where", registry=registry)
         )
 
     elif input_flag == "update_nested_many":
-
-        items["create"] = graphene.List(
-            convert_model_to_input_type(model, input_flag="create", registry=registry)
-        )
-        items["update"] = graphene.List(
-            convert_model_to_input_type(
-                model, input_flag="update_nested_update", registry=registry
+        if django_type._meta.create_mutation:
+            items["create"] = graphene.List(
+                convert_model_to_input_type(model, input_flag="create", registry=registry)
             )
-        )
-        items["delete"] = graphene.List(
-            convert_model_to_input_type(model, input_flag="where", registry=registry)
-        )
+        if django_type._meta.update_mutation:
+            items["update"] = graphene.List(
+                convert_model_to_input_type(
+                    model, input_flag="update_nested_update", registry=registry
+                )
+            )
+        if django_type._meta.delete_mutation:
+            items["delete"] = graphene.List(
+                convert_model_to_input_type(model, input_flag="where", registry=registry)
+            )
         items["connect"] = graphene.List(
             convert_model_to_input_type(model, input_flag="where", registry=registry)
         )
@@ -155,21 +158,25 @@ def convert_model_to_input_type(
         )
 
     elif input_flag == "create_nested":
-        items["create"] = graphene.Field(
-            convert_model_to_input_type(model, input_flag="create", exclude=exclude, registry=registry)
-        )
+        if django_type._meta.create_mutation:
+            items["create"] = graphene.Field(
+                convert_model_to_input_type(model, input_flag="create", exclude=exclude, registry=registry)
+            )
         items["connect"] = graphene.Field(
             convert_model_to_input_type(model, input_flag="where", registry=registry)
         )
 
     elif input_flag == "update_nested":
-        items["create"] = graphene.Field(
-            convert_model_to_input_type(model, input_flag="create", exclude=exclude, registry=registry)
-        )
-        items["update"] = graphene.Field(
-            convert_model_to_input_type(model, input_flag="update", registry=registry)
-        )
-        items["delete"] = Boolean()
+        if django_type._meta.create_mutation:
+            items["create"] = graphene.Field(
+                convert_model_to_input_type(model, input_flag="create", exclude=exclude, registry=registry)
+            )
+        if django_type._meta.update_mutation:
+            items["update"] = graphene.Field(
+                convert_model_to_input_type(model, input_flag="update", registry=registry)
+            )
+        if django_type._meta.delete_mutation:
+            items["delete"] = Boolean()
         items["connect"] = graphene.Field(
             convert_model_to_input_type(model, input_flag="where", registry=registry)
         )

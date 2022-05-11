@@ -38,6 +38,7 @@ django orm into a graphql API with the following features:
       - [input_extend_fields](#input_extend_fields)
       - [where_only_fields / where_exclude_fields](#where_only_fields--where_exclude_fields)
       - [order_by_only_fields / order_by_exclude_fields](#order_by_only_fields--order_by_exclude_fields)
+      - [create_mutation / update_mutation / delete_mutation](#create_mutation--update_mutation--delete_mutation)
       - [validator](#validator)
       - [validator_exclude](#validator_exclude)
       - [validator_validate_unique](#validator_validate_unique)
@@ -794,6 +795,11 @@ of the two parameters can be declared.
 
 Tuple of model fields to include/exclude in graphql order_by input type. Only
 one of the two parameters can be declared.
+
+#### create_mutation / update_mutation / delete_mutation
+
+default: True\
+Activate/deactivate the nested mutation.
 
 #### validator
 

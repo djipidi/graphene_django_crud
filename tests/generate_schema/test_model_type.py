@@ -1184,3 +1184,41 @@ class DjangoCRUDObjectTypeSchemaTest(SchemaTestCase):
                 ["id", "orderByOnly", "allInput"],
                 input_type=True,
             )
+
+    def test_disable_nested_mutations(self):
+        with self.subTest():
+            self.assertTypeIsComposeOfFields(
+                "ModelTestGenerateSchemaFCreateNestedInput",
+                ["connect"],
+                input_type=True,
+            )
+        with self.subTest():
+            self.assertTypeIsComposeOfFields(
+                "ModelTestGenerateSchemaFCreateNestedManyInput",
+                ["connect"],
+                input_type=True,
+            )
+        with self.subTest():
+            self.assertTypeIsComposeOfFields(
+                "ModelTestGenerateSchemaFCreateNestedWithoutOtoFRelatedInput",
+                ["connect"],
+                input_type=True,
+            )
+        with self.subTest():
+            self.assertTypeIsComposeOfFields(
+                "ModelTestGenerateSchemaFUpdateNestedInput",
+                ["connect", "disconnect"],
+                input_type=True,
+            )
+        with self.subTest():
+            self.assertTypeIsComposeOfFields(
+                "ModelTestGenerateSchemaFUpdateNestedManyInput",
+                ["connect", "disconnect"],
+                input_type=True,
+            )
+        with self.subTest():
+            self.assertTypeIsComposeOfFields(
+                "ModelTestGenerateSchemaFUpdateNestedWithoutOtoFRelatedInput",
+                ["connect", "disconnect"],
+                input_type=True,
+            )
