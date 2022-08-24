@@ -63,47 +63,58 @@ def make_input_type(name, definition, registry=None):
     return ret_type
 
 
+def get_input_type_name(model, input_flag, complement=None):
+    if complement is None or complement == "":
+        complement = ""
+    else:
+        complement += "_"
+    return to_camel_case("{}_{}_{}input".format(model.__name__, input_flag, complement))
+
+
 def convert_model_to_input_type(
-    model, input_flag="create", registry=None, exclude=[], only="__all__"
+    model, input_flag=None, registry=None, exclude=[], only="__all__"
 ):
 
-    djangoType = registry.get_type_for_model(model)
+    assert input_flag is not None
+
+    django_type = registry.get_type_for_model(model)
+
     for_queryset = "order_by" in input_flag or "where" in input_flag
 
-    model_fields = get_model_fields(model, for_queryset=for_queryset)
+    model_fields = get_model_fields(django_type._meta.model, for_queryset=for_queryset)
 
     if "create" in input_flag or "update" in input_flag:
         model_fields = filter(
-            lambda field : is_include(field[0], djangoType._meta.input_only_fields, djangoType._meta.input_exclude_fields),
+            lambda field : is_include(field[0], django_type._meta.input_only_fields, django_type._meta.input_exclude_fields),
             model_fields
         )
         if "create" in input_flag:
             model_fields = filter(
-                lambda field : is_include(field[0], djangoType._meta.create_only_fields, djangoType._meta.create_exclude_fields),
+                lambda field : is_include(field[0], django_type._meta.create_only_fields, django_type._meta.create_exclude_fields),
                 model_fields
             )
         elif "update" in input_flag:
             model_fields = filter(
-                lambda field : is_include(field[0], djangoType._meta.update_only_fields, djangoType._meta.update_exclude_fields),
+                lambda field : is_include(field[0], django_type._meta.update_only_fields, django_type._meta.update_exclude_fields),
                 model_fields
             )
     else:
         model_fields = filter(
-            lambda field : is_include(field[0], djangoType._meta.only_fields, djangoType._meta.exclude_fields),
+            lambda field : is_include(field[0], django_type._meta.only_fields, django_type._meta.exclude_fields),
             model_fields
         )
         if "where" in input_flag:
             model_fields = filter(
-                lambda field : is_include(field[0], djangoType._meta.where_only_fields, djangoType._meta.where_exclude_fields),
+                lambda field : is_include(field[0], django_type._meta.where_only_fields, django_type._meta.where_exclude_fields),
                 model_fields
             )
         if "order_by" in input_flag:
             model_fields = filter(
-                lambda field : is_include(field[0], djangoType._meta.order_by_only_fields, djangoType._meta.order_by_exclude_fields),
+                lambda field : is_include(field[0], django_type._meta.order_by_only_fields, django_type._meta.order_by_exclude_fields),
                 model_fields
             )
 
-    without = ""
+    input_type_name_without_complement = ""
     if not (len(exclude) == 0 and only == "__all__"):
         it = model_fields
         model_fields = []
@@ -114,12 +125,12 @@ def convert_model_to_input_type(
             else:
                 model_fields.append((name, field))
         exclude_fields.sort()
-        without = "without_" + "_".join(exclude_fields) + "_"
+        input_type_name_without_complement = "without_" + "_".join(exclude_fields)
     else:
         model_fields = list(model_fields)
 
-    input_type_name = "{}_{}_{}input".format(model.__name__, input_flag, without)
-    input_type_name = to_camel_case(input_type_name)
+    input_type_name = get_input_type_name(model, input_flag, complement=input_type_name_without_complement)
+
     input_type = registry.get_type_for_input(input_type_name)
     if input_type is not None:
         return input_type
@@ -218,18 +229,17 @@ def convert_model_to_input_type(
             items[name] = converted
 
         if "create" in input_flag or "update" in input_flag:
-            for name, field in djangoType._meta.input_extend_fields:
+            for name, field in django_type._meta.input_extend_fields:
                 items[name] = field
             if "create" in input_flag:
-                for name, field in djangoType._meta.create_extend_fields:
+                for name, field in django_type._meta.create_extend_fields:
                     items[name] = field
             elif "update" in input_flag:
-                for name, field in djangoType._meta.update_extend_fields:
+                for name, field in django_type._meta.update_extend_fields:
                     items[name] = field
 
-    ret_type = make_input_type(input_type_name, items, registry=registry)
+    return  make_input_type(input_type_name, items, registry=registry)
 
-    return ret_type
 
 
 def assert_valid_name(name):
