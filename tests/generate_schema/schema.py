@@ -140,31 +140,3 @@ class Mutation(graphene.ObjectType):
     test_generate_schema_f_create = ModelTestGenerateSchemaFType.CreateField()
     test_generate_schema_f_update = ModelTestGenerateSchemaFType.UpdateField()
     test_generate_schema_f_delete = ModelTestGenerateSchemaFType.DeleteField()
-
-
-class Subscription(graphene.ObjectType):
-
-    test_generate_schema_a_created = ModelTestGenerateSchemaAType.CreatedField()
-    test_generate_schema_a_updated = ModelTestGenerateSchemaAType.UpdatedField()
-    test_generate_schema_a_deleted = ModelTestGenerateSchemaAType.DeletedField()
-
-    test_generate_schema_b_created = ModelTestGenerateSchemaBType.CreatedField()
-    test_generate_schema_b_updated = ModelTestGenerateSchemaBType.UpdatedField()
-    test_generate_schema_b_deleted = ModelTestGenerateSchemaBType.DeletedField()
-
-    test_generate_schema_c_created = ModelTestGenerateSchemaCType.CreatedField()
-    test_generate_schema_c_updated = ModelTestGenerateSchemaCType.UpdatedField()
-    test_generate_schema_c_deleted = ModelTestGenerateSchemaCType.DeletedField()
-
-    test_generate_schema_d_created = ModelTestGenerateSchemaDType.CreatedField()
-    test_generate_schema_d_updated = ModelTestGenerateSchemaDType.UpdatedField()
-    test_generate_schema_d_deleted = ModelTestGenerateSchemaDType.DeletedField()
-    
-    test_generate_schema_e_created = ModelTestGenerateSchemaEType.CreatedField()
-    test_generate_schema_e_updated = ModelTestGenerateSchemaEType.UpdatedField()
-    test_generate_schema_e_deleted = ModelTestGenerateSchemaEType.DeletedField()
-
-    test_generate_schema_F_created = ModelTestGenerateSchemaFType.CreatedField()
-    test_generate_schema_F_updated = ModelTestGenerateSchemaFType.UpdatedField()
-    test_generate_schema_F_deleted = ModelTestGenerateSchemaFType.DeletedField()
-

@@ -22,12 +22,3 @@ class Mutation(graphene.ObjectType):
     test_file_create = TestFileType.CreateField()
     test_file_update = TestFileType.UpdateField()
     test_file_delete = TestFileType.DeleteField()
-
-
-
-
-class Subscription(graphene.ObjectType):
-
-    test_file_created = TestFileType.CreatedField()
-    test_file_updated = TestFileType.UpdatedField()
-    test_file_deleted = TestFileType.DeletedField()

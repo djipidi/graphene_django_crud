@@ -38,15 +38,3 @@ class Mutation(graphene.ObjectType):
     test_relay_b_create = TestRelayBType.CreateField()
     test_relay_b_update = TestRelayBType.UpdateField()
     test_relay_b_delete = TestRelayBType.DeleteField()
-
-
-
-class Subscription(graphene.ObjectType):
-
-    test_relay_a_created = TestRelayAType.CreatedField()
-    test_relay_a_updated = TestRelayAType.UpdatedField()
-    test_relay_a_deleted = TestRelayAType.DeletedField()
-
-    test_relay_b_created = TestRelayBType.CreatedField()
-    test_relay_b_updated = TestRelayBType.UpdatedField()
-    test_relay_b_deleted = TestRelayBType.DeletedField()
