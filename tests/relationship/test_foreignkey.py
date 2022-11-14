@@ -336,7 +336,7 @@ class RelationShipForeignKeyTest(GraphQLTestCase, VerifyResponseAssertionMixins)
                         }
                     ],
                 },
-                "testFkC": {"disconnect": {"id": {"exact": self.c1.pk}}},
+                "testFkC": {"disconnect": True},
             },
             "where": {"id": {"exact": self.b1.pk}},
         }
@@ -369,7 +369,7 @@ class RelationShipForeignKeyTest(GraphQLTestCase, VerifyResponseAssertionMixins)
         variables = {
             "input": {
                 "text": "b1-bis",
-                "testFkC": {"delete": {"id": {"exact": self.c1.pk}}},
+                "testFkC": {"delete": True},
             },
             "where": {"id": {"exact": self.b1.pk}},
         }
