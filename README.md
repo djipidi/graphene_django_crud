@@ -8,7 +8,6 @@ django orm into a graphql API with the following features:
 - Filtering with logical operators
 - Authentication and permissions
 - Nested mutations
-- Subscription fields
 
 ## Table of contents
 
@@ -48,9 +47,6 @@ django orm into a graphql API with the following features:
       - [CreateField](#createfield)
       - [UpdateField](#updatefield)
       - [DeleteField](#deletefield)
-      - [CreatedField](#createdfield)
-      - [UpdatedField](#updatedfield)
-      - [DeletedField](#deletedfield)
     - [Input Types](#input-types)
       - [WhereInputType](#whereinputtype)
       - [OrderByInputType](#orderbyinputtype)
@@ -80,12 +76,6 @@ django orm into a graphql API with the following features:
     - [Scalar filters](#scalar-filters)
 
 ## Installation
-
-> For the use of the subscription fields you must have correctly installed
-> graphene-subscription in your project.
-> [For that follow their installation part](https://github.com/jaydenwindle/graphene-subscriptions)\
-> [The generate signals](#generate_signals)
-> method allows to connect model signals to graphene-subcription signals.
 
 > For the support of
 > [Multipart Request Spec](https://github.com/jaydenseric/graphql-multipart-request-spec),
@@ -156,7 +146,7 @@ class UserType(DjangoCRUDObjectType):
         if info.context.user.is_authenticated:
             return User.objects.all()
         else:
-            return User.objects.none() 
+            return User.objects.none()
 
     @classmethod
     def mutate(cls, parent, info, instance, data, *args, **kwargs):
@@ -196,22 +186,8 @@ class Mutation(graphene.ObjectType):
     group_update = GroupType.UpdateField()
     group_delete = GroupType.DeleteField()
 
-class Subscription(graphene.ObjectType):
-
-    user_created = UserType.CreatedField()
-    user_updated = UserType.UpdatedField()
-    user_deleted = UserType.DeletedField()
-
-    group_created = GroupType.CreatedField()
-    group_updated = GroupType.UpdatedField()
-    group_deleted = GroupType.DeletedField()
-
 #signals.py
 from .schema import UserType, GroupType
-
-# Necessary for subscription fields
-UserType.generate_signals()
-GroupType.generate_signals()
 ```
 
 And get the resulting GraphQL API:
@@ -223,7 +199,6 @@ And get the resulting GraphQL API:
 schema {
   query: Query
   mutation: Mutation
-  subscription: Subscription
 }
 
 scalar DateTime
@@ -368,15 +343,6 @@ input StringFilter {
   iendswith: String
 }
 
-type Subscription {
-  userCreated(where: UserWhereInput): UserType
-  userUpdated(where: UserWhereInput): UserType
-  userDeleted(where: UserWhereInput): UserType
-  groupCreated(where: GroupWhereInput): GroupType
-  groupUpdated(where: GroupWhereInput): GroupType
-  groupDeleted(where: GroupWhereInput): GroupType
-}
-
 input UserCreateInput {
   email: String
   firstName: String
@@ -470,7 +436,7 @@ input UserWhereInput {
 }
 ```
 
-</details> 
+</details>
 
 Queries example:
 
@@ -861,21 +827,6 @@ respective model.
 
 Mutation field to allow clients to delete one particular record at time of the
 respective model.
-
-#### CreatedField
-
-Subscription field to allow customers to subscribe to the creatied of instances
-of the respective model.
-
-#### UpdatedField
-
-Subscription field to allow customers to subscribe to the updated of instances
-of the respective model.
-
-#### DeletedField
-
-Subscription field to allow customers to subscribe to the deleted of instances
-of the respective model.
 
 ### Input Types
 

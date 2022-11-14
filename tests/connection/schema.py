@@ -75,18 +75,3 @@ class Mutation(graphene.ObjectType):
     test_conn_c_create = TestConnCType.CreateField()
     test_conn_c_update = TestConnCType.UpdateField()
     test_conn_c_delete = TestConnCType.DeleteField()
-
-
-class Subscription(graphene.ObjectType):
-
-    test_conn_a_created = TestConnAType.CreatedField()
-    test_conn_a_updated = TestConnAType.UpdatedField()
-    test_conn_a_deleted = TestConnAType.DeletedField()
-
-    test_conn_b_created = TestConnBType.CreatedField()
-    test_conn_b_updated = TestConnBType.UpdatedField()
-    test_conn_b_deleted = TestConnBType.DeletedField()
-
-    test_conn_c_created = TestConnCType.CreatedField()
-    test_conn_c_updated = TestConnCType.UpdatedField()
-    test_conn_c_deleted = TestConnCType.DeletedField()

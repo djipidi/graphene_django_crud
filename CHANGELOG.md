@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 
 - Upgrade dependency from graphene v2 to graphene v3
 
+### Breaking changed
+
+- Removed subscriptions fields
+
 ### Added
 
 - Nested updates [#7](https://github.com/djipidi/graphene_django_crud/issues/7)

@@ -18,10 +18,3 @@ class Mutation(graphene.ObjectType):
     issue_8_create = Issue8Type.CreateField()
     issue_8_update = Issue8Type.UpdateField()
     issue_8_delete = Issue8Type.DeleteField()
-
-
-class Subscription(graphene.ObjectType):
-
-    issue_8_created = Issue8Type.CreatedField()
-    issue_8_updated = Issue8Type.UpdatedField()
-    issue_8_deleted = Issue8Type.DeletedField()
