@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## \[Unreleased\]
 
+- Upgrade dependency from graphene v2 to graphene v3
+
 ### Added
 
 - Nested updates [#7](https://github.com/djipidi/graphene_django_crud/issues/7)

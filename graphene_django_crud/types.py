@@ -6,7 +6,10 @@ from django.core.files.uploadedfile import UploadedFile
 import graphene
 from graphene.types.objecttype import ObjectTypeOptions
 from graphene_django.utils.utils import is_valid_django_model
-from graphql.language.ast import FragmentSpread, InlineFragment
+from graphql.language.ast import (
+    FragmentSpreadNode as FragmentSpread,
+    InlineFragmentNode as InlineFragment,
+)
 from graphene.relay import Connection as RelayConnection, Node
 import io
 from django.core.files import File
@@ -185,7 +188,7 @@ class DjangoCRUDObjectType(graphene.ObjectType):
 
         if not _meta:
             _meta = DjangoCRUDObjectTypeOptions(cls)
-        
+
         _meta.model = model
         _meta.max_limit = max_limit
         _meta.fields = fields
@@ -333,7 +336,11 @@ class DjangoCRUDObjectType(graphene.ObjectType):
         else:
             new_suffix = suffix + "__"
 
-        ret = {"select_related": [], "only": [new_suffix + cls._meta.model._meta.pk.name], "prefetch_related": []}
+        ret = {
+            "select_related": [],
+            "only": [new_suffix + cls._meta.model._meta.pk.name],
+            "prefetch_related": [],
+        }
 
         model_fields, computed_field_hints = cls._get_fields()
 
@@ -812,7 +819,7 @@ class DjangoCRUDObjectType(graphene.ObjectType):
     def get_node(cls, info, id):
         try:
             return cls._queryset_factory(
-                info, field_ast=info.field_asts[0], is_connection=False
+                info, field_ast=info.field_nodes[0], is_connection=False
             ).get(pk=id)
         except cls._meta.model.DoesNotExist:
             return None
@@ -902,7 +909,7 @@ class DjangoCRUDObjectType(graphene.ObjectType):
     @classmethod
     def read(cls, parent, info, **kwargs):
         queryset = cls._queryset_factory(
-            info, field_ast=info.field_asts[0], is_connection=False
+            info, field_ast=info.field_nodes[0], is_connection=False
         )
         return queryset.get()
 
@@ -938,7 +945,7 @@ class DjangoCRUDObjectType(graphene.ObjectType):
         else:
             queryset = cls._queryset_factory(
                 info,
-                field_ast=info.field_asts[0],
+                field_ast=info.field_nodes[0],
                 fragments=info.fragments,
                 is_connection=True,
             )
@@ -975,7 +982,9 @@ class DjangoCRUDObjectType(graphene.ObjectType):
             instance = cls._create(parent, info, kwargs["input"])
             result_field_ast = get_field_ast_by_path(info, ["result"])
             if result_field_ast is not None:
-                instance = cls._instance_to_queryset(info, instance, result_field_ast).get()
+                instance = cls._instance_to_queryset(
+                    info, instance, result_field_ast
+                ).get()
             else:
                 instance = None
             return {"result": instance, "ok": True, "errors": []}
@@ -1022,7 +1031,9 @@ class DjangoCRUDObjectType(graphene.ObjectType):
             instance = cls._update(parent, info, kwargs["where"], kwargs["input"])
             result_field_ast = get_field_ast_by_path(info, ["result"])
             if result_field_ast is not None:
-                instance = cls._instance_to_queryset(info, instance, result_field_ast).get()
+                instance = cls._instance_to_queryset(
+                    info, instance, result_field_ast
+                ).get()
             else:
                 instance = None
             return {"result": instance, "ok": True, "error": []}
@@ -1099,7 +1110,7 @@ class DjangoCRUDObjectType(graphene.ObjectType):
 
         return parent.filter(eventFilter).map(
             lambda event: cls._instance_to_queryset(
-                info, event.instance, info.field_asts[0]
+                info, event.instance, info.field_nodes[0]
             ).get()
         )
 
@@ -1138,7 +1149,7 @@ class DjangoCRUDObjectType(graphene.ObjectType):
 
         return parent.filter(eventFilter).map(
             lambda event: cls._instance_to_queryset(
-                info, event.instance, info.field_asts[0]
+                info, event.instance, info.field_nodes[0]
             ).get()
         )
 

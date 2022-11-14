@@ -8,6 +8,7 @@ from django.utils.encoding import force_text
 import graphene
 from graphene import (
     Field,
+    InputField,
     ID,
     Boolean,
     Dynamic,
@@ -23,8 +24,8 @@ from graphene import (
     Time,
 )
 
-from graphene.utils.str_converters import to_camel_case, to_const
-from graphene_django.utils import import_single_dispatch
+from graphene.utils.str_converters import to_camel_case
+from functools import singledispatch
 
 from .base_types import Binary, OrderEnum, OrderStringEnum, File
 from .fields import DjangoListField, DjangoConnectionField
@@ -44,8 +45,6 @@ from .input_types import (
     DateFilter,
     UUIDFilter,
 )
-
-singledispatch = import_single_dispatch()
 
 
 NAME_PATTERN = r"^[_a-zA-Z][_a-zA-Z0-9]*$"
@@ -85,33 +84,57 @@ def convert_model_to_input_type(
 
     if "create" in input_flag or "update" in input_flag:
         model_fields = filter(
-            lambda field : is_include(field[0], django_type._meta.input_only_fields, django_type._meta.input_exclude_fields),
-            model_fields
+            lambda field: is_include(
+                field[0],
+                django_type._meta.input_only_fields,
+                django_type._meta.input_exclude_fields,
+            ),
+            model_fields,
         )
         if "create" in input_flag:
             model_fields = filter(
-                lambda field : is_include(field[0], django_type._meta.create_only_fields, django_type._meta.create_exclude_fields),
-                model_fields
+                lambda field: is_include(
+                    field[0],
+                    django_type._meta.create_only_fields,
+                    django_type._meta.create_exclude_fields,
+                ),
+                model_fields,
             )
         elif "update" in input_flag:
             model_fields = filter(
-                lambda field : is_include(field[0], django_type._meta.update_only_fields, django_type._meta.update_exclude_fields),
-                model_fields
+                lambda field: is_include(
+                    field[0],
+                    django_type._meta.update_only_fields,
+                    django_type._meta.update_exclude_fields,
+                ),
+                model_fields,
             )
     else:
         model_fields = filter(
-            lambda field : is_include(field[0], django_type._meta.only_fields, django_type._meta.exclude_fields),
-            model_fields
+            lambda field: is_include(
+                field[0],
+                django_type._meta.only_fields,
+                django_type._meta.exclude_fields,
+            ),
+            model_fields,
         )
         if "where" in input_flag:
             model_fields = filter(
-                lambda field : is_include(field[0], django_type._meta.where_only_fields, django_type._meta.where_exclude_fields),
-                model_fields
+                lambda field: is_include(
+                    field[0],
+                    django_type._meta.where_only_fields,
+                    django_type._meta.where_exclude_fields,
+                ),
+                model_fields,
             )
         if "order_by" in input_flag:
             model_fields = filter(
-                lambda field : is_include(field[0], django_type._meta.order_by_only_fields, django_type._meta.order_by_exclude_fields),
-                model_fields
+                lambda field: is_include(
+                    field[0],
+                    django_type._meta.order_by_only_fields,
+                    django_type._meta.order_by_exclude_fields,
+                ),
+                model_fields,
             )
 
     input_type_name_without_complement = ""
@@ -129,7 +152,9 @@ def convert_model_to_input_type(
     else:
         model_fields = list(model_fields)
 
-    input_type_name = get_input_type_name(model, input_flag, complement=input_type_name_without_complement)
+    input_type_name = get_input_type_name(
+        model, input_flag, complement=input_type_name_without_complement
+    )
 
     input_type = registry.get_type_for_input(input_type_name)
     if input_type is not None:
@@ -140,7 +165,9 @@ def convert_model_to_input_type(
     if input_flag == "create_nested_many":
         if django_type._meta.create_mutation:
             items["create"] = graphene.List(
-                convert_model_to_input_type(model, input_flag="create", registry=registry)
+                convert_model_to_input_type(
+                    model, input_flag="create", registry=registry
+                )
             )
         items["connect"] = graphene.List(
             convert_model_to_input_type(model, input_flag="where", registry=registry)
@@ -149,7 +176,9 @@ def convert_model_to_input_type(
     elif input_flag == "update_nested_many":
         if django_type._meta.create_mutation:
             items["create"] = graphene.List(
-                convert_model_to_input_type(model, input_flag="create", registry=registry)
+                convert_model_to_input_type(
+                    model, input_flag="create", registry=registry
+                )
             )
         if django_type._meta.update_mutation:
             items["update"] = graphene.List(
@@ -159,7 +188,9 @@ def convert_model_to_input_type(
             )
         if django_type._meta.delete_mutation:
             items["delete"] = graphene.List(
-                convert_model_to_input_type(model, input_flag="where", registry=registry)
+                convert_model_to_input_type(
+                    model, input_flag="where", registry=registry
+                )
             )
         items["connect"] = graphene.List(
             convert_model_to_input_type(model, input_flag="where", registry=registry)
@@ -170,34 +201,40 @@ def convert_model_to_input_type(
 
     elif input_flag == "create_nested":
         if django_type._meta.create_mutation:
-            items["create"] = graphene.Field(
-                convert_model_to_input_type(model, input_flag="create", exclude=exclude, registry=registry)
+            items["create"] = graphene.InputField(
+                convert_model_to_input_type(
+                    model, input_flag="create", exclude=exclude, registry=registry
+                )
             )
-        items["connect"] = graphene.Field(
+        items["connect"] = graphene.InputField(
             convert_model_to_input_type(model, input_flag="where", registry=registry)
         )
 
     elif input_flag == "update_nested":
         if django_type._meta.create_mutation:
-            items["create"] = graphene.Field(
-                convert_model_to_input_type(model, input_flag="create", exclude=exclude, registry=registry)
+            items["create"] = graphene.InputField(
+                convert_model_to_input_type(
+                    model, input_flag="create", exclude=exclude, registry=registry
+                )
             )
         if django_type._meta.update_mutation:
-            items["update"] = graphene.Field(
-                convert_model_to_input_type(model, input_flag="update", registry=registry)
+            items["update"] = graphene.InputField(
+                convert_model_to_input_type(
+                    model, input_flag="update", registry=registry
+                )
             )
         if django_type._meta.delete_mutation:
             items["delete"] = Boolean()
-        items["connect"] = graphene.Field(
+        items["connect"] = graphene.InputField(
             convert_model_to_input_type(model, input_flag="where", registry=registry)
         )
         items["disconnect"] = Boolean()
 
     elif input_flag == "update_nested_update":
-        items["where"] = graphene.Field(
+        items["where"] = graphene.InputField(
             convert_model_to_input_type(model, input_flag="where", registry=registry)
         )
-        items["input"] = graphene.Field(
+        items["input"] = graphene.InputField(
             convert_model_to_input_type(model, input_flag="update", registry=registry)
         )
 
@@ -205,13 +242,19 @@ def convert_model_to_input_type(
         if input_flag == "where":
 
             def embeded_list_fields():
-                return graphene.List(
-                    convert_model_to_input_type(model, input_flag="where", registry=registry)
+                return InputField(
+                    graphene.List(
+                        convert_model_to_input_type(
+                            model, input_flag="where", registry=registry
+                        )
+                    )
                 )
 
             def embeded_field():
-                return graphene.Field(
-                    convert_model_to_input_type(model, input_flag="where", registry=registry)
+                return graphene.InputField(
+                    convert_model_to_input_type(
+                        model, input_flag="where", registry=registry
+                    )
                 )
 
             items["id"] = IdFilter()
@@ -238,8 +281,7 @@ def convert_model_to_input_type(
                 for name, field in django_type._meta.update_extend_fields:
                     items[name] = field
 
-    return  make_input_type(input_type_name, items, registry=registry)
-
+    return make_input_type(input_type_name, items, registry=registry)
 
 
 def assert_valid_name(name):
@@ -250,7 +292,7 @@ def assert_valid_name(name):
 
 
 def convert_choice_name(name):
-    name = to_const(force_text(name))
+    name = force_text(name)
     try:
         assert_valid_name(name)
     except AssertionError:
@@ -563,19 +605,19 @@ def convert_onetoone_field_to_djangomodel(field, registry=None, input_flag=None)
 
         if input_flag:
             if input_flag == "order_by":
-                return graphene.Field(
+                return graphene.InputField(
                     convert_model_to_input_type(
                         model, input_flag="order_by", registry=registry
                     ),
                 )
             elif input_flag == "where":
-                return graphene.Field(
+                return graphene.InputField(
                     convert_model_to_input_type(
                         model, input_flag="where", registry=registry
                     ),
                 )
             elif input_flag == "create":
-                return graphene.Field(
+                return graphene.InputField(
                     convert_model_to_input_type(
                         model,
                         input_flag="create_nested",
@@ -584,7 +626,7 @@ def convert_onetoone_field_to_djangomodel(field, registry=None, input_flag=None)
                     ),
                 )
             elif input_flag == "update":
-                return graphene.Field(
+                return graphene.InputField(
                     convert_model_to_input_type(
                         model,
                         input_flag="update_nested",
@@ -615,19 +657,19 @@ def convert_many_rel_djangomodel(field, registry=None, input_flag=None):
 
         if input_flag:
             if input_flag == "where":
-                return graphene.Field(
+                return graphene.InputField(
                     convert_model_to_input_type(
                         model, input_flag="where", registry=registry
                     ),
                 )
             elif input_flag == "create":
-                return graphene.Field(
+                return graphene.InputField(
                     convert_model_to_input_type(
                         model, input_flag="create_nested_many", registry=registry
                     ),
                 )
             elif input_flag == "update":
-                return graphene.Field(
+                return graphene.InputField(
                     convert_model_to_input_type(
                         model, input_flag="update_nested_many", registry=registry
                     ),
@@ -678,7 +720,7 @@ def convert_ForeignKey_field_to_djangomodel(field, registry=None, input_flag=Non
             return
         if input_flag:
             if input_flag == "order_by":
-                return graphene.Field(
+                return graphene.InputField(
                     convert_model_to_input_type(
                         model, input_flag="order_by", registry=registry
                     ),
@@ -686,14 +728,14 @@ def convert_ForeignKey_field_to_djangomodel(field, registry=None, input_flag=Non
                 )
 
             elif input_flag == "where":
-                return graphene.Field(
+                return graphene.InputField(
                     convert_model_to_input_type(
                         model, input_flag="where", registry=registry
                     ),
                     description=field.help_text or field.verbose_name,
                 )
             elif input_flag == "create":
-                return graphene.Field(
+                return graphene.InputField(
                     convert_model_to_input_type(
                         model,
                         input_flag="create_nested",
@@ -703,7 +745,7 @@ def convert_ForeignKey_field_to_djangomodel(field, registry=None, input_flag=Non
                     description=field.help_text or field.verbose_name,
                 )
             elif input_flag == "update":
-                return graphene.Field(
+                return graphene.InputField(
                     convert_model_to_input_type(
                         model,
                         input_flag="update_nested",
@@ -737,28 +779,28 @@ def convert_ForeignKey_field_to_djangomodel(field, registry=None, input_flag=Non
             return
         if input_flag:
             if input_flag == "order_by":
-                return graphene.Field(
+                return graphene.InputField(
                     convert_model_to_input_type(
                         model, input_flag="order_by", registry=registry
                     ),
                     description=field.help_text or field.verbose_name,
                 )
             elif input_flag == "where":
-                return graphene.Field(
+                return graphene.InputField(
                     convert_model_to_input_type(
                         model, input_flag="where", registry=registry
                     ),
                     description=field.help_text or field.verbose_name,
                 )
             elif input_flag == "create":
-                return graphene.Field(
+                return graphene.InputField(
                     convert_model_to_input_type(
                         model, input_flag="create_nested", registry=registry
                     ),
                     description=field.help_text or field.verbose_name,
                 )
             elif input_flag == "update":
-                return graphene.Field(
+                return graphene.InputField(
                     convert_model_to_input_type(
                         model, input_flag="update_nested", registry=registry
                     ),

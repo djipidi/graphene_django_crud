@@ -14,25 +14,22 @@ from django.db.models import (
     ManyToOneRel,
     ManyToManyRel,
     OneToOneRel,
-    ForeignKey,
-    ManyToManyField,
-    OneToOneField,
 )
 from graphql_relay import from_global_id
 from graphene.utils.str_converters import to_camel_case
 from graphene.types.scalars import MAX_INT, MIN_INT
-from graphene import Dynamic, List, Enum
+from graphene import Dynamic, List
 from graphql.language.ast import (
-    FragmentSpread,
-    InlineFragment,
-    Variable,
-    BooleanValue,
-    FloatValue,
-    IntValue,
-    ListValue,
-    ObjectValue,
-    StringValue,
-    EnumValue,
+    FragmentSpreadNode,
+    InlineFragmentNode,
+    VariableNode,
+    BooleanValueNode,
+    FloatValueNode,
+    IntValueNode,
+    ListValueNode,
+    ObjectValueNode,
+    StringValueNode,
+    EnumValueNode,
 )
 from django.conf import settings
 from django.db.models.functions import Lower
@@ -153,12 +150,13 @@ def get_model_fields(
 
     return fields
 
+
 def is_include(name, only_fields, exclude_fields):
-        if only_fields == "__all__" and name not in exclude_fields:
-            return True
-        elif name in only_fields:
-            return True
-        return False
+    if only_fields == "__all__" and name not in exclude_fields:
+        return True
+    elif name in only_fields:
+        return True
+    return False
 
 
 def is_required(field):
@@ -195,6 +193,8 @@ def get_type_field(gql_type, gql_name):
                 field_type = field.of_type
             else:
                 field_type = field.type
+            if isinstance(field_type, List):
+                field_type = field_type.of_type
             return name, field_type
 
 
@@ -218,12 +218,12 @@ def resolve_argument(input_type, argument):
 
 def get_field_ast_by_path(info, path):
     path = path.copy()
-    field_ast = info.field_asts[0]
+    field_ast = info.field_nodes[0]
     while len(path) != 0:
         found = False
         iterator = [f for f in field_ast.selection_set.selections]
         for field in iterator:
-            if isinstance(field, FragmentSpread):
+            if isinstance(field, FragmentSpreadNode):
                 iterator.extend(
                     [
                         f
@@ -232,7 +232,7 @@ def get_field_ast_by_path(info, path):
                         ].selection_set.selections
                     ]
                 )
-            if isinstance(field, InlineFragment):
+            if isinstance(field, InlineFragmentNode):
                 iterator.extend([f for f in field.selection_set.selections])
             if field.name.value == path[0]:
                 field_ast = field
@@ -245,28 +245,28 @@ def get_field_ast_by_path(info, path):
 
 
 def parse_ast(ast, variable_values={}):
-    if isinstance(ast, Variable):
+    if isinstance(ast, VariableNode):
         var_name = ast.name.value
         value = variable_values.get(var_name)
         return value
-    elif isinstance(ast, (StringValue, BooleanValue)):
+    elif isinstance(ast, (StringValueNode, BooleanValueNode)):
         return ast.value
-    elif isinstance(ast, IntValue):
+    elif isinstance(ast, IntValueNode):
         num = int(ast.value)
         if MIN_INT <= num <= MAX_INT:
             return num
-    elif isinstance(ast, FloatValue):
+    elif isinstance(ast, FloatValueNode):
         return float(ast.value)
-    elif isinstance(ast, EnumValue):
+    elif isinstance(ast, EnumValueNode):
         return ast.value
-    elif isinstance(ast, ListValue):
+    elif isinstance(ast, ListValueNode):
         ret = []
         for ast_value in ast.values:
             value = parse_ast(ast_value, variable_values=variable_values)
             if value is not None:
                 ret.append(value)
         return ret
-    elif isinstance(ast, ObjectValue):
+    elif isinstance(ast, ObjectValueNode):
         ret = {}
         for field in ast.fields:
             value = parse_ast(field.value, variable_values=variable_values)

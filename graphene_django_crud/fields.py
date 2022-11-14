@@ -5,16 +5,17 @@ from django.db.models import query
 from django.db.models.query import QuerySet
 from graphene import Int, NonNull, String, Argument
 from graphene.relay import ConnectionField, Connection as relayConnection
+from graphene.relay.connection import connection_adapter, page_info_adapter
+from graphene.relay import ConnectionField
 from graphene.types import Field, List
 from graphene_django.settings import graphene_settings
 from graphene_django.utils import maybe_queryset
 from graphql_relay.connection.arrayconnection import (
-    connection_from_list_slice,
+    connection_from_array_slice as connection_from_list_slice,
     cursor_to_offset,
     get_offset_with_default,
     offset_to_cursor,
 )
-from graphene.relay import ConnectionField, PageInfo
 from promise import Promise
 
 
@@ -67,7 +68,7 @@ class DjangoListField(Field):
         queryset = resolver(root, info, **kwargs)
         return queryset[start:end]
 
-    def get_resolver(self, parent_resolver):
+    def wrap_resolve(self, parent_resolver):
         resolver = partial(related_batchread, self.django_type, parent_resolver.args[0])
         return partial(
             self.connection_resolver,
@@ -172,11 +173,11 @@ class DjangoConnectionField(ConnectionField):
             iterable[after:],
             args,
             slice_start=after,
-            list_length=list_length,
-            list_slice_length=list_slice_length,
-            connection_type=connection,
+            array_length=list_length,
+            array_slice_length=list_slice_length,
+            connection_type=partial(connection_adapter, connection),
             edge_type=connection.Edge,
-            pageinfo_type=PageInfo,
+            page_info_type=page_info_adapter,
         )
         connection.iterable = iterable
         connection.length = list_length
@@ -190,7 +191,6 @@ class DjangoConnectionField(ConnectionField):
         # eventually leads to DjangoObjectType's get_queryset (accepts queryset)
         # or a resolve_foo (does not accept queryset)
         iterable = resolver(root, info, **args)
-
         on_resolve = partial(
             cls.resolve_connection, connection, args, max_limit=max_limit
         )
@@ -217,7 +217,7 @@ class DjangoConnectionField(ConnectionField):
         connection.data = iterable[start:end]
         return connection
 
-    def get_resolver(self, parent_resolver):
+    def wrap_resolve(self, parent_resolver):
 
         resolver = partial(related_batchread, self.django_type, parent_resolver.args[0])
 
