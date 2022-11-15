@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 
 - Removed subscriptions fields
 - Simplification of the schema by leaving the parent field in the nestedCreateInput
+- Create mutation payload for each mutation
 
 ### Added
 

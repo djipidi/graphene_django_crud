@@ -26,7 +26,7 @@ from .utils import (
     error_data_from_validation_error,
     validation_error_with_suffix,
 )
-from .base_types import mutation_factory_type, DefaultConnection
+from .base_types import get_mutation_payload_type, DefaultConnection
 
 from django.db.models import Prefetch
 from django.core.exceptions import ValidationError
@@ -958,7 +958,7 @@ class DjangoCRUDObjectType(graphene.ObjectType):
         )
 
         return graphene.Field(
-            mutation_factory_type(cls, registry=cls._meta.registry),
+            get_mutation_payload_type(cls, "create", registry=cls._meta.registry),
             args=arguments,
             resolver=cls.create_resolver,
             *args,
@@ -1007,7 +1007,7 @@ class DjangoCRUDObjectType(graphene.ObjectType):
         )
 
         return graphene.Field(
-            mutation_factory_type(cls, registry=cls._meta.registry),
+            get_mutation_payload_type(cls, "update", registry=cls._meta.registry),
             args=arguments,
             resolver=cls.update_resolver,
             *args,
@@ -1048,7 +1048,7 @@ class DjangoCRUDObjectType(graphene.ObjectType):
         )
 
         return graphene.Field(
-            mutation_factory_type(cls, registry=cls._meta.registry),
+            get_mutation_payload_type(cls, "delete", registry=cls._meta.registry),
             args=arguments,
             resolver=cls.delete_resolver,
             *args,
@@ -1066,7 +1066,6 @@ class DjangoCRUDObjectType(graphene.ObjectType):
                 "ok": False,
                 "errors": error_data_from_validation_error(e),
             }
-
 
 
 class DjangoGrapheneCRUD(DjangoCRUDObjectType):

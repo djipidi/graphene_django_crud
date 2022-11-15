@@ -13,29 +13,35 @@ import re
 from .registry import get_global_registry
 import base64
 from .settings import gdc_settings
+from graphene.utils.str_converters import to_camel_case
 
 
-def mutation_factory_type(_type, registry=None, *args, **kwargs):
+def get_mutation_payload_type(_type, mutation_flag, registry=None, *args, **kwargs):
     if not registry:
         registry = get_global_registry()
-    mutationTypeName = _type._meta.name + "Mutation"
-    mutationType = registry.get_type_for_mutation_type(mutationTypeName)
+    mutation_payload_type_name = to_camel_case(
+        f"{_type._meta.model.__name__}_{mutation_flag}_payload"
+    )
+    mutationType = registry.get_type_for_mutation_type(mutation_payload_type_name)
     if mutationType:
         return mutationType
 
-    class MutationGenericType(graphene.ObjectType):
+    class MutationPayloadGenericType(graphene.ObjectType):
         class Meta:
-            name = mutationTypeName
+            name = mutation_payload_type_name
 
         ok = graphene.Boolean(
-            description="Boolean field that return mutation result request."
+            description="Boolean field that return the success state of request."
         )
         errors = graphene.List(ErrorType, description="Errors list for the field")
-        result = graphene.Field(_type)
+        if not mutation_flag == "delete":
+            result = graphene.Field(_type)
 
-    registry.register_mutation_type(mutationTypeName, MutationGenericType)
+    MutationPayloadGenericType.__name__ = mutation_payload_type_name
 
-    return MutationGenericType
+    registry.register_mutation_type(mutation_payload_type_name, MutationPayloadGenericType)
+
+    return MutationPayloadGenericType
 
 
 class ConnectionOptions(ObjectTypeOptions):
