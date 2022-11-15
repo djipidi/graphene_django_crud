@@ -183,7 +183,7 @@ def convert_model_to_input_type(
         if django_type._meta.update_mutation:
             items["update"] = graphene.List(
                 convert_model_to_input_type(
-                    model, input_flag="update_nested_update", registry=registry
+                    model, input_flag="update_with_where", registry=registry
                 )
             )
         if django_type._meta.delete_mutation:
@@ -230,7 +230,7 @@ def convert_model_to_input_type(
         )
         items["disconnect"] = Boolean()
 
-    elif input_flag == "update_nested_update":
+    elif input_flag == "update_with_where":
         items["where"] = graphene.InputField(
             convert_model_to_input_type(model, input_flag="where", registry=registry)
         )
