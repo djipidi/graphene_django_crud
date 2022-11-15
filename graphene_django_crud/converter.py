@@ -622,7 +622,6 @@ def convert_onetoone_field_to_djangomodel(field, registry=None, input_flag=None)
                         model,
                         input_flag="create_nested",
                         registry=registry,
-                        exclude=[field.remote_field.name],
                     ),
                 )
             elif input_flag == "update":
@@ -631,7 +630,6 @@ def convert_onetoone_field_to_djangomodel(field, registry=None, input_flag=None)
                         model,
                         input_flag="update_nested",
                         registry=registry,
-                        exclude=[field.remote_field.name],
                     ),
                 )
 
@@ -740,7 +738,6 @@ def convert_ForeignKey_field_to_djangomodel(field, registry=None, input_flag=Non
                         model,
                         input_flag="create_nested",
                         registry=registry,
-                        exclude=[field.remote_field.name],
                     ),
                     description=field.help_text or field.verbose_name,
                 )
@@ -750,7 +747,6 @@ def convert_ForeignKey_field_to_djangomodel(field, registry=None, input_flag=Non
                         model,
                         input_flag="update_nested",
                         registry=registry,
-                        exclude=[field.remote_field.name],
                     ),
                     description=field.help_text or field.verbose_name,
                 )

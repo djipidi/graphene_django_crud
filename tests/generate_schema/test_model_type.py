@@ -878,7 +878,7 @@ class DjangoCRUDObjectTypeSchemaTest(SchemaTestCase):
                 "name": "oneToOneRelated",
                 "type": {
                     "kind": "INPUT_OBJECT",
-                    "name": "ModelTestGenerateSchemaACreateNestedWithoutOneToOneFieldInput",
+                    "name": "ModelTestGenerateSchemaACreateNestedInput",
                     "ofType": None,
                 },
             },
@@ -902,7 +902,7 @@ class DjangoCRUDObjectTypeSchemaTest(SchemaTestCase):
                 "name": "oneToOneBRelated",
                 "type": {
                     "kind": "INPUT_OBJECT",
-                    "name": "ModelTestGenerateSchemaBCreateNestedWithoutOneToOneFieldInput",
+                    "name": "ModelTestGenerateSchemaBCreateNestedInput",
                     "ofType": None,
                 },
             },
@@ -1062,7 +1062,7 @@ class DjangoCRUDObjectTypeSchemaTest(SchemaTestCase):
                 "name": "oneToOneRelated",
                 "type": {
                     "kind": "INPUT_OBJECT",
-                    "name": "ModelTestGenerateSchemaAUpdateNestedWithoutOneToOneFieldInput",
+                    "name": "ModelTestGenerateSchemaAUpdateNestedInput",
                     "ofType": None,
                 },
             },
@@ -1086,7 +1086,7 @@ class DjangoCRUDObjectTypeSchemaTest(SchemaTestCase):
                 "name": "oneToOneBRelated",
                 "type": {
                     "kind": "INPUT_OBJECT",
-                    "name": "ModelTestGenerateSchemaBUpdateNestedWithoutOneToOneFieldInput",
+                    "name": "ModelTestGenerateSchemaBUpdateNestedInput",
                     "ofType": None,
                 },
             },
@@ -1110,7 +1110,7 @@ class DjangoCRUDObjectTypeSchemaTest(SchemaTestCase):
                 "name": "create",
                 "type": {
                     "kind": "INPUT_OBJECT",
-                    "name": "ModelTestGenerateSchemaBCreateWithoutOneToOneFieldInput",
+                    "name": "ModelTestGenerateSchemaBCreateInput",
                     "ofType": None
                 }
             },
@@ -1124,15 +1124,7 @@ class DjangoCRUDObjectTypeSchemaTest(SchemaTestCase):
             }
         ]
         self.runtest_fields_of_type(
-            "ModelTestGenerateSchemaBCreateNestedWithoutOneToOneFieldInput", fields_to_test, input_type=True
-        )
-
-    def test_without(self):
-
-        self.assertTypeIsComposeOfFields(
-            "ModelTestGenerateSchemaBCreateWithoutOneToOneFieldInput",
-            ["extend", "foreignKeyField", "manytomanyField"],
-            input_type=True,
+            "ModelTestGenerateSchemaBCreateNestedInput", fields_to_test, input_type=True
         )
 
     def test_only_exclude_extend_fields_options(self):
@@ -1200,7 +1192,7 @@ class DjangoCRUDObjectTypeSchemaTest(SchemaTestCase):
             )
         with self.subTest():
             self.assertTypeIsComposeOfFields(
-                "ModelTestGenerateSchemaFCreateNestedWithoutOtoFRelatedInput",
+                "ModelTestGenerateSchemaFCreateNestedInput",
                 ["connect"],
                 input_type=True,
             )
@@ -1218,7 +1210,7 @@ class DjangoCRUDObjectTypeSchemaTest(SchemaTestCase):
             )
         with self.subTest():
             self.assertTypeIsComposeOfFields(
-                "ModelTestGenerateSchemaFUpdateNestedWithoutOtoFRelatedInput",
+                "ModelTestGenerateSchemaFUpdateNestedInput",
                 ["connect", "disconnect"],
                 input_type=True,
             )

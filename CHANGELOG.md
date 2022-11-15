@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 ### Breaking changed
 
 - Removed subscriptions fields
+- Simplification of the schema by leaving the parent field in the nestedCreateInput
 
 ### Added
 
