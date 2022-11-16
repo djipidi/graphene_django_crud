@@ -406,6 +406,7 @@ def convert_field_to_string(field, registry=None, input_flag=None):
 
 
 @convert_django_field.register(models.AutoField)
+@convert_django_field.register(models.BigAutoField)
 def convert_field_to_id(field, registry=None, input_flag=None):
     if input_flag == "order_by":
         return OrderEnum(
@@ -495,10 +496,8 @@ def convert_field_to_nullboolean(field, registry=None, input_flag=None):
 
 @convert_django_field.register(models.BinaryField)
 def convert_binary_to_string(field, registry=None, input_flag=None):
-    if input_flag == "order_by":
-        return OrderEnum(
-            description=field.help_text or field.verbose_name,
-        )
+    if input_flag == "order_by" or input_flag == "where":
+        return None
     return Binary(
         description=field.help_text or field.verbose_name,
         required=is_required(field) and input_flag == "create",

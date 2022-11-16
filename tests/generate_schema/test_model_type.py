@@ -373,10 +373,6 @@ class DjangoCRUDObjectTypeSchemaTest(SchemaTestCase):
                 "type": {"kind": "INPUT_OBJECT", "name": "IdFilter", "ofType": None},
             },
             {
-                "name": "binaryField",
-                "type": {"kind": "SCALAR", "name": "Binary", "ofType": None},
-            },
-            {
                 "name": "booleanField",
                 "type": {
                     "kind": "INPUT_OBJECT",
