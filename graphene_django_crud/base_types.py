@@ -97,8 +97,10 @@ class OrderEnum(graphene.Enum):
 
 
 class OrderStringEnum(graphene.Enum):
-    ASC = "STRING-ASC"
-    DESC = "STRING-DESC"
+    ASC = "ASC"
+    DESC = "DESC"
+    IASC = "IASC"
+    IDESC = "IDESC"
 
 
 class Binary(graphene.Scalar):

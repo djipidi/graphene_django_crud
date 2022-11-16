@@ -374,9 +374,9 @@ def order_by_input_to_args(order_by):
                     args.append("__".join(path))
                 elif v == "DESC":
                     args.append("-" + "__".join(path))
-                elif v == "STRING-ASC":
+                elif v == "IASC":
                     args.append(Lower("__".join(path)).asc())
-                elif v == "STRING-DESC":
+                elif v == "IDESC":
                     args.append(Lower("__".join(path)).desc())
     return args
 
