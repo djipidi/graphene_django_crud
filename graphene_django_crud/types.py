@@ -155,6 +155,9 @@ class DjangoCRUDObjectType(graphene.ObjectType):
             'Registry, received "{}".'
         ).format(cls.__name__, registry)
 
+        if "name" not in options.keys():
+            options["name"] = f"{model.__name__}Type"
+
         description = description or "type for {} model".format(model.__name__)
 
         fields = yank_fields_from_attrs(
