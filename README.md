@@ -56,7 +56,6 @@ django orm into a graphql API with the following features:
       - [get_queryset(cls, parent, info, \*\*kwargs)](#get_querysetcls-parent-info-kwargs)
       - [mutate, create, update, delete](#mutate-create-update-delete)
       - [(Deprecated) Middleware methods before_XXX(cls, parent, info, instance, data) / after_XXX(cls, parent, info, instance, data)](#deprecated-middleware-methods-before_xxxcls-parent-info-instance-data--after_xxxcls-parent-info-instance-data)
-    - [generate_signals()](#generate_signals)
   - [Settings](#settings)
     - [Customize](#customize)
       - [DEFAULT_CONNECTION_NODES_FIELD_NAME](#default_connection_nodes_field_name)
@@ -69,10 +68,14 @@ django orm into a graphql API with the following features:
       - [@resolver_hints(only: list\[str\], select_related:list\[str\])](#resolver_hintsonly-liststr-select_relatedliststr)
       - [where_input_to_Q(where_input: dict) -> Q](#where_input_to_qwhere_input-dict---q)
       - [order_by_input_to_args(order_by_input: list\[dict\]) -> list\[str\]](#order_by_input_to_argsorder_by_input-listdict---liststr)
-  - [Graphql types](#graphql-types)
+  - [Schema generated](#schema-generated)
+    - [Fields Mapping](#fields-mapping)
+    - [Model mutation / query fields](#model-mutation--query-fields)
+    - [Model types](#model-types)
     - [File](#file)
     - [FileInput](#fileinput)
     - [Binary](#binary)
+    - [OrderEnum](#orderenum)
     - [Scalar filters](#scalar-filters)
 
 ## Installation
@@ -186,8 +189,6 @@ class Mutation(graphene.ObjectType):
     group_update = GroupType.UpdateField()
     group_delete = GroupType.DeleteField()
 
-#signals.py
-from .schema import UserType, GroupType
 ```
 
 And get the resulting GraphQL API:
@@ -244,18 +245,28 @@ input GroupOrderByInput {
 type GroupType {
   id: ID
   name: String
-  userSet(where: UserWhereInput, orderBy: [UserOrderByInput], limit: Int, offset: Int): UserTypeConnection
+  userSet(where: UserWhereInput, orderBy: [UserOrderByInput], limit: Int, offset: Int): UserConnection
 }
 
-type GroupTypeConnection {
+type GroupConnection {
   data: [GroupType]!
   count: Int
 }
 
-type GroupTypeMutation {
+type GroupCreatePayload {
   ok: Boolean
   errors: [ErrorType]
   result: GroupType
+}
+
+type GroupUpdatePayload {
+  ok: Boolean
+  errors: [ErrorType]
+  result: GroupType
+}
+type GroupDeletePayload {
+  ok: Boolean
+  errors: [ErrorType]
 }
 
 input GroupUpdateInput {
@@ -302,12 +313,12 @@ input IntFilter {
 }
 
 type Mutation {
-  userCreate(input: UserCreateInput!): UserTypeMutation
-  userUpdate(input: UserUpdateInput!, where: UserWhereInput!): UserTypeMutation
-  userDelete(where: UserWhereInput!): UserTypeMutation
-  groupCreate(input: GroupCreateInput!): GroupTypeMutation
-  groupUpdate(input: GroupUpdateInput!, where: GroupWhereInput!): GroupTypeMutation
-  groupDelete(where: GroupWhereInput!): GroupTypeMutation
+  userCreate(input: UserCreateInput!): UserCreatePayload
+  userUpdate(input: UserUpdateInput!, where: UserWhereInput!): UserUpdatePayload
+  userDelete(where: UserWhereInput!): UserDeletePayload
+  groupCreate(input: GroupCreateInput!): GroupCreatePayload
+  groupUpdate(input: GroupUpdateInput!, where: GroupWhereInput!): GroupUpdatePayload
+  groupDelete(where: GroupWhereInput!): GroupDeletePayload
 }
 
 enum OrderEnum {
@@ -323,9 +334,9 @@ enum OrderStringEnum {
 type Query {
   me: UserType
   user(where: UserWhereInput!): UserType
-  users(where: UserWhereInput, orderBy: [UserOrderByInput], limit: Int, offset: Int): UserTypeConnection
+  users(where: UserWhereInput, orderBy: [UserOrderByInput], limit: Int, offset: Int): UserConnection
   group(where: GroupWhereInput!): GroupType
-  groups(where: GroupWhereInput, orderBy: [GroupOrderByInput], limit: Int, offset: Int): GroupTypeConnection
+  groups(where: GroupWhereInput, orderBy: [GroupOrderByInput], limit: Int, offset: Int): GroupConnection
 }
 
 input StringFilter {
@@ -378,7 +389,7 @@ type UserType {
   dateJoined: DateTime
   email: String
   firstName: String
-  groups(where: GroupWhereInput, orderBy: [GroupOrderByInput], limit: Int, offset: Int): GroupTypeConnection
+  groups(where: GroupWhereInput, orderBy: [GroupOrderByInput], limit: Int, offset: Int): GroupConnection
   isActive: Boolean
   isStaff: Boolean
   isSuperuser: Boolean
@@ -388,15 +399,26 @@ type UserType {
   fullName: String
 }
 
-type UserTypeConnection {
+type UserConnection {
   data: [UserType]!
   count: Int
 }
 
-type UserTypeMutation {
+type UserCreatePayload {
   ok: Boolean
   errors: [ErrorType]
   result: UserType
+}
+
+type UserUpdatePayload {
+  ok: Boolean
+  errors: [ErrorType]
+  result: UserType
+}
+
+type UserDeletePayload {
+  ok: Boolean
+  errors: [ErrorType]
 }
 
 input UserUpdateInput {
@@ -946,30 +968,6 @@ argument of the mutation, or it's been created by the model constructor. The
 "data" argument is a dict of the "input" argument of the mutation. The method is
 also called in nested mutation.
 
-### generate_signals()
-
-Graphene-subscription needs to connect the model signals to its own signals. the
-"generate_signals()" method does this for the model.
-
-```python
-# signals.py
-
-from .schema import UserType, GroupTyp
-
-UserType.generate_signals()
-GroupType.generate_signals()
-
-# apps.py
-
-from django.apps import AppConfig
-
-class CoreConfig(AppConfig):
-    name = 'core'
-
-    def ready(self):
-        import core.signals
-```
-
 ## Settings
 
 Graphene-django-crud reads your configuration from a single Django setting named
@@ -1049,10 +1047,149 @@ order_by method of queryset.
 example :
 
 ```python
-<model>.objects.all().order_by(order_by_input_to_args(where))
+<model>.objects.all().order_by(*order_by_input_to_args(order_by))
 ```
 
-## Graphql types
+## Schema generated
+
+[DjangoCRUDObjectType Class](#djangocrudobjecttype-class) contains configurable
+fields that you use for projecting fields of your django model onto graphql objects. 
+
+### Fields Mapping
+
+| Model field               | \<model\>Type       | \<model\>WhereInput | \<model\>CreateInput           | \<model\>UpdateInput           | \<model\>orderByInput |
+| ------------------------- | ------------------- | ------------------- | ------------------------------ | ------------------------------ | --------------------- |
+| AutoField                 | ID                  | IDFilter            | ID                             | ID                             | OrderEnum             |
+| BigAutoField              | ID                  | IDFilter            | ID                             | ID                             | OrderEnum             |
+| UUIDField                 | UUID                | UUIDFilter          | UUID                           | UUID                           | OrderEnum             |
+| CharField                 | String              | StringFilter        | String                         | String                         | OrderStringEnum       |
+| TextField                 | String              | StringFilter        | String                         | String                         | OrderStringEnum       |
+| EmailField                | String              | StringFilter        | String                         | String                         | OrderStringEnum       |
+| SlugField                 | String              | StringFilter        | String                         | String                         | OrderStringEnum       |
+| URLField                  | String              | StringFilter        | String                         | String                         | OrderStringEnum       |
+| GenericIPAddressField     | String              | StringFilter        | String                         | String                         | OrderStringEnum       |
+| PositiveIntegerField      | Int                 | IntFilter           | Int                            | Int                            | OrderEnum             |
+| PositiveSmallIntegerField | Int                 | IntFilter           | Int                            | Int                            | OrderEnum             |
+| SmallIntegerField         | Int                 | IntFilter           | Int                            | Int                            | OrderEnum             |
+| BigIntegerField           | Int                 | IntFilter           | Int                            | Int                            | OrderEnum             |
+| IntegerField              | Int                 | IntFilter           | Int                            | Int                            | OrderEnum             |
+| BooleanField              | Boolean             | BooleanFilter       | Boolean                        | Boolean                        | OrderEnum             |
+| BinaryField               | Binary              |                     | Binary                         | Binary                         |                       |
+| DecimalField              | Float               | FloatFilter         | Float                          | Float                          | OrderEnum             |
+| FloatField                | Float               | FloatFilter         | Float                          | Float                          | OrderEnum             |
+| DurationField             | Float               | FloatFilter         | Float                          | Float                          | OrderEnum             |
+| DateField                 | Date                | DateFilter          | Date                           | Date                           | OrderEnum             |
+| DateTimeField             | DateTime            | DatetimeFilter      | DateTime                       | DateTime                       | OrderEnum             |
+| TimeField                 | Time                | TimeFilter          | Time                           | Time                           | OrderEnum             |
+| FileField                 | File                | StringFilter        | FileInput                      | FileInput                      | OrderEnum             |
+| ImageField                | File                | StringFilter        | FileInput                      | FileInput                      | OrderEnum             |
+| ForeignKey                | \<model\>Type       | \<model\>WhereInput | \<model\>CreateNestedInput     | \<model\>UpdateNestedInput     | \<model\>OrderByInput |
+| ManyToOneRel              | \<model\>Connection | \<model\>WhereInput | \<model\>CreateNestedManyInput | \<model\>UpdateNestedManyInput |                       |
+| OneToOneField             | \<model\>Type       | \<model\>WhereInput | \<model\>CreateNestedInput     | \<model\>UpdateNestedInput     | \<model\>OrderByInput |
+| OneToOneRel               | \<model\>Type       | \<model\>WhereInput | \<model\>CreateNestedInput     | \<model\>UpdateNestedInput     | \<model\>OrderByInput |
+| ManyToManyField           | \<model\>Connection | \<model\>WhereInput | \<model\>CreateNestedManyInput | \<model\>UpdateNestedManyInput |                       |
+| ManyToManyRel             | \<model\>Connection | \<model\>WhereInput | \<model\>CreateNestedManyInput | \<model\>UpdateNestedManyInput |                       |
+
+### Model mutation / query fields
+
+```gql
+
+query {
+  <model>(where: <model>CreateInput!): <model>Type
+  <model_plural_name>(
+    where: <model>CreateInput
+    orderBy: [<model>orderByInput]
+    limit: Int
+    offset: Int
+  ): <model>Connection
+}
+
+mutation {
+  <model>Create(input: <model>CreateInput!): <model>CreatePayload
+  <model>Update(input: <model>UpdateInput!, where: <model>UpdateInput!): <model>UpdatePayload
+  <model>Delete(where: <model>CreateInput!): <model>DeletePayload
+}
+
+```
+
+### Model types
+
+```gql
+
+type <model>Type {
+  ...<fields Mapping>
+}
+
+type <model>Connection {
+  data: [<modelType>]
+  count: Int
+}
+
+type <model>CreatePayload {
+  ok: Boolean
+  errors: [errorType]
+  result: <model>Type
+}
+
+type <model>UpdatePayload {
+  ok: Boolean
+  errors: [errorType]
+  result: <model>Type
+}
+
+type <model>DeletePayload {
+  ok: Boolean
+  errors: [errorType]
+}
+
+input <model>WhereInput {
+  ...<fields Mapping>
+}
+
+input <model>CreateInput {
+  ...<fields Mapping>
+}
+
+input <model>UpdateInput {
+  ...<fields Mapping>
+}
+
+input <model>OrderByInput {
+  ...<fields Mapping>
+}
+
+input <model>CreateNestedInput {
+  create: <related_model>CreateInput
+  connect: <related_model>WhereInput
+}
+
+input <model>CreateNestedManyInput {
+  create: [<related_model>CreateInput]
+  connect: [<related_model>WhereInput]
+}
+
+input <model>UpdateNestedInput {
+  create: <related_model>CreateInput
+  update: <related_model>UpdateInput
+  connect: <related_model>WhereInput
+  delete: Boolean
+  disconnect: Boolean
+}
+
+input <model>UpdateNestedManyInput {
+  create: [<related_model>CreateInput]
+  update: [<related_model>UpdateWithWhereInput]
+  connect: [<related_model>WhereInput]
+  delete: [<related_model>WhereInput]
+  disconnect: [<related_model>WhereInput]
+}
+
+input <model>UpdateWithWhereInput {
+  where: <model>WhereInput
+  input: <model>UpdateInput
+}
+
+```
 
 ### File
 
@@ -1093,9 +1230,48 @@ scalar Binary
 
 Represents `Bytes` that are base64 encoded and decoded.
 
+### OrderEnum
+
+```
+enum OrderEnum {
+  ASC
+  DESC
+}
+
+enum OrderStringEnum {
+  ASC
+  DESC
+  IASC
+  IDESC
+}
+
+```
+
 ### Scalar filters
 
 ```gql
+
+input IDFilter {
+  equals: ID
+  exact: ID
+  in: [ID]
+  isnull: Boolean
+}
+
+input BooleanFilter {
+  equals: Boolean
+  exact: Boolean
+  in: [Boolean]
+  isnull: Boolean
+}
+
+input UUIDFilter {
+  equals: UUID
+  exact: UUID
+  in: [UUID]
+  isnull: Boolean
+}
+
 input StringFilter {
   equals: String
   exact: String
@@ -1141,7 +1317,7 @@ input FloatFilter {
   regex: String
 }
 
-input timeFilter {
+input TimeFilter {
   equals: Time
   exact: Time
   in: [Time]
