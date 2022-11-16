@@ -97,7 +97,7 @@ def gen_inputType_filter(
     )
 
 
-IdFilter = gen_inputType_filter("IdFilter", graphene.ID)
+IDfilter = gen_inputType_filter("IDFilter", graphene.ID)
 
 if gdc_settings.BOOLEAN_FILTER_USE_BOOLEAN_FIELD:
     BooleanFilter = graphene.Boolean

@@ -35,7 +35,7 @@ from .utils import is_required, get_model_fields, get_related_model, is_include
 from .input_types import (
     BooleanFilter,
     FileInput,
-    IdFilter,
+    IDfilter,
     IntFilter,
     DecimalFilter,
     FloatFilter,
@@ -257,7 +257,7 @@ def convert_model_to_input_type(
                     )
                 )
 
-            items["id"] = IdFilter()
+            items["id"] = IDfilter()
             items["OR"] = graphene.Dynamic(embeded_list_fields)
             items["AND"] = graphene.Dynamic(embeded_list_fields)
             items["NOT"] = graphene.Dynamic(embeded_field)
@@ -414,7 +414,7 @@ def convert_field_to_id(field, registry=None, input_flag=None):
         )
     if input_flag:
         if input_flag == "where":
-            return IntFilter(
+            return IDfilter(
                 description=field.help_text or field.verbose_name,
             )
         return ID(

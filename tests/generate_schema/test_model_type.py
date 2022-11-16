@@ -370,7 +370,7 @@ class DjangoCRUDObjectTypeSchemaTest(SchemaTestCase):
         fields_to_test = [
             {
                 "name": "id",
-                "type": {"kind": "INPUT_OBJECT", "name": "IdFilter", "ofType": None},
+                "type": {"kind": "INPUT_OBJECT", "name": "IDFilter", "ofType": None},
             },
             {
                 "name": "booleanField",
