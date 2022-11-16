@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Removed subscriptions fields
 - Simplification of the schema by leaving the parent field in the nestedCreateInput
 - Create mutation payload for each mutation
+- Rename "idFilter" to "IDfilter"
 
 ### Added
 
@@ -22,10 +23,8 @@ All notable changes to this project will be documented in this file.
 - create_mutation, update_mutation, delete_mutation options in
   DjangoCRUDObjectType to enable/disable nested mutation
   [#10](https://github.com/djipidi/graphene_django_crud/issues/10)
+- OrderStringEnum has state sensitive or case insensitive
 
-### Fixed
-
-- Invalid nested_create, nested_update input if parent field is exclude
 
 ## \[1.3.4\] - 2022-02-11
 
