@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## \[Unreleased\]
+
+### Fixed
+
+- <model>Connection have invalid name
+
 ## \[2.0.0\] - 2022-11-16
 
 - Upgrade dependency from graphene v2 to graphene v3

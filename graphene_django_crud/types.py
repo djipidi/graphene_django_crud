@@ -180,7 +180,7 @@ class DjangoCRUDObjectType(graphene.ObjectType):
                     connection_class = DefaultConnection
 
             connection = connection_class.create_type(
-                "{}Connection".format(options.get("name") or cls.__name__), node=cls
+                "{}Connection".format(model.__name__), node=cls
             )
 
         if not _meta:

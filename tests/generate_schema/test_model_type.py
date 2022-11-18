@@ -164,7 +164,7 @@ class DjangoCRUDObjectTypeSchemaTest(SchemaTestCase):
                 "name": "manytomanyField",
                 "type": {
                     "kind": "OBJECT",
-                    "name": "ModelTestGenerateSchemaATypeConnection",
+                    "name": "ModelTestGenerateSchemaAConnection",
                     "ofType": None,
                 },
                 "args": [
@@ -201,7 +201,7 @@ class DjangoCRUDObjectTypeSchemaTest(SchemaTestCase):
                 "name": "foreignKeyRelated",
                 "type": {
                     "kind": "OBJECT",
-                    "name": "ModelTestGenerateSchemaATypeConnection",
+                    "name": "ModelTestGenerateSchemaAConnection",
                     "ofType": None,
                 },
                 "args": [
@@ -247,7 +247,7 @@ class DjangoCRUDObjectTypeSchemaTest(SchemaTestCase):
                 "name": "manyToManyRelated",
                 "type": {
                     "kind": "OBJECT",
-                    "name": "ModelTestGenerateSchemaATypeConnection",
+                    "name": "ModelTestGenerateSchemaAConnection",
                     "ofType": None,
                 },
                 "args": [
@@ -284,7 +284,7 @@ class DjangoCRUDObjectTypeSchemaTest(SchemaTestCase):
                 "name": "foreignKeyBRelated",
                 "type": {
                     "kind": "OBJECT",
-                    "name": "ModelTestGenerateSchemaBTypeConnection",
+                    "name": "ModelTestGenerateSchemaBConnection",
                     "ofType": None,
                 },
                 "args": [
@@ -330,7 +330,7 @@ class DjangoCRUDObjectTypeSchemaTest(SchemaTestCase):
                 "name": "manyToManyBRelated",
                 "type": {
                     "kind": "OBJECT",
-                    "name": "ModelTestGenerateSchemaBTypeConnection",
+                    "name": "ModelTestGenerateSchemaBConnection",
                     "ofType": None,
                 },
                 "args": [

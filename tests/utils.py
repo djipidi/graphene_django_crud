@@ -26,6 +26,8 @@ class VerifyResponseAssertionMixins:
 
 
 class SchemaTestCase(GraphQLTestCase):
+  
+    maxDiff = None
 
     QUERY_GET_TYPE = """
         fragment type on __Type {
